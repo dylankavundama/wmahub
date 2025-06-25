@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<style>
+
+
+    /* Footer General Styling */
+.footer {
+    background-color: #1a1a1a; /* Dark background */
+    color: white;
+    padding: 40px 0;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.footer .container {
+    display: flex;
+    flex-direction: column; /* Stack items vertically by default (mobile first) */
+    align-items: center; /* Center items horizontally */
+    gap: 25px; /* Augmente l'espace entre les éléments du footer (copyright, logos, social icons) */
+    text-align: center;
+}
+
+/* Footer Logos Styling */
+.footer-logos {
+    display: flex; /* Permet d'aligner les logos à l'intérieur s'il y en a plusieurs */
+    align-items: center;
+    gap: 20px; /* Espace entre les logos individuels si vous en avez plusieurs */
+}
+
+.footer-logos img {
+    height: 30px; /* Adjust logo size */
+    filter: brightness(0) invert(1); /* To make logos white if they are dark */
+}
+
+/* Footer Social Icons Styling */
+.social-icons {
+    display: flex;
+    gap: 20px; /* Espace entre les icônes */
+    /* margin-top: 20px;  Removed as gap in container handles overall spacing */
+    justify-content: center; /* Centrer les icônes sur mobile */
+    width: 100%; /* Permet de prendre toute la largeur pour le centrage */
+}
+
+.social-icons a {
+    color: white; /* Couleur des icônes */
+    font-size: 2em; /* Taille des icônes */
+    transition: color 0.3s ease;
+}
+
+.social-icons a:hover {
+    color: #ff6600; /* Couleur au survol (votre couleur orange primaire) */
+}
+
+/* Responsive Adjustments for Footer */
+@media (min-width: 769px) {
+    .footer .container {
+        flex-direction: row; /* Layout items in a row on larger screens */
+        justify-content: space-between; /* Space out items (copyright left, logos/social right) */
+        align-items: center;
+    }
+
+    .footer-logos {
+        margin-right: auto; /* Pousse les logos vers la gauche, créant de l'espace avec les icônes sociales */
+        /* If you want the logos to be grouped with social icons on the right, remove margin-right: auto and adjust justify-content on .footer .container */
+    }
+
+    .social-icons {
+        margin-top: 0; /* Remove top margin on larger screens */
+        justify-content: flex-end; /* Align social icons to the right */
+        width: auto; /* Allow social icons to take natural width */
+    }
+}
+
+@media (max-width: 480px) {
+    .social-icons {
+        gap: 15px; /* Slightly less gap on very small screens */
+    }
+}
+</style>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMA Hub - Distributez Votre Musique</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMA Hub - Distributez Votre Musique</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+
+
+<body>
+
+    <header class="hero">
+        <div class="hero-overlay"></div>
+        <div class="container">
+            <nav class="navbar">
+                <img src="asset/trans.png" alt="WMA Logo" class="logo"> </nav>
+            <div class="hero-content">
+                <h1>VENDEZ VOTRE MUSIQUE DANS LE MONDE ENTIER</h1>
+                <p>La meilleure solution de distribution pour les artistes et les labels</p>
+                <a href="#" class="btn btn-primary">Distribuer</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="about-us">
+        <div class="container">
+            <h2>QUI SOMMES NOUS ?</h2>
+            <p>WMA Hub est une plateforme internationale dédiée à la promotion, la gestion et la distribution d'artistes et de contenus audiovisuels. Nous réunissons une équipe de passionnés qui travaillent en synergie pour offrir visibilité, accompagnement stratégique et opportunités concrètes aux talents créatifs.</p>
+        </div>
+    </section>
+
+    <section class="our-team">
+        <div class="container">
+            <h2>NOTRE ÉQUIPE</h2>
+            <p>En rejoignant WMA Hub, vous intégrez une communauté internationale de professionnels de la musique et de la vidéo. Nous nous appuyons sur ce réseau pour offrir à nos membres une meilleure visibilité et davantage d'opportunités pour développer leur carrière.</p>
+            <img src="asset/off.png" alt="WMA Office" class="team-office-img">
+        </div>
+    </section>
+
+    <section class="distribute-intro">
+        <div class="container">
+            <h2 class="orange-text">DISTRIBUEZ VOTRE MUSIQUE</h2>
+            <p>Nous distribuons votre musique sur plus de 200 plateformes de streaming, et nous veillons à la meilleure visibilité de vos titres. Profitez de nos offres sans abonnement et du paiement de vos royalties sous 48 heures</p>
+        </div>
+    </section>
+
+    <section class="sell-music-platforms">
+        <div class="container">
+            <div class="platform-logos">
+                <img src="asset/logo/1" alt="Spotify"> <img src="asset/logo/3.png" alt="Apple Music"> <img src="asset/logo/4.svg" alt="Deezer"> <img src="asset/logo/5.svg" alt="Boomplay"> </div>
+            <h2>VENDEZ VOTRE MUSIQUE SUR PLUS DE 200 PLATEFORMES MONDIALES</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Créer une sortie</h3>
+                    <p>Commencez avec une seule piste, un EP ou un album complet. Ajoutez des collaborateurs pour créditer facilement leur travail en une seule fois.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Ajouter des Métadonnées</h3>
+                    <p>Ajoutez votre pochette d'album, les paroles et les données des collaborateurs. Ajoutez des collaborateurs pour créditer facilement leur travail en une seule fois.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Distribuez votre musique</h3>
+                    <p>Lancez votre musique sur tous les principaux services de musique, sociaux et vidéo. Lancez une campagne de pré-enregistrement et créez du buzz.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+ <section class="analytics-section">
+    <div class="container">
+        <div class="analytics-content">
+            <div class="analytics-text">
+                <h2>Analyses intelligentes</h2>
+                <p>Visualisez toutes vos données de streaming de tous les DSP en un seul endroit.</p>
+                <ul>
+                    <li>Visualisez vos données</li>
+                    <li>Comprendre votre entreprise</li>
+                    <li>Prenez de meilleures décisions marketing</li>
+                    <li>Découvrez des opportunités cachées</li>
+                </ul>
+                <a href="#" class="btn btn-primary">Distribuer ma musique</a>
+            </div>
+            <div class="analytics-chart">
+                <img src="asset/logo/grqph.png" alt="Graphique des meilleures chaînes de distribution">
+            </div>
+        </div>
+    </div>
+</section>
+
+    <section class="catalog-growth">
+        <div class="container">
+            <div class="catalog-growth-grid">
+                <div class="catalog-column">
+                    <h2>Récupérez votre catalogue</h2>
+                    <p>Gérez votre musique, droits d'auteur, répartitions et données tout dans un seul système.</p>
+                    <ul>
+                        <li>Gérez vos actifs</li>
+                        <li>Importez ou exportez facilement votre catalogue</li>
+                        <li>Gérez toutes vos métadonnées et actifs numériques</li>
+                        <li>Livrez des métadonnées parfaites</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary">Distributeur ma musique</a>
+                </div>
+                <div class="growth-column">
+                    <h2>Analysez votre croissance</h2>
+                    <p>Obtenez toutes vos métriques de revenus et de streaming quotidiennement.</p>
+                    <ul>
+                        <li>Simplifiez le reporting</li>
+                        <li>Consolidez tous vos rapports de revenus</li>
+                        <li>Analysez facilement les données financières</li>
+                        <li>Accélérez les flux de travail de reporting</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary">Distributeur ma musique</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="key-figures">
+        <div class="container">
+            <div class="impact-statement">
+                <p>NOUS SOMMES L'UN DES ACTEURS MAJEURS DE LA DISTRIBUTION EN AFRIQUE AVEC PLUS DE 700 ARTISTES ET 50 LABELS EN AFRIQUE</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <img src="images/icon_platforms.png" alt="Platforms Icon"> <h3>+200 plateformes</h3>
+                    <p>de distribution</p>
+                </div>
+                <div class="stat-item">
+                    <img src="images/icon_artists.png" alt="Artists Icon"> <h3>+50k artistes</h3>
+                    <p>distribués par JTV</p>
+                </div>
+                <div class="stat-item">
+                    <img src="images/icon_support.png" alt="Support Icon"> <h3>Assistance 24h/24 et 7j/7</h3>
+                    <p>personnalisé à votre écoute</p>
+                </div>
+                <div class="stat-item">
+                    <img src="images/icon_titles.png" alt="Titles Icon"> <h3>+100K titres</h3>
+                    <p>distribués dans le monde</p>
+                </div>
+                <div class="stat-item">
+                    <img src="images/icon_streams.png" alt="Streams Icon"> <h3>+80M d'écoutes</h3>
+                    <p>chaque mois grâce à JTV</p>
+                </div>
+                <div class="stat-item">
+                    <img src="images/icon_royalties.png" alt="Royalties Icon"> <h3>48 heures</h3>
+                    <p>au max pour recevoir vos royalties</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="global-presence">
+        <div class="container">
+            <h2>Notre Présence Mondiale</h2>
+            <img src="./asset/6.png" alt="World Map with WMA Hub locations" class="world-map-img">
+        </div>
+    </section>
+
+    <section class="trusted-by">
+        <div class="container">
+            <!-- <div class="trust-header">Ils nous ont fait confiance</div> -->
+            <div class="artist-collage-wrapper">
+                <img src="asset/7.png" alt="Collage of artists who trust WMA Hub" class="artist-collage-img">
+            </div>
+        </div>
+    </section>
+
+ <footer class="footer">
+    <div class="container">
+        <p>&copy; Copyright 2025 WMAHUB. Tous droits réservés.</p>
+        <div class="footer-logos">
+            <img src="asset/trans.png" alt="HMA Logo">
+        </div>
+        <div class="social-icons">
+            <a href="https://www.instagram.com/yourprofile" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://wa.me/yourphonenumber" target="_blank" aria-label="WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="https://www.facebook.com/yourprofile" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,540 @@
+/* General Styling */
+body {
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f8f8;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 3em;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 2.5em;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+p {
+    font-size: 1.1em;
+    line-height: 1.8;
+}
+
+.orange-text {
+    color: #ff6600;
+}
+
+.btn {
+    display: inline-block;
+    padding: 15px 30px;
+    background-color: #ff6600;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #e65c00;
+}
+
+/* Header/Hero Section (from 1.jpg) */
+.hero {
+    position: relative;
+    height: 80vh; /* Adjust as needed */
+    background: url('asset/aspi.jpg') no-repeat center center/cover; /* REPLACE WITH YOUR IMAGE PATH */
+    display: flex;
+    align-items: center;
+    color: white;
+    text-align: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+    z-index: 1;
+}
+
+.hero .container {
+    position: relative;
+    z-index: 2;
+    padding-top: 0; /* Adjust if needed */
+}
+
+.navbar {
+    display: flex;
+    justify-content: flex-start; /* Align logo to the left */
+    align-items: center;
+    padding: 20px 0;
+    position: absolute; /* Position relative to hero container */
+    top: 0;
+    left: 20px; /* Adjust as needed */
+    width: calc(100% - 40px); /* Adjust for padding */
+}
+
+.navbar .logo {
+    height: 40px; /* Adjust logo size */
+    filter: brightness(0) invert(1); /* Makes a dark logo white if it's black on transparent */
+}
+
+.hero-content {
+    padding-top: 100px; /* Space for the navbar */
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-content h1 {
+    color: white;
+    font-size: 4em;
+    margin-bottom: 20px;
+}
+
+.hero-content p {
+    color: white;
+    font-size: 1.4em;
+    margin-bottom: 40px;
+}
+
+/* About Us Section (from 11.jpg) */
+.about-us {
+    background-color: #1a1a1a; /* Dark background from image */
+    color: white;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.about-us h2 {
+    color: white;
+    text-align: left; /* Text alignment from image */
+    padding-left: 20px;
+}
+
+.about-us p {
+    text-align: left; /* Text alignment from image */
+    max-width: 800px;
+    margin: 0 auto; /* Center the paragraph block */
+    padding: 0 20px;
+}
+
+/* Our Team Section (from 9.jpg) */
+.our-team {
+    background-color: #f8f8f8;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.our-team h2 {
+    color: #ff6600;
+}
+
+.our-team p {
+    max-width: 800px;
+    margin: 0 auto 40px auto;
+    padding: 0 20px;
+}
+
+.team-office-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Distribute Music Intro (from 10.png) */
+.distribute-intro {
+    background-color: #fff;
+    padding: 60px 0;
+    text-align: center;
+}
+
+.distribute-intro p {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.2em;
+}
+
+/* Sell Music Platforms (from 2.png) */
+.sell-music-platforms {
+    background-color: #f8f8f8;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.platform-logos {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.platform-logos img {
+    height: 50px; /* Adjust logo sizes */
+    filter: grayscale(100%); /* Make them grayscale if they are color logos */
+    opacity: 0.7;
+}
+
+.sell-music-platforms h2 {
+    font-size: 2.2em;
+    margin-bottom: 50px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.feature-card {
+    background-color: #ff6600;
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: left;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.feature-card h3 {
+    color: white;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+/* Intelligent Analytics (from 4.png) */
+.analytics-section {
+    background-color: #fff;
+    padding: 80px 0;
+}
+
+.analytics-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.analytics-text {
+    flex: 1;
+    min-width: 300px;
+    text-align: left;
+}
+
+.analytics-text ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 30px;
+}
+
+.analytics-text ul li {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.analytics-text ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #ff6600;
+    border-radius: 50%;
+}
+
+.analytics-chart {
+    flex: 1;
+    min-width: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.analytics-chart img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd; /* Simulate the card border */
+    border-radius: 8px;
+    padding: 15px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+
+/* Catalog and Growth (from 3.png) */
+.catalog-growth {
+    background-color: #f8f8f8;
+    padding: 80px 0;
+}
+
+.catalog-growth-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+}
+
+.catalog-column, .growth-column {
+    flex: 1;
+    min-width: 450px; /* Adjust based on desired layout */
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.catalog-column h2, .growth-column h2 {
+    text-align: left;
+    font-size: 2em;
+    color: #333;
+}
+
+.catalog-column ul, .growth-column ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 30px;
+}
+
+.catalog-column ul li, .growth-column ul li {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.catalog-column ul li::before, .growth-column ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #ff6600;
+    border-radius: 50%;
+}
+
+/* Key Figures / Our Impact (from 5.png and 8.png) */
+.key-figures {
+    background-color: #fff;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.impact-statement {
+    background-color: #ff6600;
+    color: white;
+    padding: 50px 20px;
+    border-radius: 10px;
+    margin-bottom: 60px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.impact-statement p {
+    font-size: 1.8em;
+    font-weight: 600;
+    margin: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    background-color: #f8f8f8; /* Background for the grid section itself */
+    padding: 40px;
+    border-radius: 10px;
+}
+
+.stat-item {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.stat-item img {
+    height: 60px; /* Icon size */
+    margin-bottom: 15px;
+    filter: invert(45%) sepia(90%) saturate(600%) hue-rotate(350deg) brightness(100%) contrast(100%); /* Orange filter */
+}
+
+.stat-item h3 {
+    font-size: 1.8em;
+    color: #ff6600;
+    margin-bottom: 10px;
+}
+
+.stat-item p {
+    font-size: 1em;
+    margin: 0;
+}
+
+/* Global Presence (from 6.png) */
+.global-presence {
+    background-color: #f8f8f8;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.global-presence h2 {
+    color: #333;
+}
+
+.world-map-img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 40px;
+}
+
+/* Trusted By Section (from 7.jpg) */
+.trusted-by {
+    background-color: #fff;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.trust-header {
+    background-color: #ff6600;
+    color: white;
+    display: inline-block;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 60px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.artist-collage-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* This section is tricky to replicate exactly with CSS for varied shapes.
+       Using a single image is easiest. */
+}
+
+.artist-collage-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px; /* Optional: adds a slight curve to the overall image */
+}
+
+/* Footer (from 11.jpg copyright) */
+.footer {
+    background-color: #1a1a1a; /* Dark background */
+    color: white;
+    padding: 40px 0;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.footer-logos img {
+    height: 30px; /* Adjust logo size */
+    margin-left: 20px;
+    filter: brightness(0) invert(1); /* To make logos white if they are dark */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.5em;
+    }
+    h2 {
+        font-size: 2em;
+    }
+    .hero {
+        height: 60vh;
+    }
+    .hero-content {
+        padding-top: 80px;
+    }
+    .platform-logos {
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    .analytics-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    .analytics-text, .analytics-chart {
+        min-width: unset;
+        width: 100%;
+    }
+    .catalog-growth-grid {
+        flex-direction: column;
+    }
+    .catalog-column, .growth-column {
+        min-width: unset;
+        width: 100%;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        padding: 20px;
+    }
+    .impact-statement p {
+        font-size: 1.4em;
+    }
+    .footer .container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .footer-logos {
+        margin-top: 15px;
+    }
+    .footer-logos img {
+        margin: 0 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 1.8em;
+    }
+    .hero-content p {
+        font-size: 1.1em;
+    }
+    .platform-logos img {
+        height: 40px;
+    }
+    .trust-header {
+        font-size: 1.2em;
+        padding: 10px 25px;
+    }
+}
