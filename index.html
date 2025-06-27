@@ -37,6 +37,25 @@
     </script>
 
     <style>
+        /* General Navbar Styling */
+        .navbar {
+            display: flex; /* Make it a flex container */
+            justify-content: flex-start; /* Align content to the left (logo) */
+            align-items: center; /* Vertically center items */
+            padding: 30px 20px; /* Add padding around the navbar, including left for the logo */
+            width: 100%; /* Ensure it takes full width */
+            box-sizing: border-box; /* Include padding in the width calculation */
+            position: relative; /* Needed for z-index if hero-overlay is used */
+            z-index: 2; /* Ensure navbar is above the overlay */
+        }
+
+        /* Logo specific styling within the navbar */
+        .navbar .logo {
+            height: 111px; /* Adjust logo height as needed */
+            width: auto; /* Maintain aspect ratio */
+        }
+
+
         /* Footer General Styling */
         .footer {
             background-color: #1a1a1a; /* Dark background */
