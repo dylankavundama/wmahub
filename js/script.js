@@ -38,3 +38,51 @@ window.addEventListener('DOMContentLoaded', () => {
     fixVH();
     window.addEventListener('resize', fixVH);
 });
+
+// Animation au scroll
+function revealOnScroll() {
+    const reveals = document.querySelectorAll('.reveal');
+    
+    for (let i = 0; i < reveals.length; i++) {
+        const windowHeight = window.innerHeight;
+        const elementTop = reveals[i].getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < windowHeight - elementVisible) {
+            reveals[i].classList.add('active');
+        }
+    }
+}
+
+// Ajoutez la classe reveal aux éléments que vous voulez animer au scroll
+document.addEventListener('DOMContentLoaded', function() {
+    // Sélectionnez les sections à animer
+    const sections = document.querySelectorAll('section');
+    sections.forEach((section, index) => {
+        section.classList.add('reveal');
+        // Délai progressif pour un effet en cascade
+        section.style.transitionDelay = `${index * 0.1}s`;
+    });
+    
+    // Animation des cartes de fonctionnalités
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach((card, index) => {
+        card.style.setProperty('--order', index);
+    });
+    
+    // Écouteur pour le scroll
+    window.addEventListener('scroll', revealOnScroll);
+    revealOnScroll(); // Déclenche au chargement
+});
+
+// Animation spéciale pour le hero
+function heroAnimation() {
+    const heroContent = document.querySelector('.hero-content');
+    heroContent.style.opacity = '0';
+    setTimeout(() => {
+        heroContent.style.opacity = '1';
+    }, 500);
+}
+
+// Appeler cette fonction au chargement
+window.addEventListener('load', heroAnimation);
