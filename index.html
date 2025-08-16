@@ -242,19 +242,48 @@
 
     <script>
 
-        // Gestion du preloader
+// Gestion du preloader amélioré
 window.addEventListener('load', function() {
     const preloader = document.getElementById('preloader');
+    const loaderText = document.querySelector('.loader-text');
+    
+    // Changement de texte pendant le chargement
+    const texts = ["Préparation...", "Chargement...", "Presque terminé..."];
+    let counter = 0;
+    
+    const textInterval = setInterval(() => {
+        loaderText.textContent = texts[counter % texts.length];
+        counter++;
+    }, 1500);
+    
     setTimeout(() => {
+        // Animation de disparition
         preloader.style.opacity = '0';
+        
+        // Arrêt de l'animation de texte
+        clearInterval(textInterval);
+        
+        // Suppression après la transition
         setTimeout(() => {
             preloader.style.display = 'none';
-        }, 500);
-    }, 1000);
+        }, 800);
+    }, 3000); // Durée totale du preloader (3 secondes)
 });
+
+// Pour tester rapidement en développement, vous pouvez réduire le temps :
+// window.addEventListener('load', function() {
+//     setTimeout(() => {
+//         document.getElementById('preloader').style.display = 'none';
+//     }, 500);
+// });
     </script>
-    <div id="preloader">
-    <div class="loader"></div>
+<div id="preloader">
+    <div class="preloader-content">
+        <!-- Remplacez "asset/logo-loader.png" par le chemin de votre logo -->
+        <img src="asset/trans.png" alt="WMA Hub Logo" class="loader-logo">
+        <div class="loader-text">Chargement...</div>
+        <div class="loader-spinner"></div>
+    </div>
 </div>
 </body>
 
