@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,26 +40,37 @@
     <style>
         /* General Navbar Styling */
         .navbar {
-            display: flex; /* Make it a flex container */
-            justify-content: flex-start; /* Align content to the left (logo) */
-            align-items: center; /* Vertically center items */
-            padding: 30px 20px; /* Add padding around the navbar, including left for the logo */
-            width: 100%; /* Ensure it takes full width */
-            box-sizing: border-box; /* Include padding in the width calculation */
-            position: relative; /* Needed for z-index if hero-overlay is used */
-            z-index: 2; /* Ensure navbar is above the overlay */
+            display: flex;
+            /* Make it a flex container */
+            justify-content: flex-start;
+       
+            align-items: center;
+          
+            padding: 30px 20px;
+            /* Add padding around the navbar, including left for the logo */
+            width: 100%;
+            /* Ensure it takes full width */
+            box-sizing: border-box;
+            /* Include padding in the width calculation */
+            position: relative;
+            /* Needed for z-index if hero-overlay is used */
+            z-index: 2;
+            /* Ensure navbar is above the overlay */
         }
 
         /* Logo specific styling within the navbar */
         .navbar .logo {
-            height: 111px; /* Adjust logo height as needed */
-            width: auto; /* Maintain aspect ratio */
+            height: 111px;
+            /* Adjust logo height as needed */
+            width: auto;
+            /* Maintain aspect ratio */
         }
 
 
         /* Footer General Styling */
         .footer {
-            background-color: #1a1a1a; /* Dark background */
+            background-color: #1a1a1a;
+            /* Dark background */
             color: white;
             padding: 40px 0;
             text-align: center;
@@ -67,68 +79,89 @@
 
         .footer .container {
             display: flex;
-            flex-direction: column; /* Stack items vertically by default (mobile first) */
-            align-items: center; /* Center items horizontally */
-            gap: 25px; /* Augmente l'espace entre les éléments du footer (copyright, logos, social icons) */
+            flex-direction: column;
+            /* Stack items vertically by default (mobile first) */
+            align-items: center;
+            /* Center items horizontally */
+            gap: 25px;
+            /* Augmente l'espace entre les éléments du footer (copyright, logos, social icons) */
             text-align: center;
         }
 
         /* Footer Logos Styling */
         .footer-logos {
-            display: flex; /* Permet d'aligner les logos à l'intérieur s'il y en a plusieurs */
+            display: flex;
+            /* Permet d'aligner les logos à l'intérieur s'il y en a plusieurs */
             align-items: center;
-            gap: 20px; /* Espace entre les logos individuels si vous en avez plusieurs */
+            gap: 20px;
+            /* Espace entre les logos individuels si vous en avez plusieurs */
         }
 
         .footer-logos img {
-            height: 30px; /* Adjust logo size */
-            filter: brightness(0) invert(1); /* To make logos white if they are dark */
+            height: 30px;
+            /* Adjust logo size */
+            filter: brightness(0) invert(1);
+            /* To make logos white if they are dark */
         }
 
         /* Footer Social Icons Styling */
         .social-icons {
             display: flex;
-            gap: 20px; /* Espace entre les icônes */
-            justify-content: center; /* Centrer les icônes sur mobile */
-            width: 100%; /* Permet de prendre toute la largeur pour le centrage */
+            gap: 20px;
+            /* Espace entre les icônes */
+            justify-content: center;
+            /* Centrer les icônes sur mobile */
+            width: 100%;
+            /* Permet de prendre toute la largeur pour le centrage */
         }
 
         .social-icons a {
-            color: white; /* Couleur des icônes */
-            font-size: 2em; /* Taille des icônes */
+            color: white;
+            /* Couleur des icônes */
+            font-size: 2em;
+            /* Taille des icônes */
             transition: color 0.3s ease;
         }
 
         .social-icons a:hover {
-            color: #ff6600; /* Couleur au survol (votre couleur orange primaire) */
+            color: #ff6600;
+            /* Couleur au survol (votre couleur orange primaire) */
         }
 
         /* Responsive Adjustments for Footer */
         @media (min-width: 769px) {
             .footer .container {
-                flex-direction: row; /* Layout items in a row on larger screens */
-                justify-content: space-between; /* Space out items (copyright left, logos/social right) */
+                flex-direction: row;
+                /* Layout items in a row on larger screens */
+                justify-content: space-between;
+                /* Space out items (copyright left, logos/social right) */
                 align-items: center;
             }
 
             .footer-logos {
-                margin-right: auto; /* Pousse les logos vers la gauche, créant de l'espace avec les icônes sociales */
+                margin-right: auto;
+                /* Pousse les logos vers la gauche, créant de l'espace avec les icônes sociales */
             }
 
             .social-icons {
-                margin-top: 0; /* Remove top margin on larger screens */
-                justify-content: flex-end; /* Align social icons to the right */
-                width: auto; /* Allow social icons to take natural width */
+                margin-top: 0;
+                /* Remove top margin on larger screens */
+                justify-content: flex-end;
+                /* Align social icons to the right */
+                width: auto;
+                /* Allow social icons to take natural width */
             }
         }
 
         @media (max-width: 480px) {
             .social-icons {
-                gap: 15px; /* Slightly less gap on very small screens */
+                gap: 15px;
+                /* Slightly less gap on very small screens */
             }
         }
     </style>
 </head>
+
 <body>
 
     <header class="hero">
@@ -140,7 +173,7 @@
             <div class="hero-content">
                 <h3 style="color: white;">VENDEZ VOTRE MUSIQUE DANS LE MONDE ENTIER</h3>
                 <p>La meilleure solution de distribution pour les artistes et les labels</p>
-                <a href="#" class="btn btn-primary"  onclick="openDialog()">Distribuer</a>
+                <a href="#" class="btn btn-primary" onclick="openDialog()">Distribuer</a>
             </div>
         </div>
     </header>
@@ -148,14 +181,18 @@
     <section class="about-us">
         <div class="container">
             <h2>QUI SOMMES NOUS ?</h2>
-            <p>WMA Hub est une plateforme internationale dédiée à la promotion, la gestion et la distribution d'artistes et de contenus audiovisuels. Nous réunissons une équipe de passionnés qui travaillent en synergie pour offrir visibilité, accompagnement stratégique et opportunités concrètes aux talents créatifs.</p>
+            <p>WMA Hub est une plateforme internationale dédiée à la promotion, la gestion et la distribution d'artistes
+                et de contenus audiovisuels. Nous réunissons une équipe de passionnés qui travaillent en synergie pour
+                offrir visibilité, accompagnement stratégique et opportunités concrètes aux talents créatifs.</p>
         </div>
     </section>
 
     <section class="our-team">
         <div class="container">
             <h2>NOTRE ÉQUIPE</h2>
-            <p>En rejoignant WMA Hub, vous intégrez une communauté internationale de professionnels de la musique et de la vidéo. Nous nous appuyons sur ce réseau pour offrir à nos membres une meilleure visibilité et davantage d'opportunités pour développer leur carrière.</p>
+            <p>En rejoignant WMA Hub, vous intégrez une communauté internationale de professionnels de la musique et de
+                la vidéo. Nous nous appuyons sur ce réseau pour offrir à nos membres une meilleure visibilité et
+                davantage d'opportunités pour développer leur carrière.</p>
             <img src="asset/off.png" alt="WMA Office" class="team-office-img">
         </div>
     </section>
@@ -163,7 +200,9 @@
     <section class="distribute-intro">
         <div class="container">
             <h2 class="orange-text">DISTRIBUEZ VOTRE MUSIQUE</h2>
-            <p>Nous distribuons votre musique sur plus de 200 plateformes de streaming, et nous veillons à la meilleure visibilité de vos titres. Profitez de nos offres sans abonnement et du paiement de vos royalties sous 48 heures</p>
+            <p>Nous distribuons votre musique sur plus de 200 plateformes de streaming, et nous veillons à la meilleure
+                visibilité de vos titres. Profitez de nos offres sans abonnement et du paiement de vos royalties sous 48
+                heures</p>
         </div>
     </section>
 
@@ -179,15 +218,18 @@
             <div class="features-grid">
                 <div class="feature-card">
                     <h3>Créer une sortie</h3>
-                    <p>Commencez avec une seule piste, un EP ou un album complet. Ajoutez des collaborateurs pour créditer facilement leur travail en une seule fois.</p>
+                    <p>Commencez avec une seule piste, un EP ou un album complet. Ajoutez des collaborateurs pour
+                        créditer facilement leur travail en une seule fois.</p>
                 </div>
                 <div class="feature-card">
                     <h3>Ajouter des Métadonnées</h3>
-                    <p>Ajoutez votre pochette d'album, les paroles et les données des collaborateurs. Ajoutez des collaborateurs pour créditer facilement leur travail en une seule fois.</p>
+                    <p>Ajoutez votre pochette d'album, les paroles et les données des collaborateurs. Ajoutez des
+                        collaborateurs pour créditer facilement leur travail en une seule fois.</p>
                 </div>
                 <div class="feature-card">
                     <h3>Distribuez votre musique</h3>
-                    <p>Lancez votre musique sur tous les principaux services de musique, sociaux et vidéo. Lancez une campagne de pré-enregistrement et créez du buzz.</p>
+                    <p>Lancez votre musique sur tous les principaux services de musique, sociaux et vidéo. Lancez une
+                        campagne de pré-enregistrement et créez du buzz.</p>
                 </div>
             </div>
         </div>
@@ -213,9 +255,13 @@
                             <label for="userName">Nom :</label><br>
                             <input type="text" id="userName" style="width:100%; padding:8px; margin-bottom:10px;"><br>
                             <label for="userAddress">Adresse :</label><br>
-                            <input type="text" id="userAddress" style="width:100%; padding:8px; margin-bottom:20px;"><br>
-                            <button onclick="sendToWhatsApp()" style="background:#25D366; color:white; border:none; padding:10px 20px; border-radius:5px;">Envoyer sur WhatsApp</button>
-                            <button onclick="closeDialog()" style="margin-left:10px; padding:10px 20px;">Annuler</button>
+                            <input type="text" id="userAddress"
+                                style="width:100%; padding:8px; margin-bottom:20px;"><br>
+                            <button onclick="sendToWhatsApp()"
+                                style="background:#25D366; color:white; border:none; padding:10px 20px; border-radius:5px;">Envoyer
+                                sur WhatsApp</button>
+                            <button onclick="closeDialog()"
+                                style="margin-left:10px; padding:10px 20px;">Annuler</button>
                         </div>
                     </div>
                 </div>
@@ -254,11 +300,11 @@
             </div>
         </div>
     </section>
-
     <section class="key-figures">
         <div class="container">
             <div class="impact-statement">
-                <p>NOUS SOMMES L'UN DES ACTEURS MAJEURS DE LA DISTRIBUTION EN AFRIQUE AVEC PLUS DE 700 ARTISTES ET 50 LABELS EN AFRIQUE</p>
+                <p>NOUS SOMMES L'UN DES ACTEURS MAJEURS DE LA DISTRIBUTION EN AFRIQUE AVEC PLUS DE 700 ARTISTES ET 50
+                    LABELS EN AFRIQUE</p>
             </div>
             <div class="stats-grid">
                 <div class="stat-item">
@@ -313,9 +359,12 @@
     <footer class="footer">
         <div class="container">
             <p>&copy; Copyright 2025 WMAHUB. Tous droits réservés.</p>
-         <div class="footer-logos">
-    <img src="asset/trans.png" alt="WMA Logo" style="height: 80px; filter: brightness(0) invert(1);">
-</div>
+            <div class="footer-logos">
+                <img src="asset/trans.png" alt="WMA Logo" style="height: 80px; filter: brightness(0) invert(1);">
+                <img src="asset/logo/spo.png" alt="WMA Logo" style="height: 33px; filter: brightness(0) invert(1);">
+                <img src="asset/logo/you.png" alt="WMA Logo" style="height: 66; filter: brightness(0) invert(1);">
+                <img src="asset/logo/one.png" alt="WMA Logo" style="height: 66; filter: brightness(0) invert(1);">
+            </div>
             <div class="social-icons">
                 <a href="https://www.instagram.com/wmamusic.fr/" target="_blank" aria-label="Instagram">
                     <i class="fab fa-instagram"></i>
