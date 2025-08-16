@@ -239,6 +239,23 @@
     </div>
 
     <script src="js/script.js"></script>
+
+    <script>
+
+        // Gestion du preloader
+window.addEventListener('load', function() {
+    const preloader = document.getElementById('preloader');
+    setTimeout(() => {
+        preloader.style.opacity = '0';
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    }, 1000);
+});
+    </script>
+    <div id="preloader">
+    <div class="loader"></div>
+</div>
 </body>
 
 </html>
