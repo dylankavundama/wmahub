@@ -10,84 +10,139 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Couleurs du site WMA Hub */
+        /* Couleurs du site WMA Hub - Légèrement ajustées pour plus de contraste */
         :root {
             --primary-color: #ff6600;
-            --secondary-color: #000;
-            --background-color: #2c3e50;
+            --secondary-color: #1a1a1a;
+            --background-color: #0d0d0d;
+            --card-color: #1c1c1c; /* Nouvelle couleur pour les sections */
             --text-color: #f4f7f9;
-            --light-text-color: #aaa;
-            --border-color: #555;
-            --shadow-color: rgba(0, 0, 0, 0.3);
+            --light-text-color: #b0b0b0;
+            --border-color: #3a3a3a;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --gradient-start: #ff8c42; /* Nouveau dégradé */
+            --gradient-end: #e65c00;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--background-color);
             color: var(--text-color);
-            padding: 10px;
+            padding: 20px;
             margin: 0;
-            line-height: 1.5;
+            line-height: 1.6;
+            display: flex; /* Centrer le contenu */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        /* NOUVEAUTÉS */
+        /* Animation de fond subtile pour plus de dynamisme */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, var(--background-color) 0%, transparent 60%);
+            opacity: 0.1;
+            z-index: -1;
+            animation: pulse-bg 20s infinite ease-in-out;
+        }
+
+        @keyframes pulse-bg {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         .form-container {
             background: var(--secondary-color);
             padding: 20px 30px;
-            border-radius: 10px;
-            max-width: 700px;
+            border-radius: 12px;
+            max-width: 800px; /* Augmenté pour un meilleur espacement */
             margin: 20px auto;
-            box-shadow: 0 8px 20px var(--shadow-color);
+            box-shadow: 0 10px 25px var(--shadow-color);
+            border: 1px solid var(--border-color); /* Bordure subtile */
         }
 
         header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             color: var(--primary-color);
             font-weight: 700;
             margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+            letter-spacing: 1px;
         }
 
         h2 {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: var(--light-text-color);
             font-weight: 400;
             margin-top: 0;
+            margin-bottom: 20px;
         }
 
+        /* NOUVEAUTÉS */
         h3 {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 8px;
-            margin-top: 30px;
-            margin-bottom: 15px;
+            font-size: 1.4rem;
+            color: var(--text-color);
+            position: relative;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
+        h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 60px; /* Trait souligné plus court */
+            height: 3px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 2px;
+        }
+
+        fieldset {
+            border: none;
+            padding: 0;
+            margin: 0 0 30px 0;
+        }
+        
         label {
             display: block;
             font-weight: 600;
-            margin-bottom: 5px;
-            margin-top: 15px;
-            font-size: 0.95rem;
+            margin-bottom: 8px;
+            margin-top: 20px;
+            font-size: 1rem;
             color: #fff;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
         }
 
         input,
         textarea,
         select {
             width: 100%;
-            padding: 10px 12px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            background-color: #333;
+            background-color: var(--card-color);
             color: #fff;
             box-sizing: border-box;
             transition: border-color 0.3s, box-shadow 0.3s;
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         input:focus,
@@ -95,19 +150,15 @@
         select:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 6px rgba(255, 102, 0, 0.3);
-        }
-
-        .input-group {
-            margin-bottom: 15px;
+            box-shadow: 0 0 8px rgba(255, 102, 0, 0.4);
         }
 
         .radio-group,
         .checkbox-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 15px;
         }
 
         .radio-group label,
@@ -118,30 +169,38 @@
             cursor: pointer;
             margin-top: 0;
             font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+        
+        /* NOUVEAUTÉS */
+        .radio-group label:hover,
+        .checkbox-group label:hover {
+            color: var(--primary-color);
         }
 
         .radio-group input,
         .checkbox-group input {
             width: auto;
-            margin-right: 10px;
+            margin-right: 12px;
             accent-color: var(--primary-color);
+            transform: scale(1.1);
         }
 
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            transition: background-color 0.3s, transform 0.2s;
-            margin-top: 25px;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            margin-top: 30px;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
         }
 
         .btn-whatsapp {
-            background-color: #25d366;
-            /* Vert WhatsApp */
+            background: linear-gradient(45deg, #25d366, #128c7e);
             color: #fff;
             display: flex;
             align-items: center;
@@ -150,30 +209,53 @@
         }
 
         .btn-whatsapp:hover {
-            background-color: #128c7e;
-            transform: translateY(-1px);
+            background: linear-gradient(45deg, #128c7e, #25d366);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
         }
 
         .required-note {
-            font-size: 0.8em;
+            font-size: 0.85em;
             color: var(--light-text-color);
             text-align: right;
             margin-top: -5px;
         }
 
+        /* NOUVEAUTÉS */
+        .promo-pack-label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--primary-color);
+            display: block;
+        }
+        
+        .promo-pack-description {
+            font-size: 0.85rem;
+            color: var(--light-text-color);
+            margin-left: 28px;
+            margin-top: 4px;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+            }
             .form-container {
                 padding: 15px;
-                margin: 15px;
+                margin: 15px 5px;
             }
 
             h1 {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
             }
 
             h3 {
-                font-size: 1.1rem;
+                font-size: 1.2rem;
+            }
+            .btn {
+                font-size: 1rem;
             }
         }
     </style>
@@ -252,13 +334,13 @@
             <fieldset>
                 <h3>Détails des Morceaux (si EP / Album)</h3>
                 <div class="input-group">
-                    <textarea id="details_morceaux" name="details_morceaux" rows="4" placeholder="Liste des titres + durée de chaque morceau"></textarea>
+                    <textarea id="details_morceaux" name="details_morceaux" rows="5" placeholder="Liste des titres + durée de chaque morceau..."></textarea>
                 </div>
             </fieldset>
 
             <fieldset>
                 <h3>Éléments à Fournir</h3>
-                <p>Veuillez cocher les éléments que vous êtes en mesure de fournir.</p>
+                <p style="color: var(--light-text-color); margin-bottom: 15px;">Veuillez cocher les éléments que vous êtes en mesure de fournir.</p>
                 <div class="checkbox-group">
                     <label for="fichier_audio"><input type="checkbox" id="fichier_audio" name="fichiers[]" value="Fichier audio"> Fichier audio en haute qualité (WAV ou MP3 320kbps)</label>
                     <label for="pochette"><input type="checkbox" id="pochette" name="fichiers[]" value="Pochette officielle"> Pochette officielle (3000x3000 px minimum)</label>
@@ -271,10 +353,34 @@
             <fieldset>
                 <h3>Choix du Pack Promotionnel (optionnel & payant)</h3>
                 <div class="radio-group">
-                    <label for="pack_starter"><input type="radio" id="pack_starter" name="pack_promo" value="Pack Starter"> Pack Starter – 50$ : Publication sur réseaux sociaux + diffusion basique.</label>
-                    <label for="pack_standard"><input type="radio" id="pack_standard" name="pack_promo" value="Pack Standard"> Pack Standard – 90$ : Promo réseaux sociaux + presse locale + boost visuel.</label>
-                    <label for="pack_pro"><input type="radio" id="pack_pro" name="pack_promo" value="Pack Pro"> Pack Pro – 150$ : Promo réseaux + presse nationale + playlisting digital.</label>
-                    <label for="pack_premium"><input type="radio" id="pack_premium" name="pack_promo" value="Pack Premium"> Pack Premium – 350$ : Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</label>
+                    <label for="pack_starter">
+                        <input type="radio" id="pack_starter" name="pack_promo" value="Pack Starter"> 
+                        <div>
+                            <span class="promo-pack-label">Pack Starter – 50$</span>
+                            <p class="promo-pack-description">Publication sur réseaux sociaux + diffusion basique.</p>
+                        </div>
+                    </label>
+                    <label for="pack_standard">
+                        <input type="radio" id="pack_standard" name="pack_promo" value="Pack Standard"> 
+                        <div>
+                            <span class="promo-pack-label">Pack Standard – 90$</span>
+                            <p class="promo-pack-description">Promo réseaux sociaux + presse locale + boost visuel.</p>
+                        </div>
+                    </label>
+                    <label for="pack_pro">
+                        <input type="radio" id="pack_pro" name="pack_promo" value="Pack Pro"> 
+                        <div>
+                            <span class="promo-pack-label">Pack Pro – 150$</span>
+                            <p class="promo-pack-description">Promo réseaux + presse nationale + playlisting digital.</p>
+                        </div>
+                    </label>
+                    <label for="pack_premium">
+                        <input type="radio" id="pack_premium" name="pack_promo" value="Pack Premium"> 
+                        <div>
+                            <span class="promo-pack-label">Pack Premium – 350$</span>
+                            <p class="promo-pack-description">Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</p>
+                        </div>
+                    </label>
                 </div>
             </fieldset>
 
