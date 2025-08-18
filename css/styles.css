@@ -111,9 +111,9 @@ img {
 
 /* Navbar */
 .navbar {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+  display: flex;
+    justify-content: center; /* Centre horizontalement les éléments */
+    align-items: center;     /* Centre verticalement les éléments (si nécessaire) */
     padding: 15px 0;
     position: absolute;
     top: 0;
@@ -124,7 +124,7 @@ img {
 }
 
 .navbar .logo {
-    height: clamp(60px, 15vw, 111px);
+    height: clamp(50px, 15vw, 111px);
     width: auto;
 }
 
