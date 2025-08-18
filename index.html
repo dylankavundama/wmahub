@@ -20,21 +20,81 @@
         </div>
     </div>
 
-    <header class="hero" role="banner">
-        <div class="hero-overlay"></div>
-        <div class="container">
-            <nav class="navbar" aria-label="Navigation principale">
-                <a href="#accueil" class="logo-link" aria-label="Retour à l'accueil">
-                    <img src="asset/trans.png" alt="WMA Logo" class="logo">
-                </a>
-            </nav>
-            <div class="hero-content">
-                <h3 class="hero-title" style="color: #fff;">VENDEZ VOTRE MUSIQUE DANS LE MONDE ENTIER</h3>
-                <p>La meilleure solution de distribution pour les artistes et les labels</p>
-                <a href="#" class="btn btn-primary" id="distributeBtn">Distribuer</a>
-            </div>
+ <header class="hero" role="banner">
+    <div class="hero-overlay"></div>
+
+    <!-- Slider -->
+    <div class="slider">
+        <div class="slides">
+            <img src="asset/artiste/DOC-20250816-WA0143_" alt="Slide 1">
+            <img src="asset/artiste/41163.png" alt="Slide 2">
+            <img src="asset/image3.jpg" alt="Slide 3">
+            <img src="asset/image4.jpg" alt="Slide 4">
+            <img src="asset/image5.jpg" alt="Slide 5">
         </div>
-    </header>
+    </div>
+
+    <div class="container">
+        <nav class="navbar" aria-label="Navigation principale">
+            <a href="#accueil" class="logo-link" aria-label="Retour à l'accueil">
+                <img src="asset/trans.png" alt="WMA Logo" class="logo">
+            </a>
+        </nav>
+        <div class="hero-content">
+            <h3 class="hero-title" style="color: #fff;">VENDEZ VOTRE MUSIQUE DANS LE MONDE ENTIER</h3>
+            <p>La meilleure solution de distribution pour les artistes et les labels</p>
+            <a href="#" class="btn btn-primary" id="distributeBtn">Distribuer</a>
+        </div>
+    </div>
+</header>
+
+<style>
+/* Slider styles */
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0; /* derrière le contenu */
+}
+
+.slides img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.slides img.active {
+    opacity: 1;
+}
+</style>
+
+<script>
+// Slider JS
+let currentIndex = 0;
+const slides = document.querySelectorAll('.slides img');
+
+function showSlide(index) {
+    slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+    });
+}
+
+function nextSlide() {
+    currentIndex = (currentIndex + 1) % slides.length;
+    showSlide(currentIndex);
+}
+
+// Démarrer le slider
+showSlide(currentIndex);
+setInterval(nextSlide, 4000); // change toutes les 4 secondes
+</script>
+
 
     <main id="main-content">
         <section class="about-us" id="qui-sommes-nous">
