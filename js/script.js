@@ -4,10 +4,15 @@ function fixVH() {
     document.documentElement.style.setProperty('--vh', `${vh}px`);
 }
 
-// Gestion de la boîte de dialogue WhatsApp
 function openDialog() {
-    document.getElementById("whatsappDialog").style.display = "flex";
-    document.body.style.overflow = "hidden";
+    // URL de la nouvelle page vers laquelle vous souhaitez naviguer
+    const nouvellePageURL = 'projet.php'; 
+
+    // Ouvre la nouvelle page dans le même onglet
+    window.location.href = nouvellePageURL;
+
+    // Si vous souhaitez ouvrir dans un nouvel onglet, utilisez la ligne ci-dessous :
+    // window.open(nouvellePageURL, '_blank');
 }
 
 function closeDialog() {

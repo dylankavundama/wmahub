@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire de Soumission de Projet - WMA Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b5998;
+            --secondary-color: #6a82fb;
+            --background-color: #f4f7f9;
+            --text-color: #333;
+            --light-text-color: #777;
+            --border-color: #ddd;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 10px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .form-container {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            max-width: 700px; /* Réduction de la largeur maximale */
+            margin: 20px auto; /* Réduction de l'espacement */
+            box-shadow: 0 8px 20px var(--shadow-color); /* Ombre plus subtile */
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem; /* Taille de police réduite */
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            font-size: 1rem; /* Taille de police réduite */
+            color: var(--light-text-color);
+            font-weight: 400;
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 1.2rem; /* Taille de police réduite */
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 8px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            margin-top: 15px; /* Réduction de l'espacement */
+            font-size: 0.95rem;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px; /* Réduction du padding */
+            border-radius: 6px; /* Bords légèrement moins arrondis */
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-size: 0.95rem; /* Taille de police plus petite */
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 6px rgba(106, 130, 251, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 15px; /* Réduction de l'espacement */
+        }
+
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Espacement réduit */
+            margin-top: 10px;
+        }
+
+        .radio-group label,
+        .checkbox-group label {
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-top: 0;
+            font-size: 0.95rem; /* Taille de police réduite */
+        }
+
+        .radio-group input,
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px; /* Bouton plus petit */
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem; /* Taille de police réduite */
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 25px;
+        }
+
+        .btn-submit {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .btn-submit:hover {
+            background-color: #2e4a86;
+            transform: translateY(-1px);
+        }
+
+        .required-note {
+            font-size: 0.8em;
+            color: var(--light-text-color);
+            text-align: right;
+            margin-top: -5px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+                margin: 15px;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+
+            h3 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <header>
+            <h1>Formulaire de Soumission de Projet</h1>
+            <h2>WMA Hub</h2>
+        </header>
+
+        <form action="#" method="POST">
+            <p class="required-note">Les champs marqués d'un * sont obligatoires.</p>
+
+            <fieldset>
+                <h3>Informations Personnelles de l'Artiste</h3>
+                <div class="input-group">
+                    <label for="nom_complet">Nom et prénom : *</label>
+                    <input type="text" id="nom_complet" name="nom_complet" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="nom_artiste">Nom d'artiste :</label>
+                    <input type="text" id="nom_artiste" name="nom_artiste">
+                </div>
+
+                <div class="input-group">
+                    <label for="email">Adresse e-mail : *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="telephone">Numéro de téléphone (WhatsApp) :</label>
+                    <input type="tel" id="telephone" name="telephone">
+                </div>
+
+                <div class="input-group">
+                    <label for="ville">Ville / Pays : *</label>
+                    <input type="text" id="ville" name="ville" required>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h3>Informations sur le Projet Musical</h3>
+                <div class="input-group">
+                    <label for="titre_projet">Titre du projet (Single / EP / Album) : *</label>
+                    <input type="text" id="titre_projet" name="titre_projet" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Type de projet : *</label>
+                    <div class="radio-group">
+                        <label for="type_single"><input type="radio" id="type_single" name="type_projet" value="single" required> Single</label>
+                        <label for="type_ep"><input type="radio" id="type_ep" name="type_projet" value="ep"> EP</label>
+                        <label for="type_album"><input type="radio" id="type_album" name="type_projet" value="album"> Album</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="genre">Genre musical : *</label>
+                    <input type="text" id="genre" name="genre" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="langues">Langue(s) utilisée(s) :</label>
+                    <input type="text" id="langues" name="langues">
+                </div>
+
+                <div class="input-group">
+                    <label for="date_sortie">Date prévue de sortie : *</label>
+                    <input type="date" id="date_sortie" name="date_sortie" required>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h3>Détails des Morceaux (si EP / Album)</h3>
+                <div class="input-group">
+                    <textarea id="details_morceaux" name="details_morceaux" rows="4" placeholder="Liste des titres + durée de chaque morceau"></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h3>Éléments à Fournir</h3>
+                <p>Veuillez cocher les éléments que vous êtes en mesure de fournir.</p>
+                <div class="checkbox-group">
+                    <label for="fichier_audio"><input type="checkbox" id="fichier_audio" name="fichiers[]" value="audio"> Fichier audio en haute qualité (WAV ou MP3 320kbps)</label>
+                    <label for="pochette"><input type="checkbox" id="pochette" name="fichiers[]" value="pochette"> Pochette officielle (3000x3000 px minimum)</label>
+                    <label for="paroles"><input type="checkbox" id="paroles" name="fichiers[]" value="paroles"> Paroles de la chanson</label>
+                    <label for="credits"><input type="checkbox" id="credits" name="fichiers[]" value="credits"> Crédit(s) de production (beatmaker, studio, etc.)</label>
+                    <label for="visuels"><input type="checkbox" id="visuels" name="fichiers[]" value="visuels"> Autres visuels ou matériel promotionnel</label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h3>Choix du Pack Promotionnel (optionnel & payant)</h3>
+                <div class="radio-group">
+                    <label for="pack_starter"><input type="radio" id="pack_starter" name="pack_promo" value="starter"> Pack Starter – 50$ : Publication sur réseaux sociaux + diffusion basique.</label>
+                    <label for="pack_standard"><input type="radio" id="pack_standard" name="pack_promo" value="standard"> Pack Standard – 90$ : Promo réseaux sociaux + presse locale + boost visuel.</label>
+                    <label for="pack_pro"><input type="radio" id="pack_pro" name="pack_promo" value="pro"> Pack Pro – 150$ : Promo réseaux + presse nationale + playlisting digital.</label>
+                    <label for="pack_premium"><input type="radio" id="pack_premium" name="pack_promo" value="premium"> Pack Premium – 350$ : Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h3>Conditions & Autorisation</h3>
+                <div class="input-group">
+                    <label for="autorisation">J'autorise WMA Hub à distribuer mon projet sur les plateformes digitales : *</label>
+                    <div class="radio-group">
+                        <label for="autorisation_oui"><input type="radio" id="autorisation_oui" name="autorisation" value="oui" required> Oui</label>
+                        <label for="autorisation_non"><input type="radio" id="autorisation_non" name="autorisation" value="non"> Non</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="date_signature">Date : *</label>
+                    <input type="date" id="date_signature" name="date" required>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="btn btn-submit">Soumettre le projet</button>
+        </form>
+    </div>
+</body>
+</html>
