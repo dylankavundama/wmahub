@@ -12,9 +12,9 @@
     <style>
         /* Couleurs du site WMA Hub */
         :root {
-            --primary-color: #ff6600; /* Orange vif de WMA */
-            --secondary-color: #000; /* Noir */
-            --background-color: #2c3e50; /* Bleu foncé de la page d'accueil */
+            --primary-color: #ff6600;
+            --secondary-color: #000;
+            --background-color: #2c3e50;
             --text-color: #f4f7f9;
             --light-text-color: #aaa;
             --border-color: #555;
@@ -57,7 +57,7 @@
             font-weight: 400;
             margin-top: 0;
         }
-        
+
         h3 {
             font-size: 1.2rem;
             color: var(--primary-color);
@@ -66,7 +66,7 @@
             margin-top: 30px;
             margin-bottom: 15px;
         }
-        
+
         label {
             display: block;
             font-weight: 600;
@@ -75,7 +75,7 @@
             font-size: 0.95rem;
             color: #fff;
         }
-        
+
         input,
         textarea,
         select {
@@ -97,7 +97,7 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 6px rgba(255, 102, 0, 0.3);
         }
-        
+
         .input-group {
             margin-bottom: 15px;
         }
@@ -109,7 +109,7 @@
             gap: 8px;
             margin-top: 10px;
         }
-        
+
         .radio-group label,
         .checkbox-group label {
             font-weight: 400;
@@ -140,7 +140,8 @@
         }
 
         .btn-whatsapp {
-            background-color: #25d366; /* Vert WhatsApp */
+            background-color: #25d366;
+            /* Vert WhatsApp */
             color: #fff;
             display: flex;
             align-items: center;
@@ -152,14 +153,14 @@
             background-color: #128c7e;
             transform: translateY(-1px);
         }
-        
+
         .required-note {
             font-size: 0.8em;
             color: var(--light-text-color);
             text-align: right;
             margin-top: -5px;
         }
-        
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .form-container {
@@ -259,28 +260,28 @@
                 <h3>Éléments à Fournir</h3>
                 <p>Veuillez cocher les éléments que vous êtes en mesure de fournir.</p>
                 <div class="checkbox-group">
-                    <label for="fichier_audio"><input type="checkbox" id="fichier_audio" name="fichiers[]" value="audio"> Fichier audio en haute qualité (WAV ou MP3 320kbps)</label>
-                    <label for="pochette"><input type="checkbox" id="pochette" name="fichiers[]" value="pochette"> Pochette officielle (3000x3000 px minimum)</label>
-                    <label for="paroles"><input type="checkbox" id="paroles" name="fichiers[]" value="paroles"> Paroles de la chanson</label>
-                    <label for="credits"><input type="checkbox" id="credits" name="fichiers[]" value="credits"> Crédit(s) de production (beatmaker, studio, etc.)</label>
-                    <label for="visuels"><input type="checkbox" id="visuels" name="fichiers[]" value="visuels"> Autres visuels ou matériel promotionnel</label>
+                    <label for="fichier_audio"><input type="checkbox" id="fichier_audio" name="fichiers[]" value="Fichier audio"> Fichier audio en haute qualité (WAV ou MP3 320kbps)</label>
+                    <label for="pochette"><input type="checkbox" id="pochette" name="fichiers[]" value="Pochette officielle"> Pochette officielle (3000x3000 px minimum)</label>
+                    <label for="paroles"><input type="checkbox" id="paroles" name="fichiers[]" value="Paroles"> Paroles de la chanson</label>
+                    <label for="credits"><input type="checkbox" id="credits" name="fichiers[]" value="Crédits de production"> Crédit(s) de production (beatmaker, studio, etc.)</label>
+                    <label for="visuels"><input type="checkbox" id="visuels" name="fichiers[]" value="Visuels"> Autres visuels ou matériel promotionnel</label>
                 </div>
             </fieldset>
 
             <fieldset>
                 <h3>Choix du Pack Promotionnel (optionnel & payant)</h3>
                 <div class="radio-group">
-                    <label for="pack_starter"><input type="radio" id="pack_starter" name="pack_promo" value="Pack Starter – 50$"> Pack Starter – 50$ : Publication sur réseaux sociaux + diffusion basique.</label>
-                    <label for="pack_standard"><input type="radio" id="pack_standard" name="pack_promo" value="Pack Standard – 90$"> Pack Standard – 90$ : Promo réseaux sociaux + presse locale + boost visuel.</label>
-                    <label for="pack_pro"><input type="radio" id="pack_pro" name="pack_promo" value="Pack Pro – 150$"> Pack Pro – 150$ : Promo réseaux + presse nationale + playlisting digital.</label>
-                    <label for="pack_premium"><input type="radio" id="pack_premium" name="pack_promo" value="Pack Premium – 350$"> Pack Premium – 350$ : Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</label>
+                    <label for="pack_starter"><input type="radio" id="pack_starter" name="pack_promo" value="Pack Starter"> Pack Starter – 50$ : Publication sur réseaux sociaux + diffusion basique.</label>
+                    <label for="pack_standard"><input type="radio" id="pack_standard" name="pack_promo" value="Pack Standard"> Pack Standard – 90$ : Promo réseaux sociaux + presse locale + boost visuel.</label>
+                    <label for="pack_pro"><input type="radio" id="pack_pro" name="pack_promo" value="Pack Pro"> Pack Pro – 150$ : Promo réseaux + presse nationale + playlisting digital.</label>
+                    <label for="pack_premium"><input type="radio" id="pack_premium" name="pack_promo" value="Pack Premium"> Pack Premium – 350$ : Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</label>
                 </div>
             </fieldset>
 
             <fieldset>
                 <h3>Conditions & Autorisation</h3>
                 <div class="input-group">
-                    <label for="autorisation_oui">J'autorise WMA Hub à distribuer mon projet sur les plateformes digitales : *</label>
+                    <label>J'autorise WMA Hub à distribuer mon projet sur les plateformes digitales : *</label>
                     <div class="radio-group">
                         <label for="autorisation_oui"><input type="radio" id="autorisation_oui" name="autorisation" value="Oui" required> Oui</label>
                         <label for="autorisation_non"><input type="radio" id="autorisation_non" name="autorisation" value="Non"> Non</label>
@@ -299,57 +300,51 @@
 
     <script>
         const form = document.getElementById('submissionForm');
+        // REMPLACEZ '256743297668' PAR VOTRE NUMÉRO WHATSAPP BUSINESS AVEC LE CODE PAYS
         const whatsappNumber = '256743297668';
 
         form.addEventListener('submit', function(event) {
-            event.preventDefault(); // Empêche l'envoi classique du formulaire
+            event.preventDefault();
 
-            // Récupère toutes les données du formulaire
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
-            // Gère les checkboxes et les radios
-            const fichiers = formData.getAll('fichiers[]');
-            const packPromo = formData.get('pack_promo');
-            const autorisation = formData.get('autorisation');
-            const typeProjet = formData.get('type_projet');
+            // Récupérer les valeurs des champs cochés et les formater
+            const fichiers = formData.getAll('fichiers[]').length > 0 ? formData.getAll('fichiers[]').join(', ') : 'Aucun';
+            const packPromo = data.pack_promo || 'Aucun';
+            const autorisation = data.autorisation || 'Non spécifié';
+            const typeProjet = data.type_projet || 'Non spécifié';
 
-            // Vérification simple des champs obligatoires
             if (!data.nom_complet || !data.email || !data.telephone || !data.ville || !data.titre_projet || !data.date_sortie || !typeProjet || !autorisation) {
                 alert("Veuillez remplir tous les champs obligatoires marqués d'un *.");
                 return;
             }
 
-            // Crée le message WhatsApp
-            let message = `Bonjour WMAHUB, voici les détails pour la soumission d'un nouveau projet :\n\n`;
-            message += `*--- Informations Personnelles ---*\n`;
-            message += `*Nom & Prénom:* ${data.nom_complet}\n`;
-            message += `*Nom d'artiste:* ${data.nom_artiste || 'Non spécifié'}\n`;
-            message += `*Email:* ${data.email}\n`;
-            message += `*Téléphone:* ${data.telephone}\n`;
-            message += `*Ville / Pays:* ${data.ville}\n\n`;
+            // Création du message structuré pour WhatsApp Business
+            const message = `*Nouvelle soumission de projet - WMA Hub*\n\n` +
+                `*--- Informations Personnelles ---*\n` +
+                `*Nom & Prénom:* ${data.nom_complet}\n` +
+                `*Nom d'artiste:* ${data.nom_artiste || 'Non spécifié'}\n` +
+                `*Email:* ${data.email}\n` +
+                `*Téléphone:* ${data.telephone}\n` +
+                `*Ville / Pays:* ${data.ville}\n\n` +
+                `*--- Informations sur le Projet ---*\n` +
+                `*Titre du projet:* ${data.titre_projet}\n` +
+                `*Type de projet:* ${typeProjet}\n` +
+                `*Genre musical:* ${data.genre || 'Non spécifié'}\n` +
+                `*Langue(s):* ${data.langues || 'Non spécifié'}\n` +
+                `*Date de sortie:* ${data.date_sortie}\n\n` +
+                `*--- Détails et Conditions ---*\n` +
+                `*Détails des morceaux:* ${data.details_morceaux || 'Non spécifié'}\n` +
+                `*Éléments fournis:* ${fichiers}\n` +
+                `*Pack Promotionnel:* ${packPromo}\n` +
+                `*Autorisation de distribution:* ${autorisation}\n` +
+                `*Date de soumission:* ${data.date || 'Non spécifié'}\n\n` +
+                `---`;
 
-            message += `*--- Informations sur le Projet Musical ---*\n`;
-            message += `*Titre du projet:* ${data.titre_projet}\n`;
-            message += `*Type de projet:* ${typeProjet}\n`;
-            message += `*Genre musical:* ${data.genre}\n`;
-            message += `*Langue(s) utilisée(s):* ${data.langues || 'Non spécifié'}\n`;
-            message += `*Date de sortie:* ${data.date_sortie}\n\n`;
-
-            message += `*--- Détails & Conditions ---*\n`;
-            message += `*Détails des morceaux:* ${data.details_morceaux || 'Non spécifié'}\n`;
-            message += `*Éléments fournis:* ${fichiers.length > 0 ? fichiers.join(', ') : 'Aucun'}\n`;
-            message += `*Pack Promotionnel:* ${packPromo || 'Aucun'}\n`;
-            message += `*Autorisation de distribution:* ${autorisation}\n`;
-            message += `*Date de la soumission:* ${data.date}\n\n`;
-            
-            message += `Cordialement,\n${data.nom_complet}`;
-
-            // Encode le message pour l'URL
             const encodedMessage = encodeURIComponent(message);
             const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 
-            // Ouvre WhatsApp dans un nouvel onglet
             window.open(url, '_blank');
         });
     </script>
