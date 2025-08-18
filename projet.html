@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,15 +8,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* Couleurs du site WMA Hub */
         :root {
-            --primary-color: #3b5998;
-            --secondary-color: #6a82fb;
-            --background-color: #f4f7f9;
-            --text-color: #333;
-            --light-text-color: #777;
-            --border-color: #ddd;
-            --shadow-color: rgba(0, 0, 0, 0.1);
+            --primary-color: #ff6600; /* Orange vif de WMA */
+            --secondary-color: #000; /* Noir */
+            --background-color: #2c3e50; /* Bleu foncé de la page d'accueil */
+            --text-color: #f4f7f9;
+            --light-text-color: #aaa;
+            --border-color: #555;
+            --shadow-color: rgba(0, 0, 0, 0.3);
         }
 
         body {
@@ -28,12 +31,12 @@
         }
 
         .form-container {
-            background: #fff;
+            background: var(--secondary-color);
             padding: 20px 30px;
             border-radius: 10px;
-            max-width: 700px; /* Réduction de la largeur maximale */
-            margin: 20px auto; /* Réduction de l'espacement */
-            box-shadow: 0 8px 20px var(--shadow-color); /* Ombre plus subtile */
+            max-width: 700px;
+            margin: 20px auto;
+            box-shadow: 0 8px 20px var(--shadow-color);
         }
 
         header {
@@ -42,68 +45,71 @@
         }
 
         h1 {
-            font-size: 1.8rem; /* Taille de police réduite */
+            font-size: 1.8rem;
             color: var(--primary-color);
             font-weight: 700;
             margin-bottom: 5px;
         }
 
         h2 {
-            font-size: 1rem; /* Taille de police réduite */
+            font-size: 1rem;
             color: var(--light-text-color);
             font-weight: 400;
             margin-top: 0;
         }
-
+        
         h3 {
-            font-size: 1.2rem; /* Taille de police réduite */
+            font-size: 1.2rem;
             color: var(--primary-color);
-            border-bottom: 2px solid var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
             padding-bottom: 8px;
             margin-top: 30px;
             margin-bottom: 15px;
         }
-
+        
         label {
             display: block;
             font-weight: 600;
             margin-bottom: 5px;
-            margin-top: 15px; /* Réduction de l'espacement */
+            margin-top: 15px;
             font-size: 0.95rem;
+            color: #fff;
         }
-
+        
         input,
         textarea,
         select {
             width: 100%;
-            padding: 10px 12px; /* Réduction du padding */
-            border-radius: 6px; /* Bords légèrement moins arrondis */
+            padding: 10px 12px;
+            border-radius: 6px;
             border: 1px solid var(--border-color);
+            background-color: #333;
+            color: #fff;
             box-sizing: border-box;
             transition: border-color 0.3s, box-shadow 0.3s;
-            font-size: 0.95rem; /* Taille de police plus petite */
+            font-size: 0.95rem;
         }
 
         input:focus,
         textarea:focus,
         select:focus {
             outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 6px rgba(106, 130, 251, 0.3);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 6px rgba(255, 102, 0, 0.3);
         }
-
+        
         .input-group {
-            margin-bottom: 15px; /* Réduction de l'espacement */
+            margin-bottom: 15px;
         }
 
         .radio-group,
         .checkbox-group {
             display: flex;
             flex-direction: column;
-            gap: 8px; /* Espacement réduit */
+            gap: 8px;
             margin-top: 10px;
         }
-
+        
         .radio-group label,
         .checkbox-group label {
             font-weight: 400;
@@ -111,7 +117,7 @@
             align-items: center;
             cursor: pointer;
             margin-top: 0;
-            font-size: 0.95rem; /* Taille de police réduite */
+            font-size: 0.95rem;
         }
 
         .radio-group input,
@@ -123,33 +129,37 @@
 
         .btn {
             width: 100%;
-            padding: 12px; /* Bouton plus petit */
+            padding: 12px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 1rem; /* Taille de police réduite */
+            font-size: 1rem;
             font-weight: 600;
             transition: background-color 0.3s, transform 0.2s;
             margin-top: 25px;
         }
 
-        .btn-submit {
-            background-color: var(--primary-color);
+        .btn-whatsapp {
+            background-color: #25d366; /* Vert WhatsApp */
             color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .btn-submit:hover {
-            background-color: #2e4a86;
+        .btn-whatsapp:hover {
+            background-color: #128c7e;
             transform: translateY(-1px);
         }
-
+        
         .required-note {
             font-size: 0.8em;
             color: var(--light-text-color);
             text-align: right;
             margin-top: -5px;
         }
-
+        
         /* Responsive Design */
         @media (max-width: 768px) {
             .form-container {
@@ -167,6 +177,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="form-container">
         <header>
@@ -174,7 +185,7 @@
             <h2>WMA Hub</h2>
         </header>
 
-        <form action="#" method="POST">
+        <form id="submissionForm">
             <p class="required-note">Les champs marqués d'un * sont obligatoires.</p>
 
             <fieldset>
@@ -195,8 +206,8 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="telephone">Numéro de téléphone (WhatsApp) :</label>
-                    <input type="tel" id="telephone" name="telephone">
+                    <label for="telephone">Numéro de téléphone (WhatsApp) : *</label>
+                    <input type="tel" id="telephone" name="telephone" required>
                 </div>
 
                 <div class="input-group">
@@ -215,9 +226,9 @@
                 <div class="input-group">
                     <label>Type de projet : *</label>
                     <div class="radio-group">
-                        <label for="type_single"><input type="radio" id="type_single" name="type_projet" value="single" required> Single</label>
-                        <label for="type_ep"><input type="radio" id="type_ep" name="type_projet" value="ep"> EP</label>
-                        <label for="type_album"><input type="radio" id="type_album" name="type_projet" value="album"> Album</label>
+                        <label for="type_single"><input type="radio" id="type_single" name="type_projet" value="Single" required> Single</label>
+                        <label for="type_ep"><input type="radio" id="type_ep" name="type_projet" value="EP"> EP</label>
+                        <label for="type_album"><input type="radio" id="type_album" name="type_projet" value="Album"> Album</label>
                     </div>
                 </div>
 
@@ -259,20 +270,20 @@
             <fieldset>
                 <h3>Choix du Pack Promotionnel (optionnel & payant)</h3>
                 <div class="radio-group">
-                    <label for="pack_starter"><input type="radio" id="pack_starter" name="pack_promo" value="starter"> Pack Starter – 50$ : Publication sur réseaux sociaux + diffusion basique.</label>
-                    <label for="pack_standard"><input type="radio" id="pack_standard" name="pack_promo" value="standard"> Pack Standard – 90$ : Promo réseaux sociaux + presse locale + boost visuel.</label>
-                    <label for="pack_pro"><input type="radio" id="pack_pro" name="pack_promo" value="pro"> Pack Pro – 150$ : Promo réseaux + presse nationale + playlisting digital.</label>
-                    <label for="pack_premium"><input type="radio" id="pack_premium" name="pack_promo" value="premium"> Pack Premium – 350$ : Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</label>
+                    <label for="pack_starter"><input type="radio" id="pack_starter" name="pack_promo" value="Pack Starter – 50$"> Pack Starter – 50$ : Publication sur réseaux sociaux + diffusion basique.</label>
+                    <label for="pack_standard"><input type="radio" id="pack_standard" name="pack_promo" value="Pack Standard – 90$"> Pack Standard – 90$ : Promo réseaux sociaux + presse locale + boost visuel.</label>
+                    <label for="pack_pro"><input type="radio" id="pack_pro" name="pack_promo" value="Pack Pro – 150$"> Pack Pro – 150$ : Promo réseaux + presse nationale + playlisting digital.</label>
+                    <label for="pack_premium"><input type="radio" id="pack_premium" name="pack_promo" value="Pack Premium – 350$"> Pack Premium – 350$ : Accompagnement complet (6 mois : promotion, communication, instruction & suivi personnalisé).</label>
                 </div>
             </fieldset>
 
             <fieldset>
                 <h3>Conditions & Autorisation</h3>
                 <div class="input-group">
-                    <label for="autorisation">J'autorise WMA Hub à distribuer mon projet sur les plateformes digitales : *</label>
+                    <label for="autorisation_oui">J'autorise WMA Hub à distribuer mon projet sur les plateformes digitales : *</label>
                     <div class="radio-group">
-                        <label for="autorisation_oui"><input type="radio" id="autorisation_oui" name="autorisation" value="oui" required> Oui</label>
-                        <label for="autorisation_non"><input type="radio" id="autorisation_non" name="autorisation" value="non"> Non</label>
+                        <label for="autorisation_oui"><input type="radio" id="autorisation_oui" name="autorisation" value="Oui" required> Oui</label>
+                        <label for="autorisation_non"><input type="radio" id="autorisation_non" name="autorisation" value="Non"> Non</label>
                     </div>
                 </div>
 
@@ -282,8 +293,66 @@
                 </div>
             </fieldset>
 
-            <button type="submit" class="btn btn-submit">Soumettre le projet</button>
+            <button type="submit" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Envoyer le projet sur WhatsApp</button>
         </form>
     </div>
+
+    <script>
+        const form = document.getElementById('submissionForm');
+        const whatsappNumber = '256743297668';
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Empêche l'envoi classique du formulaire
+
+            // Récupère toutes les données du formulaire
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Gère les checkboxes et les radios
+            const fichiers = formData.getAll('fichiers[]');
+            const packPromo = formData.get('pack_promo');
+            const autorisation = formData.get('autorisation');
+            const typeProjet = formData.get('type_projet');
+
+            // Vérification simple des champs obligatoires
+            if (!data.nom_complet || !data.email || !data.telephone || !data.ville || !data.titre_projet || !data.date_sortie || !typeProjet || !autorisation) {
+                alert("Veuillez remplir tous les champs obligatoires marqués d'un *.");
+                return;
+            }
+
+            // Crée le message WhatsApp
+            let message = `Bonjour WMAHUB, voici les détails pour la soumission d'un nouveau projet :\n\n`;
+            message += `*--- Informations Personnelles ---*\n`;
+            message += `*Nom & Prénom:* ${data.nom_complet}\n`;
+            message += `*Nom d'artiste:* ${data.nom_artiste || 'Non spécifié'}\n`;
+            message += `*Email:* ${data.email}\n`;
+            message += `*Téléphone:* ${data.telephone}\n`;
+            message += `*Ville / Pays:* ${data.ville}\n\n`;
+
+            message += `*--- Informations sur le Projet Musical ---*\n`;
+            message += `*Titre du projet:* ${data.titre_projet}\n`;
+            message += `*Type de projet:* ${typeProjet}\n`;
+            message += `*Genre musical:* ${data.genre}\n`;
+            message += `*Langue(s) utilisée(s):* ${data.langues || 'Non spécifié'}\n`;
+            message += `*Date de sortie:* ${data.date_sortie}\n\n`;
+
+            message += `*--- Détails & Conditions ---*\n`;
+            message += `*Détails des morceaux:* ${data.details_morceaux || 'Non spécifié'}\n`;
+            message += `*Éléments fournis:* ${fichiers.length > 0 ? fichiers.join(', ') : 'Aucun'}\n`;
+            message += `*Pack Promotionnel:* ${packPromo || 'Aucun'}\n`;
+            message += `*Autorisation de distribution:* ${autorisation}\n`;
+            message += `*Date de la soumission:* ${data.date}\n\n`;
+            
+            message += `Cordialement,\n${data.nom_complet}`;
+
+            // Encode le message pour l'URL
+            const encodedMessage = encodeURIComponent(message);
+            const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+            // Ouvre WhatsApp dans un nouvel onglet
+            window.open(url, '_blank');
+        });
+    </script>
 </body>
+
 </html>
