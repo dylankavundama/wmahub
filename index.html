@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
- 
+
 </head>
 
 <body>
@@ -20,88 +20,91 @@
         </div>
     </div>
 
- <header class="hero" role="banner">
-    <div class="hero-overlay"></div>
+    <header class="hero" role="banner">
+        <div class="hero-overlay"></div>
 
-    <!-- Slider -->
-    <div class="slider">
-        <div class="slides">
-            <img src="asset/artiste/DOC-20250816-WA0143_" alt="Slide 1">
-            <img src="asset/artiste/41163.png" alt="Slide 2">
-            <img src="asset/artiste/rr.png" alt="Slide 3">
-            <img src="asset/image4.jpg" alt="Slide 4">
-            <img src="asset/image5.jpg" alt="Slide 5">
+        <!-- Slider -->
+        <div class="slider">
+            <div class="slides">
+                <img src="asset/artiste/DOC-20250816-WA0143_" alt="Slide 1">
+                <img src="asset/artiste/41163.png" alt="Slide 2">
+                <img src="asset/artiste/rr.png" alt="Slide 3">
+                <img src="asset/image4.jpg" alt="Slide 4">
+                <img src="asset/image5.jpg" alt="Slide 5">
+            </div>
         </div>
-    </div>
 
-    <div class="container">
-        <nav class="navbar" aria-label="Navigation principale">
-            <a href="#accueil" class="logo-link" aria-label="Retour à l'accueil">
-                <img src="asset/trans.png" alt="WMA Logo" class="logo">
-            </a>
-        </nav>
-        <div class="hero-content">
-            <h3 class="hero-title" style="color: #fff;">VENDEZ VOTRE MUSIQUE DANS LE MONDE ENTIER</h3>
-            <p>La meilleure solution de distribution pour les artistes et les labels</p>
-            <a href="#" class="btn btn-primary" id="distributeBtn">Distribuer</a>
+        <div class="container">
+            <nav class="navbar" aria-label="Navigation principale">
+                <a href="#accueil" class="logo-link" aria-label="Retour à l'accueil">
+                    <img src="asset/trans.png" alt="WMA Logo" class="logo">
+                </a>
+            </nav>
+            <div class="hero-content">
+                <h3 class="hero-title" style="color: #fff;">VENDEZ VOTRE MUSIQUE DANS LE MONDE ENTIER</h3>
+                <p>La meilleure solution de distribution pour les artistes et les labels</p>
+                <a href="#" class="btn btn-primary" id="distributeBtn">Distribuer</a>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<style>
-/* Slider styles */
-.slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: 0; /* derrière le contenu */
-}
+    <style>
+        /* Slider styles */
+        .slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            /* derrière le contenu */
+        }
 
-.slides img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    position: absolute;
-    opacity: 0;
-    transition: opacity 1s ease-in-out;
-}
+        .slides img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
 
-.slides img.active {
-    opacity: 1;
-}
-</style>
+        .slides img.active {
+            opacity: 1;
+        }
+    </style>
 
-<script>
-// Slider JS
-let currentIndex = 0;
-const slides = document.querySelectorAll('.slides img');
+    <script>
+        // Slider JS
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.slides img');
 
-function showSlide(index) {
-    slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-    });
-}
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+        }
 
-function nextSlide() {
-    currentIndex = (currentIndex + 1) % slides.length;
-    showSlide(currentIndex);
-}
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % slides.length;
+            showSlide(currentIndex);
+        }
 
-// Démarrer le slider
-showSlide(currentIndex);
-setInterval(nextSlide, 4000); // change toutes les 4 secondes
-</script>
+        // Démarrer le slider
+        showSlide(currentIndex);
+        setInterval(nextSlide, 4000); // change toutes les 4 secondes
+    </script>
 
 
     <main id="main-content">
         <section class="about-us" id="qui-sommes-nous">
             <div class="container">
                 <h2 class="section-title">QUI SOMMES NOUS ?</h2>
-                <p>WMA Hub est une plateforme internationale dédiée à la promotion, la gestion et la distribution d'artistes
-                    et de contenus audiovisuels. Nous réunissons une équipe de passionnés qui travaillent en synergie pour
+                <p>WMA Hub est une plateforme internationale dédiée à la promotion, la gestion et la distribution
+                    d'artistes
+                    et de contenus audiovisuels. Nous réunissons une équipe de passionnés qui travaillent en synergie
+                    pour
                     offrir visibilité, accompagnement stratégique et opportunités concrètes aux talents créatifs.</p>
             </div>
         </section>
@@ -109,7 +112,8 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
         <section class="our-team" id="notre-equipe">
             <div class="container">
                 <h2 class="section-title">NOTRE ÉQUIPE</h2>
-                <p>En rejoignant WMA Hub, vous intégrez une communauté internationale de professionnels de la musique et de
+                <p>En rejoignant WMA Hub, vous intégrez une communauté internationale de professionnels de la musique et
+                    de
                     la vidéo. Nous nous appuyons sur ce réseau pour offrir à nos membres une meilleure visibilité et
                     davantage d'opportunités pour développer leur carrière.</p>
                 <img src="asset/off.png" alt="WMA Office - L'équipe de WMA Hub au bureau" class="team-office-img">
@@ -119,8 +123,10 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
         <section class="distribute-intro" id="distribution">
             <div class="container">
                 <h2 class="section-title orange-text">DISTRIBUEZ VOTRE MUSIQUE</h2>
-                <p>Nous distribuons votre musique sur plus de 200 plateformes de streaming, et nous veillons à la meilleure
-                    visibilité de vos titres. Profitez de nos offres sans abonnement et du paiement de vos royalties sous 48
+                <p>Nous distribuons votre musique sur plus de 200 plateformes de streaming, et nous veillons à la
+                    meilleure
+                    visibilité de vos titres. Profitez de nos offres sans abonnement et du paiement de vos royalties
+                    sous 48
                     heures.</p>
             </div>
         </section>
@@ -129,7 +135,8 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
             <div class="container">
                 <div class="platform-logos">
                     <img src="asset/logo/spoti.png" alt="Spotify Logo">
-                    <img src="https://styleguide.audiomack.com/assets/dl/am-stacked-ffa200_000.svg" alt="Audiomack Logo">
+                    <img src="https://styleguide.audiomack.com/assets/dl/am-stacked-ffa200_000.svg"
+                        alt="Audiomack Logo">
                     <img src="asset/logo/4.svg" alt="Deezer Logo">
                     <img src="asset/logo/5.svg" alt="Boomplay Logo">
                     <img src="asset/logo/3.png" alt="Apple Music Logo">
@@ -147,7 +154,8 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
                     </div>
                     <div class="feature-card">
                         <h3>Distribuez votre musique</h3>
-                        <p>Lancez votre musique sur tous les principaux services de musique, sociaux et vidéo. Lancez une
+                        <p>Lancez votre musique sur tous les principaux services de musique, sociaux et vidéo. Lancez
+                            une
                             campagne de pré-enregistrement et créez du buzz.</p>
                     </div>
                 </div>
@@ -207,36 +215,43 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
         <section class="key-figures">
             <div class="container">
                 <div class="impact-statement">
-                    <p>NOUS SOMMES L'UN DES ACTEURS MAJEURS DE LA DISTRIBUTION EN AFRIQUE AVEC PLUS DE 700 ARTISTES ET 50 LABELS EN AFRIQUE</p>
+                    <p>NOUS SOMMES L'UN DES ACTEURS MAJEURS DE LA DISTRIBUTION EN AFRIQUE AVEC PLUS DE 700 ARTISTES ET
+                        50 LABELS EN AFRIQUE</p>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <img src="https://yesicannes.com/wp-content/uploads/2017/06/idjdigital-midem-2017-feat.jpg" alt="Icone de plateformes de distribution">
+                        <img src="https://yesicannes.com/wp-content/uploads/2017/06/idjdigital-midem-2017-feat.jpg"
+                            alt="Icone de plateformes de distribution">
                         <h3>+200 plateformes</h3>
                         <p>de distribution</p>
                     </div>
                     <div class="stat-item">
-                        <img src="https://www.freeiconspng.com/uploads/artist-music-player-representation-icons--free-download-11.jpg" alt="Icone d'artistes">
+                        <img src="https://www.freeiconspng.com/uploads/artist-music-player-representation-icons--free-download-11.jpg"
+                            alt="Icone d'artistes">
                         <h3>+50k artistes</h3>
                         <p>distribués par WMA</p>
                     </div>
                     <div class="stat-item">
-                        <img src="https://www.svgrepo.com/show/192522/customer-service-support.svg" alt="Icone d'assistance">
+                        <img src="https://www.svgrepo.com/show/192522/customer-service-support.svg"
+                            alt="Icone d'assistance">
                         <h3>Assistance 24h/24 et 7j/7</h3>
                         <p>personnalisé à votre écoute</p>
                     </div>
                     <div class="stat-item">
-                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCKnS4Cb2whcsaHh7mMxbTZGa_9NIh3D1yiQ&s" alt="Icone de titres musicaux">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTCKnS4Cb2whcsaHh7mMxbTZGa_9NIh3D1yiQ&s"
+                            alt="Icone de titres musicaux">
                         <h3>+100K titres</h3>
                         <p>distribués dans le monde</p>
                     </div>
                     <div class="stat-item">
-                        <img src="https://static.vecteezy.com/system/resources/previews/026/136/306/non_2x/live-streaming-icon-broadcasting-livestream-or-online-stream-social-media-concept-template-for-tv-online-channel-live-breaking-news-vector.jpg" alt="Icone de streaming">
+                        <img src="https://static.vecteezy.com/system/resources/previews/026/136/306/non_2x/live-streaming-icon-broadcasting-livestream-or-online-stream-social-media-concept-template-for-tv-online-channel-live-breaking-news-vector.jpg"
+                            alt="Icone de streaming">
                         <h3>+80M d'écoutes</h3>
                         <p>chaque mois grâce à ONERPM</p>
                     </div>
                     <div class="stat-item">
-                        <img src="https://media.istockphoto.com/id/1304149942/vector/money-turnover-icon-vector-illustration.jpg?s=612x612&w=0&k=20&c=Vfk8a9Otg1WDRWTcRbB8hYtG7QJWJZeY6uGfvfrhoVI=" alt="Icone de royalties">
+                        <img src="https://media.istockphoto.com/id/1304149942/vector/money-turnover-icon-vector-illustration.jpg?s=612x612&w=0&k=20&c=Vfk8a9Otg1WDRWTcRbB8hYtG7QJWJZeY6uGfvfrhoVI="
+                            alt="Icone de royalties">
                         <h3>48 heures</h3>
                         <p>au max pour recevoir vos royalties</p>
                     </div>
@@ -247,15 +262,17 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
         <section class="global-presence">
             <div class="container">
                 <h2 class="section-title">Notre Présence Mondiale</h2>
-                <img src="./asset/6.png" alt="Carte du monde avec les emplacements de WMA Hub" class="world-map-img" loading="lazy">
+                <img src="./asset/6.png" alt="Carte du monde avec les emplacements de WMA Hub" class="world-map-img"
+                    loading="lazy">
             </div>
         </section>
 
         <section class="trusted-by">
             <div class="container">
-    
+
                 <div class="artist-collage-wrapper">
-                    <img src="asset/7.png" alt="Collage d'artistes qui font confiance à WMA Hub" class="artist-collage-img" loading="lazy">
+                    <img src="asset/7.png" alt="Collage d'artistes qui font confiance à WMA Hub"
+                        class="artist-collage-img" loading="lazy">
                 </div>
             </div>
         </section>
@@ -265,27 +282,33 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
         <div class="container">
             <p>&copy; Copyright 2025 WMAHUB. <br> Tous droits réservés.</p>
             <div class="footer-logos">
-                <img src="asset/trans.png" alt="WMA Hub Logo blanc" style="height: 80px; filter: brightness(0) invert(1);">
+                <img src="asset/trans.png" alt="WMA Hub Logo blanc"
+                    style="height: 80px; filter: brightness(0) invert(1);">
                 <img src="asset/logo/spo.png" alt="Spotify Logo" style="height: 30px;">
-                <img src="asset/logo/le.png" alt="Label Engine Logo blanc" style="height: 100px; filter: brightness(0) invert(1);">
+                <img src="asset/logo/le.png" alt="Label Engine Logo blanc"
+                    style="height: 100px; filter: brightness(0) invert(1);">
                 <img src="asset/logo/you.png" alt="YouTube Logo">
                 <img src="asset/logo/one.png" alt="OneRPM Logo">
             </div>
             <div class="social-icons">
-                <a href="https://www.instagram.com/wmamusic.fr/" target="_blank" aria-label="Suivez-nous sur Instagram" rel="noopener noreferrer">
+                <a href="https://www.instagram.com/wmamusic.fr/" target="_blank" aria-label="Suivez-nous sur Instagram"
+                    rel="noopener noreferrer">
                     <i class="fab fa-instagram"></i>
                 </a>
-                <a href="https://wa.me/256743297668" target="_blank" aria-label="Contactez-nous sur WhatsApp" rel="noopener noreferrer">
+                <a href="https://wa.me/256743297668" target="_blank" aria-label="Contactez-nous sur WhatsApp"
+                    rel="noopener noreferrer">
                     <i class="fab fa-whatsapp"></i>
                 </a>
-                <a href="https://www.facebook.com/wmardc" target="_blank" aria-label="Suivez-nous sur Facebook" rel="noopener noreferrer">
+                <a href="https://www.facebook.com/wmardc" target="_blank" aria-label="Suivez-nous sur Facebook"
+                    rel="noopener noreferrer">
                     <i class="fab fa-facebook-f"></i>
                 </a>
             </div>
         </div>
     </footer>
 
-    <div id="whatsappDialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+    <div id="whatsappDialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"
+        aria-describedby="dialog-description">
         <div class="dialog-content">
             <h3 id="dialog-title">Informations de contact</h3>
             <p id="dialog-description">Veuillez remplir ces champs pour nous contacter via WhatsApp.</p>
@@ -303,14 +326,14 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
     <script src="js/script.js"></script>
     <script>
         // Gestion du préchargeur
- window.addEventListener('load', function() {
-    const preloader = document.getElementById('preloader');
-    
-    // Masque le préchargeur après un court délai pour permettre à la page de se charger complètement
-    setTimeout(() => {
-        preloader.style.display = 'none';
-    }, 500); // Délai en millisecondes. 500ms est une bonne pratique.
-});
+        window.addEventListener('load', function () {
+            const preloader = document.getElementById('preloader');
+
+            // Masque le préchargeur après un court délai pour permettre à la page de se charger complètement
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 500); // Délai en millisecondes. 500ms est une bonne pratique.
+        });
 
         // Script pour gérer la boîte de dialogue et la redirection
         const distributeBtn = document.getElementById('distributeBtn');
@@ -345,4 +368,5 @@ setInterval(nextSlide, 4000); // change toutes les 4 secondes
         }
     </script>
 </body>
+
 </html>
