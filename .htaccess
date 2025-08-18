@@ -1,3 +1,16 @@
+# Active le moteur de réécriture d'URL
 RewriteEngine On
+
+# Empêche la réécriture de liens si le fichier existe déjà
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.*)$ $1.html [L]
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Règle pour masquer l'extension .html
+# Exemple : monsite.com/projet affichera le contenu de projet.html
+RewriteRule ^([^\.]+)$ $1.html [NC,L]
+
+# Règle pour rediriger les anciennes URL (avec .html) vers les nouvelles (sans .html)
+# Cela est bon pour le SEO (référencement) et évite le contenu dupliqué
+# Exemple : monsite.com/projet.html redirigera vers monsite.com/projet
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*\.html\ HTTP/
+RewriteRule ^(.*)\.html$ /$1 [R=301,L]
