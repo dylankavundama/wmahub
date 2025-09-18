@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="WMA Hub - Plateforme de distribution musicale pour artistes et labels">
-    <title>WMA Hub - Distributez Votre Musique</title>
+  <title>WMAHUB - La Plateforme de Distribution musicale</title>
+
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -13,12 +14,12 @@
 </head>
 
 <body>
-    <div id="preloader" aria-live="polite" aria-label="Page en cours de chargement">
+    <!-- <div id="preloader" aria-live="polite" aria-label="Page en cours de chargement">
         <div class="preloader-content">
             <img src="asset/trans.png" alt="WMA Hub Logo" class="loader-logo">
             <div class="loader-text">Chargement...</div>
         </div>
-    </div>
+    </div> -->
 
     <header class="hero" role="banner">
         <div class="hero-overlay"></div>
@@ -211,7 +212,13 @@
                 </div>
             </div>
         </section>
-
+<!--<section class="news-section">-->
+<!--    <div class="container">-->
+<!--        <h2 class="section-title orange-text">Actualités</h2>-->
+<!--        <div id="actualites-container" class="news-grid">-->
+<!--            </div>-->
+<!--    </div>-->
+<!--</section>-->
         <section class="key-figures">
             <div class="container">
                 <div class="impact-statement">
@@ -284,24 +291,33 @@
             <div class="footer-logos">
                 <img src="asset/trans.png" alt="WMA Hub Logo blanc"
                     style="height: 80px; filter: brightness(0) invert(1);">
+                     <img src="asset/logo/one.png" alt="ONERPM Logo" style="height: 30px;">
                 <img src="asset/logo/spo.png" alt="Spotify Logo" style="height: 30px;">
+                  <img src="asset/logo/ub.png" alt="UB Logo" style="height: 70px;">
                 <img src="asset/logo/le.png" alt="Label Engine Logo blanc"
                     style="height: 100px; filter: brightness(0) invert(1);">
                 <img src="asset/logo/you.png" alt="YouTube Logo">
-                <img src="asset/logo/one.png" alt="OneRPM Logo">
+                 
+                <img src="asset/logo/dream.png" alt="Dream Logo" style="height: 50px;">
             </div>
             <div class="social-icons">
-                <a href="https://www.instagram.com/wmamusic.fr/" target="_blank" aria-label="Suivez-nous sur Instagram"
-                    rel="noopener noreferrer">
+
+        
+                <a href="https://www.instagram.com/wmahub?igsh=YW5tcjQxbWZ5NW1y" target="_blank"
+                    aria-label="Suivez-nous sur Instagram" rel="noopener noreferrer">
                     <i class="fab fa-instagram"></i>
                 </a>
-                <a href="https://wa.me/256743297668" target="_blank" aria-label="Contactez-nous sur WhatsApp"
+                <a href="https://wa.me/243975278131" target="_blank" aria-label="Contactez-nous sur WhatsApp"
                     rel="noopener noreferrer">
                     <i class="fab fa-whatsapp"></i>
                 </a>
-                <a href="https://www.facebook.com/wmardc" target="_blank" aria-label="Suivez-nous sur Facebook"
-                    rel="noopener noreferrer">
+                <a href="https://www.facebook.com/share/173a8UbLZf/" target="_blank"
+                    aria-label="Suivez-nous sur Facebook" rel="noopener noreferrer">
                     <i class="fab fa-facebook-f"></i>
+                </a>
+                        <a href="https://metal-server.nitrowebhost.co.uk:2096/webmaillogout.cgi" target="_blank"
+                    aria-label="Suivez-nous sur Instagram" rel="noopener noreferrer">
+                    <i class="fab fa-telegram"></i>
                 </a>
             </div>
         </div>
@@ -326,14 +342,14 @@
     <script src="js/script.js"></script>
     <script>
         // Gestion du préchargeur
-        window.addEventListener('load', function () {
-            const preloader = document.getElementById('preloader');
+        // window.addEventListener('load', function () {
+        //     const preloader = document.getElementById('preloader');
 
-            // Masque le préchargeur après un court délai pour permettre à la page de se charger complètement
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500); // Délai en millisecondes. 500ms est une bonne pratique.
-        });
+        //     // Masque le préchargeur après un court délai pour permettre à la page de se charger complètement
+        //     setTimeout(() => {
+        //         preloader.style.display = 'none';
+        //     }, 500); // Délai en millisecondes. 500ms est une bonne pratique.
+        // });
 
         // Script pour gérer la boîte de dialogue et la redirection
         const distributeBtn = document.getElementById('distributeBtn');
@@ -367,6 +383,16 @@
             document.body.style.overflow = "auto";
         }
     </script>
+
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RBQ4K1KSYF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RBQ4K1KSYF');
+</script>
 </body>
 
 </html>
