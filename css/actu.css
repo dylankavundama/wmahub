@@ -1,0 +1,97 @@
+Styles pour la section Actualités
+.news-section {
+    background-color: var(--bg-light);
+    padding: 80px 0;
+    text-align: center;
+}
+
+.news-grid {
+    display: grid;
+    /* Affiche toujours 2 colonnes de taille égale */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+    margin-top: 60px;
+    padding: 0 40px;
+}
+
+.actu-card {
+    background-color: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    text-align: left;
+}
+
+.actu-card:hover {
+    transform: translateY(-5px);
+}
+
+.actu-card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.actu-content {
+    padding: 20px;
+}
+
+.actu-content h3 {
+    margin-top: 0;
+    color: var(--text-color);
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+}
+
+.actu-content p {
+    font-size: clamp(1rem, 2.5vw, 1.1rem);
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.read-more {
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.read-more:hover {
+    background-color: #e65c00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Requêtes média pour une adaptabilité parfaite */
+@media (max-width: 1024px) {
+    .news-grid {
+        gap: 30px;
+        padding: 0 20px;
+    }
+
+    .news-section {
+        padding: 60px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .news-grid {
+        /* Maintient les deux colonnes même sur mobile pour un affichage sur toute la ligne */
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 0 20px;
+    }
+    
+    .actu-card {
+        margin: 0 auto;
+    }
+    
+    .actu-card img {
+        height: 200px;
+    }
+}
