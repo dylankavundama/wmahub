@@ -1,0 +1,95 @@
+/* ============================================
+   HARMONISATION DES THÈMES - TRANSITIONS FLUIDES
+   ============================================ */
+
+/* Transition globale pour tous les éléments */
+* {
+    transition-property: background-color, color, border-color, box-shadow, opacity;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+}
+
+/* Exceptions pour les éléments qui ne doivent pas avoir de transition */
+img, video, iframe, canvas, svg {
+    transition-property: opacity, transform;
+}
+
+/* Harmonisation des couleurs de texte */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-primary-dark {
+    color: var(--primary-dark) !important;
+}
+
+/* Harmonisation des backgrounds */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-primary-dark {
+    background-color: var(--primary-dark) !important;
+}
+
+/* Harmonisation des bordures */
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+/* Harmonisation des ombres en mode sombre */
+.dark .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Harmonisation des cards */
+.card {
+    background-color: var(--bg-white);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .card {
+    background-color: var(--bg-white);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Harmonisation des inputs et formulaires */
+input, textarea, select {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Harmonisation des liens */
+a {
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    transition: color 0.2s ease;
+}
+
+/* Harmonisation des boutons */
+button, .btn {
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* Animation de transition entre thèmes */
+@keyframes themeTransition {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.95;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.theme-transitioning {
+    animation: themeTransition 0.3s ease;
+}
+

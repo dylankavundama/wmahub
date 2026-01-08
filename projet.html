@@ -5,36 +5,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formulaire de Soumission de Projet - WMA Hub</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff6600',
+                        'primary-dark': '#e65c00',
+                    },
+                },
+            },
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="css/theme-harmony.css">
     <style>
-        /* Couleurs du site WMA Hub - Légèrement ajustées pour plus de contraste */
+        /* Couleurs harmonisées avec le reste du site */
         :root {
             --primary-color: #ff6600;
-            --secondary-color: #1a1a1a;
-            --background-color: #0d0d0d;
-            --card-color: #1c1c1c; /* Nouvelle couleur pour les sections */
-            --text-color: #f4f7f9;
-            --light-text-color: #b0b0b0;
-            --border-color: #3a3a3a;
-            --shadow-color: rgba(0, 0, 0, 0.5);
-            --gradient-start: #ff8c42; /* Nouveau dégradé */
+            --primary-dark: #e65c00;
+            --secondary-color: #ffffff;
+            --background-color: #f9fafb;
+            --card-color: #ffffff;
+            --text-color: #1f2937;
+            --light-text-color: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --gradient-start: #ff8c42;
             --gradient-end: #e65c00;
+        }
+        
+        .dark {
+            --secondary-color: #1f2937;
+            --background-color: #111827;
+            --card-color: #1f2937;
+            --text-color: #f3f4f6;
+            --light-text-color: #d1d5db;
+            --border-color: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.3);
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', sans-serif;
             background-color: var(--background-color);
             color: var(--text-color);
             padding: 20px;
             margin: 0;
             line-height: 1.6;
-            display: flex; /* Centrer le contenu */
+            display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         /* NOUVEAUTÉS */
@@ -62,10 +93,11 @@
             background: var(--secondary-color);
             padding: 20px 30px;
             border-radius: 12px;
-            max-width: 800px; /* Augmenté pour un meilleur espacement */
+            max-width: 800px;
             margin: 20px auto;
             box-shadow: 0 10px 25px var(--shadow-color);
-            border: 1px solid var(--border-color); /* Bordure subtile */
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         header {
@@ -88,6 +120,7 @@
             font-weight: 400;
             margin-top: 0;
             margin-bottom: 20px;
+            transition: color 0.3s ease;
         }
 
         /* NOUVEAUTÉS */
@@ -99,6 +132,7 @@
             margin-top: 35px;
             margin-bottom: 20px;
             font-weight: 600;
+            transition: color 0.3s ease;
         }
 
         h3::after {
@@ -124,7 +158,8 @@
             margin-bottom: 8px;
             margin-top: 20px;
             font-size: 1rem;
-            color: #fff;
+            color: var(--text-color);
+            transition: color 0.3s ease;
         }
         
         .input-group {
@@ -139,9 +174,9 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background-color: var(--card-color);
-            color: #fff;
+            color: var(--text-color);
             box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s, color 0.3s;
             font-size: 1rem;
         }
 
@@ -169,7 +204,8 @@
             cursor: pointer;
             margin-top: 0;
             font-size: 0.95rem;
-            transition: color 0.3s;
+            color: var(--text-color);
+            transition: color 0.3s ease;
         }
         
         /* NOUVEAUTÉS */
@@ -219,6 +255,7 @@
             color: var(--light-text-color);
             text-align: right;
             margin-top: -5px;
+            transition: color 0.3s ease;
         }
 
         /* NOUVEAUTÉS */
@@ -234,6 +271,7 @@
             color: var(--light-text-color);
             margin-left: 28px;
             margin-top: 4px;
+            transition: color 0.3s ease;
         }
 
         /* Responsive Design */
@@ -261,11 +299,17 @@
     </style>
 </head>
 
-<body>
-    <div class="form-container">
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Dark Mode Toggle -->
+    <button id="darkModeToggle" class="fixed top-5 right-5 z-50 p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300" aria-label="Toggle dark mode">
+        <i class="fas fa-moon text-gray-700 dark:hidden text-xl"></i>
+        <i class="fas fa-sun text-yellow-400 hidden dark:inline text-xl"></i>
+    </button>
+    
+    <div class="form-container dark:bg-gray-800 dark:border-gray-700 transition-all duration-300">
         <header>
-            <h1>Formulaire de Soumission de Projet</h1>
-            <h2>WMA Hub</h2>
+            <h1 class="dark:text-white transition-colors duration-300">Formulaire de Soumission de Projet</h1>
+            <h2 class="dark:text-gray-300 transition-colors duration-300">WMA Hub</h2>
         </header>
 
         <form id="submissionForm">
@@ -400,7 +444,9 @@
                 </div>
             </fieldset>
 
-            <button type="submit" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> Envoyer le projet sur WhatsApp</button>
+            <button type="submit" class="btn btn-whatsapp">
+                <i class="fab fa-whatsapp mr-2"></i> Envoyer le projet sur WhatsApp
+            </button>
         </form>
     </div>
 

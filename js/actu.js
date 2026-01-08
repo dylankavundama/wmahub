@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // URL de votre API WordPress pour les 4 derniers articles avec les images
+    // URL de votre API WordPress pour les 8 derniers articles avec les images
     // TRÈS IMPORTANT: Vérifiez que cette URL est correcte !
     // Le paramètre `_embed` est essentiel pour inclure les données des images.
-    const apiUrl = 'https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=4&_embed';
+    const apiUrl = 'https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=8&_embed';
 
     console.log('Tentative de récupération des articles depuis:', apiUrl);
 
