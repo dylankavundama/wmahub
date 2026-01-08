@@ -9,8 +9,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'employe') {
 
 $db = getDBConnection();
 
-// Vérifier si l'employé est actif
-$stmt = $db->prepare("SELECT is_active FROM users WHERE id = ?");
+// Vérifier si l'employé est actif et récupérer ses infos (salaire)
+$stmt = $db->prepare("SELECT is_active, salary FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 if (!$user || !$user['is_active']) {
@@ -28,6 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $db->prepare("UPDATE projects SET payment_status = ? WHERE id = ?");
         $stmt->execute([$_POST['payment_status'], $_POST['project_id']]);
     }
+    if (isset($_POST['update_task_status'])) {
+        $stmt = $db->prepare("UPDATE tasks SET status = ? WHERE id = ? AND user_id = ?");
+        $stmt->execute([$_POST['task_status'], $_POST['task_id'], $_SESSION['user_id']]);
+    }
     header('Location: index.php');
     exit;
 }
@@ -39,6 +43,11 @@ $projects = $db->query("SELECT p.*, u.name as user_name, u.email as user_email F
 $total_projects = count($projects);
 $distributed_count = count(array_filter($projects, fn($p) => $p['status'] === 'distribue'));
 $pending_payment = count(array_filter($projects, fn($p) => $p['payment_status'] !== 'paye'));
+
+// Récupérer les tâches de l'employé
+$stmt = $db->prepare("SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC");
+$stmt->execute([$_SESSION['user_id']]);
+$my_tasks = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -238,7 +247,14 @@ $pending_payment = count(array_filter($projects, fn($p) => $p['payment_status'] 
         </header>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="glass-card border-green-500/20 bg-green-500/5">
+                <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2">Salaire Mensuel</p>
+                <p class="text-4xl font-black text-white"><?= number_format($user['salary'], 0, '.', ' ') ?>$</p>
+                <div class="mt-4 flex items-center gap-2 text-xs text-green-500/60 font-bold">
+                    <i class="fas fa-money-bill-wave"></i> <span>Revenu fixe</span>
+                </div>
+            </div>
             <div class="glass-card">
                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">Total Projets</p>
                 <p class="text-4xl font-black text-white"><?= $total_projects ?></p>
@@ -252,6 +268,61 @@ $pending_payment = count(array_filter($projects, fn($p) => $p['payment_status'] 
                 <p class="text-4xl font-black text-amber-500"><?= $pending_payment ?></p>
             </div>
         </div>
+
+        <!-- Mes Tâches Assigned -->
+        <section class="mb-12">
+            <div class="flex items-center gap-3 mb-6">
+                <i class="fas fa-tasks text-orange-500"></i>
+                <h3 class="text-xl font-bold">Mes Missions & Tâches</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <?php foreach ($my_tasks as $task): ?>
+                    <div class="glass-card flex flex-col justify-between border-white/5">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-[10px] font-black uppercase px-2 py-1 rounded bg-white/5 text-gray-400">
+                                    Assignée le <?= date('d/m/Y', strtotime($task['created_at'])) ?>
+                                </span>
+                                <?php 
+                                    $statusClass = match($task['status']) {
+                                        'a_faire' => 'text-blue-500 bg-blue-500/10',
+                                        'en_cours' => 'text-amber-500 bg-amber-500/10',
+                                        'termine' => 'text-green-500 bg-green-500/10',
+                                    };
+                                    $statusLabel = match($task['status']) {
+                                        'a_faire' => 'À faire',
+                                        'en_cours' => 'En cours',
+                                        'termine' => 'Terminé',
+                                    };
+                                ?>
+                                <span class="text-[10px] font-black uppercase px-2 py-1 rounded <?= $statusClass ?>">
+                                    <?= $statusLabel ?>
+                                </span>
+                            </div>
+                            <h4 class="font-bold text-lg mb-2 text-white"><?= htmlspecialchars($task['title']) ?></h4>
+                            <p class="text-sm text-gray-500 line-clamp-3 mb-6"><?= htmlspecialchars($task['description']) ?></p>
+                        </div>
+                        <form method="POST" class="mt-auto">
+                            <input type="hidden" name="task_id" value="<?= $task['id'] ?>">
+                            <div class="flex gap-2">
+                                <select name="task_status" onchange="this.form.submit()" class="custom-select flex-1 !text-[10px] font-black uppercase">
+                                    <option value="a_faire" <?= $task['status'] === 'a_faire' ? 'selected' : '' ?>>À faire</option>
+                                    <option value="en_cours" <?= $task['status'] === 'en_cours' ? 'selected' : '' ?>>En cours</option>
+                                    <option value="termine" <?= $task['status'] === 'termine' ? 'selected' : '' ?>>Terminé ✓</option>
+                                </select>
+                                <input type="hidden" name="update_task_status" value="1">
+                            </div>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (empty($my_tasks)): ?>
+                    <div class="col-span-full py-12 text-center glass-card border-dashed">
+                        <i class="fas fa-check-double text-4xl text-gray-800 mb-4 block"></i>
+                        <p class="text-xs text-gray-500 uppercase font-black tracking-widest">Aucune tâche assignée pour le moment</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
 
         <!-- Table Container -->
         <div class="glass-card p-0 overflow-hidden shadow-2xl border-white/5">
