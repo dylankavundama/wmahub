@@ -89,8 +89,15 @@
                     <!-- <li><a href="#notre-equipe" class="nav-link">Notre équipe</a></li> -->
                     <li><a href="#distribution" class="nav-link">Distribution</a></li>
                     <li><a href="#actualites" class="nav-link">Actualités</a></li>
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <li><a href="<?= $_SESSION['role'] === 'artiste' ? 'dashboards/artiste/index.php' : 'dashboards/admin/index.php' ?>" class="nav-link">Mon Dashboard</a></li>
+                    <?php if (isset($_SESSION['user_id'])): 
+                        $dashboardUrl = 'dashboards/artiste/index.php';
+                        if ($_SESSION['role'] === 'admin') {
+                            $dashboardUrl = 'dashboards/admin/index.php';
+                        } elseif ($_SESSION['role'] === 'employe') {
+                            $dashboardUrl = 'dashboards/employe/index.php';
+                        }
+                    ?>
+                        <li><a href="<?= $dashboardUrl ?>" class="nav-link">Mon Dashboard</a></li>
                         <li><a href="auth/logout.php" class="nav-link text-red-500">Déconnexion</a></li>
                     <?php else: ?>
                         <li><a href="auth/login.php" class="nav-link">Connexion</a></li>

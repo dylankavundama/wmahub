@@ -5,15 +5,45 @@ require_once __DIR__ . '/../includes/config.php';
 if (isset($_GET['code'])) {
     $code = $_GET['code'];
 
-    // Dans une implémentation réelle, on échangerait le code contre un token ici.
-    // Pour cet exemple, nous allons simuler l'authentification réussie
-    // car nous n'avons pas encore les identifiants Client ID/Secret valides.
-    
-    // SIMULATION : On récupère des infos bidons
-    // Remplacez cette partie par l'appel à l'API Google
-    $google_id = "simulated_" . bin2hex(random_bytes(8));
-    $email = "user@" . bin2hex(random_bytes(4)) . ".com";
-    $name = "Artiste Simulation";
+    // Échange du code contre un token d'accès
+    $token_url = 'https://oauth2.googleapis.com/token';
+    $params = [
+        'code'          => $code,
+        'client_id'     => GOOGLE_CLIENT_ID,
+        'client_secret' => GOOGLE_CLIENT_SECRET,
+        'redirect_uri'  => GOOGLE_REDIRECT_URL,
+        'grant_type'    => 'authorization_code'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $token_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $token_data = json_decode($response, true);
+
+    if (isset($token_data['error'])) {
+        die("Erreur lors de l'obtention du token : " . $token_data['error_description']);
+    }
+
+    $access_token = $token_data['access_token'];
+
+    // Récupération des informations de l'utilisateur
+    $user_info_url = 'https://www.googleapis.com/oauth2/v3/userinfo?access_token=' . $access_token;
+    $user_info_response = file_get_contents($user_info_url);
+    $user_data = json_decode($user_info_response, true);
+
+    if (!$user_data || !isset($user_data['sub'])) {
+        die("Impossible de récupérer les informations de l'utilisateur.");
+    }
+
+    $google_id = $user_data['sub'];
+    $email = $user_data['email'];
+    $name = $user_data['name'];
+    $picture = $user_data['picture'] ?? '';
 
     $db = getDBConnection();
     
@@ -35,9 +65,13 @@ if (isset($_GET['code'])) {
         
         header('Location: select-role.php');
     } else {
+        // Mettre à jour les infos si nécessaire
+        $stmt = $db->prepare("UPDATE users SET google_id = ?, name = ? WHERE id = ?");
+        $stmt->execute([$google_id, $name, $user['id']]);
+
         // Utilisateur existant
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
+        $_SESSION['user_name'] = $name;
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['role'] = $user['role'];
         
@@ -47,7 +81,7 @@ if (isset($_GET['code'])) {
             header('Location: ../dashboards/artiste/index.php');
         } elseif ($user['role'] === 'employe') {
             if ($user['is_active']) {
-                header('Location: ../dashboards/admin/index.php');
+                header('Location: ../dashboards/employe/index.php');
             } else {
                 header('Location: pending.php');
             }

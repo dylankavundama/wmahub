@@ -7,15 +7,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'artiste') {
     exit;
 }
 
-$success = false;
+$success = isset($_GET['success']);
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $db = getDBConnection();
     try {
-        // Collect checkbox values
-        $provided_files = isset($_POST['fichiers']) ? implode(', ', $_POST['fichiers']) : '';
-        
         // Handle file uploads
         $audio_file = '';
         $cover_file = '';
@@ -57,13 +54,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['telephone'],
             $_POST['ville'],
             $_POST['langues'] ?? '',
-            $provided_files,
+            isset($_POST['fichiers']) ? implode(', ', $_POST['fichiers']) : '',
             $_POST['pack_promo'] ?? 'Aucun',
             ($_POST['autorisation'] === 'Oui' ? 1 : 0),
             $audio_file,
             $cover_file
         ]);
-        $success = true;
+        
+        header('Location: submit.php?success=1');
+        exit;
     } catch (PDOException $e) {
         $error = "Une erreur est survenue lors de l'enregistrement : " . $e->getMessage();
     }
