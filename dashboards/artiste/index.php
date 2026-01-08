@@ -88,18 +88,34 @@ function getStatusLabel($status) {
             </header>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Projets</p><p class="text-3xl font-black"><?= count($projects) ?></p></div>
-                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Distribués</p><p class="text-3xl font-black"><?= count(array_filter($projects, fn($p) => $p['status'] === 'distribue')) ?></p></div>
-                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">En attente</p><p class="text-3xl font-black"><?= count(array_filter($projects, fn($p) => $p['status'] === 'en_attente')) ?></p></div>
+                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Vues Totales</p><p class="text-3xl font-black text-orange-500"><?= number_format(array_sum(array_column($projects, 'streams')), 0, '.', ' ') ?></p></div>
+                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Distribués</p><p class="text-3xl font-black text-green-500"><?= count(array_filter($projects, fn($p) => $p['status'] === 'distribue')) ?></p></div>
                 <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Revenus</p><p class="text-3xl font-black">0.00 $</p></div>
             </div>
             <div class="glass-card p-0 overflow-hidden shadow-2xl">
                 <div class="px-8 py-6 border-b border-white/5 flex items-center justify-between"><h3 class="text-lg font-bold">Sorties récentes</h3><a href="#" class="text-xs font-bold text-orange-500">Voir tout</a></div>
                 <table class="w-full text-left">
-                    <thead><tr class="text-[10px] uppercase font-black text-gray-500 border-b border-white/5"><th class="px-8 py-4">Titre</th><th class="px-8 py-4">Statut</th><th class="px-8 py-4">Sortie</th></tr></thead>
+                    <thead><tr class="text-[10px] uppercase font-black text-gray-500 border-b border-white/5"><th class="px-8 py-4">Titre</th><th class="px-8 py-4">Statut</th><th class="px-8 py-4">Vues Score</th><th class="px-8 py-4">Sortie</th></tr></thead>
                     <tbody class="divide-y divide-white/5">
                         <?php if (empty($projects)): ?><tr><td colspan="3" class="px-8 py-20 text-center text-gray-500">Aucun projet trouvé.</td></tr>
                         <?php else: foreach ($projects as $project): ?>
-                            <tr class="hover:bg-white/[0.02] group"><td class="px-8 py-5"><p class="font-bold group-hover:text-orange-500 transition-colors"><?= htmlspecialchars($project['title']) ?></p><p class="text-xs text-gray-500"><?= htmlspecialchars($project['artist_name']) ?></p></td><td class="px-8 py-5"><?php $s = $project['status']; $b = "badge-" . ($s == 'distribue' ? 'success' : ($s == 'en_preparation' ? 'info' : 'pending')); ?><span class="badge <?= $b ?>"><?= getStatusLabel($s) ?></span></td><td class="px-8 py-5 text-sm text-gray-400"><?= date('d/m/Y', strtotime($project['date_sortie'])) ?></td></tr>
+                            <tr class="hover:bg-white/[0.02] group">
+                                <td class="px-8 py-5">
+                                    <p class="font-bold group-hover:text-orange-500 transition-colors"><?= htmlspecialchars($project['title']) ?></p>
+                                    <p class="text-xs text-gray-500"><?= htmlspecialchars($project['artist_name']) ?></p>
+                                </td>
+                                <td class="px-8 py-5">
+                                    <?php $s = $project['status']; $b = "badge-" . ($s == 'distribue' ? 'success' : ($s == 'en_preparation' ? 'info' : 'pending')); ?>
+                                    <span class="badge <?= $b ?>"><?= getStatusLabel($s) ?></span>
+                                </td>
+                                <td class="px-8 py-5">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-chart-bar text-orange-500/50"></i>
+                                        <span class="font-bold"><?= number_format($project['streams'], 0, '.', ' ') ?></span>
+                                    </div>
+                                </td>
+                                <td class="px-8 py-5 text-sm text-gray-400"><?= date('d/m/Y', strtotime($project['date_sortie'])) ?></td>
+                            </tr>
                         <?php endforeach; endif; ?>
                     </tbody>
                 </table>

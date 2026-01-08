@@ -23,8 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // Ajout d'une tâche
     if (isset($_POST['add_task'])) {
-        $stmt = $db->prepare("INSERT INTO tasks (user_id, title, description) VALUES (?, ?, ?)");
-        $stmt->execute([$_POST['employee_id'], $_POST['task_title'], $_POST['task_desc']]);
+        $image_path = null;
+        if (isset($_FILES['task_image']) && $_FILES['task_image']['error'] === UPLOAD_ERR_OK) {
+            $ext = pathinfo($_FILES['task_image']['name'], PATHINFO_EXTENSION);
+            $filename = uniqid('task_') . '.' . $ext;
+            $upload_dir = __DIR__ . '/../../uploads/tasks/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
+            move_uploaded_file($_FILES['task_image']['tmp_name'], $upload_dir . $filename);
+            $image_path = 'uploads/tasks/' . $filename;
+        }
+        $stmt = $db->prepare("INSERT INTO tasks (user_id, title, description, image_path) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$_POST['employee_id'], $_POST['task_title'], $_POST['task_desc'], $image_path]);
     }
     // Suppression d'une tâche
     if (isset($_POST['delete_task'])) {
@@ -131,6 +140,10 @@ $active_tasks = $db->query("SELECT t.*, u.name as employee_name FROM tasks t JOI
                 <i class="fas fa-users-cog"></i>
                 Équipe & Staff
             </a>
+            <a href="users.php" class="nav-link">
+                <i class="fas fa-user-friends"></i>
+                Utilisateurs
+            </a>
             <a href="index.php#finance-section" class="nav-link">
                 <i class="fas fa-chart-pie"></i>
                 Rapports Financiers
@@ -187,9 +200,9 @@ $active_tasks = $db->query("SELECT t.*, u.name as employee_name FROM tasks t JOI
         <?php endif; ?>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Salaires -->
+            <!-- Revenus -->
             <section class="glass-card">
-                <h3 class="text-lg font-bold mb-6 uppercase tracking-widest text-gray-500">Salaires & Staff Actif</h3>
+                <h3 class="text-lg font-bold mb-6 uppercase tracking-widest text-gray-500">Revenus & Staff Actif</h3>
                 <div class="space-y-4">
                     <?php foreach ($active_employees as $emp): ?>
                         <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
@@ -215,7 +228,7 @@ $active_tasks = $db->query("SELECT t.*, u.name as employee_name FROM tasks t JOI
             <!-- Tâches -->
             <section class="glass-card">
                 <h3 class="text-lg font-bold mb-6 uppercase tracking-widest text-gray-500">Assigner une Mission</h3>
-                <form method="POST" class="space-y-4">
+                <form method="POST" enctype="multipart/form-data" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="text-[10px] font-black uppercase text-gray-500 mb-1 block">Employé</label>
@@ -233,6 +246,10 @@ $active_tasks = $db->query("SELECT t.*, u.name as employee_name FROM tasks t JOI
                     <div>
                         <label class="text-[10px] font-black uppercase text-gray-500 mb-1 block">Description</label>
                         <textarea name="task_desc" class="search-bar w-full h-24 resize-none" placeholder="Détails..."></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-gray-500 mb-1 block">Image d'illustration (optionnel)</label>
+                        <input type="file" name="task_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-white/5 file:text-white hover:file:bg-white/10 cursor-pointer">
                     </div>
                     <button type="submit" name="add_task" class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl border border-white/10">
                         Lancer la tâche
@@ -267,18 +284,23 @@ $active_tasks = $db->query("SELECT t.*, u.name as employee_name FROM tasks t JOI
                                     <p class="text-[10px] text-gray-500"><?= htmlspecialchars($task['description']) ?></p>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded <?= $task['status'] === 'termine' ? 'bg-green-500/10 text-green-500' : ($task['status'] === 'en_cours' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500') ?>">
+                                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded <?= $task['status'] === 'termine' ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500' ?>">
                                         <?= str_replace('_', ' ', $task['status']) ?>
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-[10px] text-gray-500"><?= date('d/m/Y', strtotime($task['created_at'])) ?></td>
                                 <td class="px-6 py-4">
-                                    <form method="POST">
-                                        <input type="hidden" name="task_id" value="<?= $task['id'] ?>">
-                                        <button type="submit" name="delete_task" class="text-gray-600 hover:text-red-500">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center gap-2">
+                                        <a href="task_chat.php?id=<?= $task['id'] ?>" class="text-orange-500 hover:text-orange-600 p-2 bg-orange-500/10 rounded-lg" title="Ouvrir le chat">
+                                            <i class="fas fa-comments"></i>
+                                        </a>
+                                        <form method="POST">
+                                            <input type="hidden" name="task_id" value="<?= $task['id'] ?>">
+                                            <button type="submit" name="delete_task" class="text-gray-600 hover:text-red-500 p-2">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

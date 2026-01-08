@@ -19,6 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $db->prepare("UPDATE projects SET payment_status = ? WHERE id = ?");
         $stmt->execute([$_POST['payment_status'], $_POST['project_id']]);
     }
+    if (isset($_POST['update_streams'])) {
+        $stmt = $db->prepare("UPDATE projects SET streams = ? WHERE id = ?");
+        $stmt->execute([$_POST['streams'], $_POST['project_id']]);
+    }
     header('Location: index.php');
     exit;
 }
@@ -142,7 +146,7 @@ foreach($projects as $p) {
             </div>
             <div class="overflow-x-auto">
                 <table class="admin-table text-left" id="projectsTable">
-                    <thead><tr><th class="px-8">Projet & Artiste</th><th>Contact</th><th>Assets & Pack</th><th>Statut</th><th>Paiement</th></tr></thead>
+                    <thead><tr><th class="px-8">Projet & Artiste</th><th>Contact</th><th>Assets & Pack</th><th>Statut</th><th>Paiement</th><th>Streaming (Vues)</th></tr></thead>
                     <tbody>
                         <?php foreach ($projects as $project): ?>
                             <tr>
@@ -160,6 +164,18 @@ foreach($projects as $p) {
                                 </td>
                                 <td><form method="POST"><input type="hidden" name="project_id" value="<?= $project['id'] ?>"><select name="status" onchange="this.form.submit()" class="custom-select"><option value="en_attente" <?= $project['status'] === 'en_attente' ? 'selected' : '' ?>>En attente</option><option value="en_preparation" <?= $project['status'] === 'en_preparation' ? 'selected' : '' ?>>Préparation</option><option value="distribue" <?= $project['status'] === 'distribue' ? 'selected' : '' ?>>Distribué</option></select><input type="hidden" name="update_project_status" value="1"></form></td>
                                 <td><form method="POST"><input type="hidden" name="project_id" value="<?= $project['id'] ?>"><select name="payment_status" onchange="this.form.submit()" class="custom-select <?= $project['payment_status'] === 'paye' ? '!text-green-500' : '!text-amber-500' ?>"><option value="en_attente" <?= $project['payment_status'] === 'en_attente' ? 'selected' : '' ?>>Non payé</option><option value="paye" <?= $project['payment_status'] === 'paye' ? 'selected' : '' ?>>Payé ✓</option></select><input type="hidden" name="update_payment_status" value="1"></form></td>
+                                <td>
+                                    <form method="POST" class="flex items-center gap-2">
+                                        <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
+                                        <div class="relative">
+                                            <input type="number" name="streams" value="<?= $project['streams'] ?>" class="custom-select !w-32 !pr-8" min="0">
+                                            <i class="fas fa-chart-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
+                                        </div>
+                                        <button type="submit" name="update_streams" class="p-2 bg-orange-500/10 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white transition-all">
+                                            <i class="fas fa-save"></i>
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
