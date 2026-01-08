@@ -1775,7 +1775,7 @@
 
             // Link all distribute buttons
             const distributeButtons = document.querySelectorAll('[id^="distributeBtn"]');
-            const formPageUrl = 'projet.html';
+            const formPageUrl = 'auth/login.php';
             distributeButtons.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -1864,7 +1864,7 @@
         const analyticsBtn = document.getElementById('analyticsBtn');
         const catalogBtn = document.getElementById('catalogBtn');
         const growthBtn = document.getElementById('growthBtn');
-        const formPageUrl = 'projet.html';
+        const formPageUrl = 'auth/login.php';
 
         function openFormPage() {
             window.location.href = formPageUrl;

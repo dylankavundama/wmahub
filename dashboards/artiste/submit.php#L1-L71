@@ -1,0 +1,79 @@
+<?php
+require_once __DIR__ . '/../../includes/config.php';
+
+// Sécurité : Accès restreint aux artistes
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'artiste') {
+    header('Location: ../../auth/login.php');
+    exit;
+}
+
+$success = isset($_GET['success']);
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $db = getDBConnection();
+    try {
+        // Handle file uploads
+        $audio_file = '';
+        $cover_file = '';
+        $upload_dir = __DIR__ . '/uploads/';
+        
+        // Ensure upload directory exists
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+        
+        // Audio Upload
+        if (isset($_FILES['audio_file']) && $_FILES['audio_file']['error'] === UPLOAD_ERR_OK) {
+            $name = time() . '_audio_' . preg_replace("/[^a-zA-Z0-9._-]/", "_", $_FILES['audio_file']['name']);
+            if (move_uploaded_file($_FILES['audio_file']['tmp_name'], $upload_dir . $name)) {
+                $audio_file = $name;
+            }
+        }
+        
+        // Cover Upload
+        if (isset($_FILES['cover_file']) && $_FILES['cover_file']['error'] === UPLOAD_ERR_OK) {
+            $name = time() . '_cover_' . preg_replace("/[^a-zA-Z0-9._-]/", "_", $_FILES['cover_file']['name']);
+            if (move_uploaded_file($_FILES['cover_file']['tmp_name'], $upload_dir . $name)) {
+                $cover_file = $name;
+            }
+        }
+
+        $stmt = $db->prepare("INSERT INTO projects 
+            (user_id, title, artist_name, type, genre, date_sortie, details, phone, city, languages, provided_files, promo_pack, authorization, audio_file, cover_file) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $stmt->execute([
+            $_SESSION['user_id'],
+            $_POST['titre_projet'],
+            $_POST['nom_artiste'] ?? '',
+            $_POST['type_projet'],
+            $_POST['genre'],
+            $_POST['date_sortie'],
+            $_POST['details_morceaux'] ?? '',
+            $_POST['telephone'],
+            $_POST['ville'],
+            $_POST['langues'] ?? '',
+            isset($_POST['fichiers']) ? implode(', ', $_POST['fichiers']) : '',
+            $_POST['pack_promo'] ?? 'Aucun',
+            ($_POST['autorisation'] === 'Oui' ? 1 : 0),
+            $audio_file,
+            $cover_file
+        ]);
+
+        $projectId = $db->lastInsertId();
+
+        // Notifier tous les admins
+        $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
+        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'projet', ?)");
+        foreach ($admins as $admin) {
+            $notifStmt->execute([$admin['id'], $projectId]);
+        }
+        
+        header('Location: submit.php?success=1');
+        exit;
+    } catch (PDOException $e) {
+        $error = "Une erreur est survenue lors de l'enregistrement : " . $e->getMessage();
+    }
+}
+?>

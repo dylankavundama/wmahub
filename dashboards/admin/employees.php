@@ -34,6 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmt = $db->prepare("INSERT INTO tasks (user_id, title, description, image_path) VALUES (?, ?, ?, ?)");
         $stmt->execute([$_POST['employee_id'], $_POST['task_title'], $_POST['task_desc'], $image_path]);
+        $taskId = $db->lastInsertId();
+
+        // Notifier l'employé
+        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'tache', ?)");
+        $notifStmt->execute([$_POST['employee_id'], $taskId]);
     }
     // Suppression d'une tâche
     if (isset($_POST['delete_task'])) {

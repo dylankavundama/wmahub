@@ -60,6 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $audio_file,
             $cover_file
         ]);
+
+        $projectId = $db->lastInsertId();
+
+        // Notifier tous les admins
+        $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
+        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'projet', ?)");
+        foreach ($admins as $admin) {
+            $notifStmt->execute([$admin['id'], $projectId]);
+        }
         
         header('Location: submit.php?success=1');
         exit;
