@@ -25,11 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$_POST['task_status'], $_POST['task_id'], $_SESSION['user_id']]);
 
         if ($_POST['task_status'] === 'termine') {
-            // Notifier les admins
+            // Notifier les admins via createNotification
             $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
-            $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_task', ?)");
             foreach ($admins as $admin) {
-                $notif->execute([$admin['id'], $_POST['task_id']]);
+                createNotification($admin['id'], 'task_update', "L'employé " . $_SESSION['user_name'] . " a terminé la mission : " . $_POST['task_id'], $_POST['task_id']);
             }
         }
     }
@@ -52,6 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare("INSERT INTO salary_withdrawals (user_id, montant, date_encaissement) VALUES (?, ?, ?)");
                 $stmt->execute([$_SESSION['user_id'], $user['salary'], $current_date]);
                 
+                // Notifier les admins
+                $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
+                foreach ($admins as $admin) {
+                    createNotification($admin['id'], 'payment_received', "Salaire encaissé par " . $_SESSION['user_name'] . " (" . $user['salary'] . "$)", null);
+                }
+
                 // Créer une dépense pour déduire de la caisse
                 $motif = "Salaire - " . $_SESSION['user_name'];
                 $stmt = $db->prepare("INSERT INTO expenses (project_id, motif, montant, date_depense) VALUES (NULL, ?, ?, ?)");

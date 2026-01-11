@@ -31,8 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_task'])) {
         $taskId = $db->lastInsertId();
 
         // Notifier l'employé
-        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_task', ?)");
-        $notifStmt->execute([$employee_id, $taskId]);
+        createNotification($employee_id, 'new_task', "Une nouvelle mission vous a été attribuée : $title", $taskId);
 
         // --- ENVOI D'EMAIL À L'EMPLOYÉ ---
         $stmt_emp = $db->prepare("SELECT email, name FROM users WHERE id = ?");

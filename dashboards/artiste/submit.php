@@ -65,38 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Notifier tous les admins
         $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
-        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_project', ?)");
         foreach ($admins as $admin) {
-            $notifStmt->execute([$admin['id'], $projectId]);
+            createNotification($admin['id'], 'new_project', "Nouveau projet soumis : " . $_POST['titre_projet'], $projectId);
         }
+        
+        // Notifier l'artiste
+        createNotification($_SESSION['user_id'], 'project_update', "Votre projet '" . $_POST['titre_projet'] . "' a été soumis. En attente de paiement.", $projectId);
 
-        // --- ENVOI D'EMAIL À INFO@WMAHUB.COM ---
-        $to = "info@wmahub.com";
-        $subject = "Nouveau projet soumis : " . $title;
-        $admin_url = "https://wmahub.com/dashboards/admin/index.php?search=" . urlencode($title);
-        
-        $message = "
-        <html>
-        <head><title>Nouveau projet soumis</title></head>
-        <body style='font-family: sans-serif;'>
-            <h2>Un nouveau projet a été soumis sur WMA HUB</h2>
-            <p><strong>Artiste :</strong> " . htmlspecialchars($artist_name ?: $_SESSION['user_name']) . "</p>
-            <p><strong>Projet :</strong> " . htmlspecialchars($title) . "</p>
-            <p><strong>Pack :</strong> " . htmlspecialchars($promo_pack) . "</p>
-            <hr>
-            <p><a href='$admin_url' style='background: #ff6600; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Gérer le projet</a></p>
-        </body>
-        </html>
-        ";
-        
-        $headers = "MIME-Version: 1.0" . "\r\n";
-        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-        $headers .= "From: WMA HUB <noreply@wmahub.com>" . "\r\n";
-
-        @mail($to, $subject, $message, $headers);
-        // ---------------------------------------
-        
-        header('Location: submit.php?success=1');
+        header('Location: submit.php?success=1&pid=' . $projectId . '&title=' . urlencode($_POST['titre_projet']) . '&artist=' . urlencode($_POST['nom_artiste'] ?: $_SESSION['user_name']));
         exit;
     } catch (PDOException $e) {
         $error = "Une erreur est survenue lors de l'enregistrement : " . $e->getMessage();
@@ -316,22 +292,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <img src="../../asset/trans.png" alt="Logo" class="h-16 opacity-10">
         </header>
 
-        <?php if ($success): ?>
-            <div class="glass-card p-12 text-center animate-bounce-in">
-                <div class="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8 border border-green-500/30">
-                    <i class="fas fa-check text-4xl"></i>
-                </div>
-                <h2 class="text-3xl font-black text-white mb-4">Félicitations !</h2>
-                <p class="text-gray-400 text-lg max-w-md mx-auto mb-10">
-                    Votre projet a été enregistré avec succès. Notre équipe va l'étudier et vous reviendra très vite.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="index.php" class="btn-submit !py-4 px-8 sm:w-auto">
-                        Retour au Catalogue
-                    </a>
-                    <button onclick="window.location.reload()" class="bg-white/5 hover:bg-white/10 text-white font-bold py-4 px-8 rounded-2xl transition-all">
-                        Nouvelle Soumission
-                    </button>
+        <?php if ($success): 
+            $pid = $_GET['pid'] ?? '0';
+            $title = $_GET['title'] ?? 'Projet';
+            $artist = $_GET['artist'] ?? 'Artiste';
+            $projectLink = "https://wmahub.com/project/" . $pid; // Exemple de lien
+            
+            $whatsappMessage = "Bonjour WMA HUB, voici ma preuve de paiement pour mon projet :
+- *Capture d'écran* : (Attachée)
+- *ID Projet* : #$pid
+- *Titre* : $title
+- *Artiste* : $artist
+- *Lien* : $projectLink";
+            $whatsappUrl = "https://wa.me/243825555555?text=" . urlencode($whatsappMessage); // Remplacer par le vrai numéro
+        ?>
+            <div class="glass-card p-12 animate-bounce-in">
+                <div class="max-w-2xl mx-auto">
+                    <div class="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/30">
+                        <i class="fas fa-check text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-white text-center mb-2">Projet Enregistré !</h2>
+                    <p class="text-gray-400 text-center mb-10">Votre ID Projet est <span class="text-white font-bold">#<?= $pid ?></span>. Veuillez finaliser le paiement pour activer la distribution.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                        <div class="bg-red-600/10 border border-red-600/30 p-4 rounded-2xl text-center">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-red-500 block mb-2">Airtel Money</span>
+                            <p class="text-lg font-bold text-white">0970000000</p>
+                            <p class="text-[9px] text-gray-500 mt-1">Nom: WMA HUB LTD</p>
+                        </div>
+                        <div class="bg-blue-600/10 border border-blue-600/30 p-4 rounded-2xl text-center">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-blue-500 block mb-2">M-Pesa</span>
+                            <p class="text-lg font-bold text-white">0810000000</p>
+                            <p class="text-[9px] text-gray-500 mt-1">Nom: WMA HUB LTD</p>
+                        </div>
+                        <div class="bg-orange-600/10 border border-orange-600/30 p-4 rounded-2xl text-center">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-orange-500 block mb-2">Orange Money</span>
+                            <p class="text-lg font-bold text-white">0890000000</p>
+                            <p class="text-[9px] text-gray-500 mt-1">Nom: WMA HUB LTD</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-500/5 border border-orange-500/20 p-6 rounded-2xl mb-10">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 flex-shrink-0 mt-1">
+                                <i class="fab fa-whatsapp text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-1 uppercase text-xs tracking-widest">Action Requise</h4>
+                                <p class="text-gray-400 text-sm leading-relaxed">
+                                    Veuillez envoyer la <span class="text-white font-bold underline">preuve de paiement</span> (capture d'écran) sur WhatsApp en cliquant sur le bouton ci-dessous.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <a href="<?= $whatsappUrl ?>" target="_blank" class="btn-submit !bg-green-600 !shadow-green-600/40 text-center">
+                            Envoyer la preuve via WhatsApp <i class="fab fa-whatsapp ml-2"></i>
+                        </a>
+                        <div class="flex gap-4">
+                            <a href="index.php" class="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-2xl transition-all text-center text-sm">
+                                Voir mes projets
+                            </a>
+                            <button onclick="window.location.href='submit.php'" class="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-2xl transition-all text-sm">
+                                Nouvelle soumission
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         <?php else: ?>

@@ -105,6 +105,7 @@ $db = getDBConnection();
         }
 
         function getText(n) {
+            if (n.message) return n.message;
             switch(n.type) {
                 case 'new_project': return 'Votre demande de distribution a bien été enregistrée.';
                 case 'project_update': return 'Le statut de votre projet a été mis à jour.';

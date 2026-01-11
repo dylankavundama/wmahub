@@ -69,4 +69,18 @@ if (php_sapi_name() !== 'cli') {
         return false; // Continuer la gestion d'erreur normale de PHP
     });
 }
+
+/**
+ * Crée une notification pour un utilisateur
+ */
+function createNotification($userId, $type, $message, $referenceId = null) {
+    try {
+        $db = getDBConnection();
+        $stmt = $db->prepare("INSERT INTO notifications (user_id, type, message, reference_id) VALUES (?, ?, ?, ?)");
+        return $stmt->execute([$userId, $type, $message, $referenceId]);
+    } catch (Exception $e) {
+        error_log("Notification Error: " . $e->getMessage());
+        return false;
+    }
+}
 ?>

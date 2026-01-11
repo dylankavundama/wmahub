@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getNotifText = (n) => {
+        if (n.message) return n.message;
         switch (n.type) {
             case 'new_project': return 'Nouveau projet créé';
             case 'new_task': return 'Une nouvelle tâche vous a été assignée';

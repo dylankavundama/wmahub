@@ -22,8 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Notify Artist
         if ($project_info) {
-            $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'project_update', ?)");
-            $notif->execute([$project_info['user_id'], $_POST['project_id']]);
+            $status_labels = [
+                'en_attente' => 'EN ATTENTE',
+                'en_preparation' => 'EN PRÉPARATION',
+                'distribue' => 'DISTRIBUÉ'
+            ];
+            $lbl = $status_labels[$_POST['status']] ?? $_POST['status'];
+            createNotification($project_info['user_id'], 'project_update', "Le statut de votre projet '" . $project_info['title'] . "' est passé à : $lbl", $_POST['project_id']);
 
             // --- ENVOI D'EMAIL À INFO@WMAHUB.COM ---
             $to = "info@wmahub.com";
@@ -64,12 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Notify Artist if paid
         if ($_POST['payment_status'] === 'paye') {
-            $stmt_user = $db->prepare("SELECT user_id FROM projects WHERE id = ?");
-            $stmt_user->execute([$_POST['project_id']]);
-            $art = $stmt_user->fetch();
-            if ($art) {
-                $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'payment_received', ?)");
-                $notif->execute([$art['user_id'], $_POST['project_id']]);
+            $stmt_p = $db->prepare("SELECT user_id, title FROM projects WHERE id = ?");
+            $stmt_p->execute([$_POST['project_id']]);
+            $proj = $stmt_p->fetch();
+            if ($proj) {
+                createNotification($proj['user_id'], 'payment_received', "Paiement confirmé pour votre projet : " . $proj['title'], $_POST['project_id']);
             }
         }
     }
