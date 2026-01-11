@@ -140,10 +140,14 @@ if ($current_day === 28) {
     <aside class="sidebar">
         <div class="flex items-center gap-4 mb-12 px-2">
             <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter">WMA STAFF</h1>
+            <div>
+                <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
+                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We Farm Your Talent</p>
+            </div>
         </div>
         <nav class="flex-1">
-            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Mes Missions</a>
+            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="missions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'missions.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Mes Missions</a>
             <a href="chat.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'active' : '' ?>"><i class="fas fa-comments"></i> Chat Équipe</a>
             <a href="service_card.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_card.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Carte de Service</a>
             <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>

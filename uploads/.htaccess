@@ -1,0 +1,17 @@
+# Désactiver l'exécution de scripts PHP dans le dossier uploads
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Autoriser uniquement les types de fichiers sûrs
+Order Deny,Allow
+Deny from all
+<FilesMatch "\.(jpg|jpeg|png|gif|mp3|wav|pdf|txt)$">
+    Allow from all
+</FilesMatch>

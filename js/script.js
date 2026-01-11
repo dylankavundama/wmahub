@@ -33,7 +33,7 @@ function revealOnScroll() {
         const windowHeight = window.innerHeight;
         const elementTop = reveals[i].getBoundingClientRect().top;
         const elementVisible = 150;
-        
+
         if (elementTop < windowHeight - elementVisible) {
             reveals[i].classList.add('active');
         }
@@ -69,7 +69,7 @@ window.addEventListener('load', heroAnimation);
  * Ouvre une nouvelle page pour le formulaire de soumission de projet.
  */
 function openDialog() {
-    const nouvellePageURL = 'projet.php'; 
+    const nouvellePageURL = 'auth/login.php';
     window.location.href = nouvellePageURL;
 }
 
@@ -102,7 +102,7 @@ function sendToWhatsApp() {
 
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
-    
+
     closeDialog();
 }
 
@@ -130,22 +130,22 @@ function animateDonutChart() {
     const segments = document.querySelectorAll('.donut-segment');
     const circumference = 2 * Math.PI * 80; // r = 80
     let currentOffset = 0;
-    
+
     // Trier les segments par ordre d'apparition (dans l'ordre du DOM)
     segments.forEach((segment, index) => {
         const percent = parseFloat(segment.getAttribute('data-percent'));
         const length = (percent / 100) * circumference;
-        
+
         // Initialiser à 0 pour l'animation
         segment.style.strokeDasharray = `0 ${circumference}`;
         segment.style.strokeDashoffset = -currentOffset;
-        
+
         // Animer vers la valeur finale
         setTimeout(() => {
             segment.style.transition = 'stroke-dasharray 1.5s ease-out';
             segment.style.strokeDasharray = `${length} ${circumference}`;
         }, index * 150);
-        
+
         currentOffset += length;
     });
 }
@@ -155,13 +155,13 @@ function animateDonutChart() {
  */
 function animateNumbers() {
     const numberElements = document.querySelectorAll('[data-target]');
-    
+
     numberElements.forEach(element => {
         const target = parseFloat(element.getAttribute('data-target'));
         const duration = 2000; // 2 secondes
         const increment = target / (duration / 16); // 60 FPS
         let current = 0;
-        
+
         const updateNumber = () => {
             current += increment;
             if (current < target) {
@@ -176,7 +176,7 @@ function animateNumbers() {
                 element.textContent = Math.floor(target);
             }
         };
-        
+
         // Démarrer l'animation quand l'élément est visible
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -186,7 +186,7 @@ function animateNumbers() {
                 }
             });
         }, { threshold: 0.5 });
-        
+
         observer.observe(element);
     });
 }
@@ -197,7 +197,7 @@ function animateNumbers() {
 function initChartAnimations() {
     const chartSection = document.querySelector('.analytics-section');
     if (!chartSection) return;
-    
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -205,17 +205,17 @@ function initChartAnimations() {
                 setTimeout(() => {
                     animateDonutChart();
                 }, 300);
-                
+
                 // Animer les nombres
                 setTimeout(() => {
                     animateNumbers();
                 }, 500);
-                
+
                 observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.3 });
-    
+
     observer.observe(chartSection);
 }
 
@@ -235,11 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function calculate3DPosition(lat, lng, radius) {
     const latRad = (lat * Math.PI) / 180;
     const lngRad = (lng * Math.PI) / 180;
-    
+
     const x = Math.cos(latRad) * Math.cos(lngRad) * radius;
     const y = Math.sin(latRad) * radius;
     const z = Math.cos(latRad) * Math.sin(lngRad) * radius;
-    
+
     return { x, y, z };
 }
 
@@ -249,22 +249,22 @@ function calculate3DPosition(lat, lng, radius) {
 function positionGlobePoints() {
     const globe = document.getElementById('globe3d');
     if (!globe) return;
-    
+
     const points = globe.querySelectorAll('.globe-point');
     const globeSize = 400; // Taille du globe
     const radius = globeSize / 2; // Rayon du globe
-    
+
     points.forEach(point => {
         const lat = parseFloat(point.style.getPropertyValue('--lat'));
         const lng = parseFloat(point.style.getPropertyValue('--lng'));
-        
+
         const { x, y, z } = calculate3DPosition(lat, lng, radius);
-        
+
         // Positionner le point sur la surface du globe
         point.style.left = `calc(50% + ${x}px - 10px)`;
         point.style.top = `calc(50% + ${y}px - 10px)`;
         point.style.transform = `translateZ(${z}px)`;
-        
+
         // Stocker les coordonnées pour la rotation
         point.dataset.x = x;
         point.dataset.y = y;
@@ -277,13 +277,13 @@ function positionGlobePoints() {
  */
 function animatePresenceStats() {
     const statNumbers = document.querySelectorAll('.stat-number-3d[data-target]');
-    
+
     statNumbers.forEach(element => {
         const target = parseFloat(element.getAttribute('data-target'));
         const duration = 2000;
         const increment = target / (duration / 16);
         let current = 0;
-        
+
         const updateNumber = () => {
             current += increment;
             if (current < target) {
@@ -293,7 +293,7 @@ function animatePresenceStats() {
                 element.textContent = Math.floor(target);
             }
         };
-        
+
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -302,7 +302,7 @@ function animatePresenceStats() {
                 }
             });
         }, { threshold: 0.5 });
-        
+
         observer.observe(element);
     });
 }
@@ -313,7 +313,7 @@ function animatePresenceStats() {
 function addGlobeInteractivity() {
     const globe = document.getElementById('globe3d');
     if (!globe) return;
-    
+
     let rotationY = 0;
     let rotationX = -20;
     let isDragging = false;
@@ -329,15 +329,15 @@ function addGlobeInteractivity() {
     let animationFrameId = null;
     let autoRotate = true;
     let autoRotateSpeed = 0.6; // degrés par frame
-    
+
     // Arrêter l'animation CSS automatique
     globe.style.animation = 'none';
-    
+
     // Fonction de mise à jour de la rotation
     function updateRotation() {
         globe.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
     }
-    
+
     // Fonction d'animation avec inertie
     function animate() {
         if (autoRotate && !isDragging) {
@@ -348,22 +348,22 @@ function addGlobeInteractivity() {
             // Appliquer l'inertie
             rotationY += velocityY;
             rotationX += velocityX;
-            
+
             // Réduire progressivement la vélocité (friction)
             velocityY *= 0.95;
             velocityX *= 0.95;
-            
+
             // Limiter la rotation X
             rotationX = Math.max(-60, Math.min(20, rotationX));
         }
-        
+
         updateRotation();
         animationFrameId = requestAnimationFrame(animate);
     }
-    
+
     // Démarrer l'animation
     animate();
-    
+
     // Gestion de la souris
     globe.addEventListener('mousedown', (e) => {
         isDragging = true;
@@ -380,15 +380,15 @@ function addGlobeInteractivity() {
         globe.style.cursor = 'grabbing';
         e.preventDefault();
     });
-    
+
     document.addEventListener('mousemove', (e) => {
         if (isDragging) {
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
-            
+
             rotationY = startRotationY + deltaX * 0.5;
             rotationX = Math.max(-60, Math.min(20, startRotationX - deltaY * 0.3));
-            
+
             // Calculer la vélocité pour l'inertie
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
@@ -396,15 +396,15 @@ function addGlobeInteractivity() {
                 velocityY = ((e.clientX - lastX) * 0.5) / deltaTime * 16;
                 velocityX = -((e.clientY - lastY) * 0.3) / deltaTime * 16;
             }
-            
+
             lastX = e.clientX;
             lastY = e.clientY;
             lastTime = currentTime;
-            
+
             updateRotation();
         }
     });
-    
+
     document.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
@@ -412,13 +412,13 @@ function addGlobeInteractivity() {
             // L'inertie continuera grâce à la fonction animate
         }
     });
-    
+
     // Gestion du touch pour mobile
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartRotationY = 0;
     let touchStartRotationX = 0;
-    
+
     globe.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
             isDragging = true;
@@ -431,28 +431,28 @@ function addGlobeInteractivity() {
             e.preventDefault();
         }
     });
-    
+
     globe.addEventListener('touchmove', (e) => {
         if (isDragging && e.touches.length === 1) {
             const deltaX = e.touches[0].clientX - touchStartX;
             const deltaY = e.touches[0].clientY - touchStartY;
-            
+
             rotationY = touchStartRotationY + deltaX * 0.5;
             rotationX = Math.max(-60, Math.min(20, touchStartRotationX - deltaY * 0.3));
-            
+
             updateRotation();
             e.preventDefault();
         }
     });
-    
+
     globe.addEventListener('touchend', () => {
         isDragging = false;
         globe.style.cursor = 'grab';
     });
-    
+
     // Curseur grab par défaut
     globe.style.cursor = 'grab';
-    
+
     // Reprendre la rotation automatique après un délai d'inactivité
     let inactivityTimeout;
     function resetAutoRotate() {
@@ -463,7 +463,7 @@ function addGlobeInteractivity() {
             }
         }, 3000); // Reprendre après 3 secondes d'inactivité
     }
-    
+
     globe.addEventListener('mouseleave', () => {
         resetAutoRotate();
     });
@@ -475,30 +475,30 @@ function addGlobeInteractivity() {
 function initGlobe3D() {
     const globeSection = document.querySelector('.global-presence');
     if (!globeSection) return;
-    
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 // Positionner les points
                 positionGlobePoints();
-                
+
                 // Animer les statistiques
                 setTimeout(() => {
                     animatePresenceStats();
                 }, 500);
-                
+
                 // Ajouter l'interactivité
                 setTimeout(() => {
                     addGlobeInteractivity();
                 }, 1000);
-                
+
                 observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.3 });
-    
+
     observer.observe(globeSection);
-    
+
     // Recalculer les positions au redimensionnement
     window.addEventListener('resize', () => {
         positionGlobePoints();

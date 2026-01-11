@@ -47,7 +47,13 @@ $history = $stmt->fetchAll();
 <body>
     <div class="bg-glow"></div>
     <aside class="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2"><img src="../../asset/trans.png" alt="Logo" class="h-10"><h1 class="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent">WMA HUB</h1></div>
+            <div class="flex items-center gap-4 mb-10 px-2">
+                <img src="../../asset/trans.png" alt="Logo" class="h-10">
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent leading-none">WMA HUB</h1>
+                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We Farm Your Talent</p>
+                </div>
+            </div>
         <nav class="flex-1">
             <a href="index.php" class="nav-link"><i class="fas fa-th-large"></i>Tableau de bord</a>
             <a href="submit.php" class="nav-link"><i class="fas fa-plus-circle"></i>Soumettre</a>

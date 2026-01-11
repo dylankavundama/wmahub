@@ -6,8 +6,15 @@ define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASSWORD') ?: '');
 
 // Configuration Google OAuth
-define('GOOGLE_CLIENT_ID', '547408646820-eedhgi415138ulb823mhh9uhln8i9f60.apps.googleusercontent.com');
-define('GOOGLE_CLIENT_SECRET', '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');
+define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '547408646820-eedhgi415138ulb823mhh9uhln8i9f60.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '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');
+
+// Configuration Gemini API
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA');
+
+// Configuration Business
+define('WHATSAPP_NUMBER', getenv('WHATSAPP_NUMBER') ?: '243825555555');
+define('SUPPORT_EMAIL', getenv('SUPPORT_EMAIL') ?: 'info@wmahub.com');
 
 // Détection dynamique de l'URL de base pour le redirect OAuth
 $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https://" : "http://";

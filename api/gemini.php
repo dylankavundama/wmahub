@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     $data = json_decode(file_get_contents('php://input'), true);
     $text = $data['text'];
 
-    $apiKey = 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA';
+    $apiKey = GEMINI_API_KEY;
     $prompt = "Agis comme un correcteur professionnel de textes et de paroles de chansons. 
     Corrige les fautes d'orthographe, de grammaire et améliore le style tout en restant fidèle à l'intention de l'artiste.
     Texte à corriger:
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     
     Réonds UNIQUEMENT avec le texte corrigé, sans commentaires.";
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" . $apiKey;
     $postData = ["contents" => [["parts" => [["text" => $prompt]]]]];
 
     $ch = curl_init($url);
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     $style = $_POST['style'];
     $verse = $_POST['verse'];
 
-    $apiKey = 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA';
+    $apiKey = GEMINI_API_KEY;
     $prompt = "Agis comme un auteur-compositeur. Écris un refrain accrocheur pour une chanson.
     Titre: $title
     Thème: $theme
@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     Rends le tout harmonieux.
     Relourne UNIQUEMENT le texte final avec le refrain coloré.";
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" . $apiKey;
     $postData = ["contents" => [["parts" => [["text" => $prompt]]]]];
 
     $ch = curl_init($url);
@@ -119,12 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
 // Action: Générer des paroles (Gemini)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Configuration de la clé API Gemini
-    $apiKey = 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA';
-
-    if ($apiKey === 'YOUR_API_KEY_HERE') {
-        echo json_encode(['success' => false, 'message' => 'Clé API Gemini non configurée. Veuillez contacter l\'administrateur.']);
-        exit;
-    }
+    $apiKey = GEMINI_API_KEY;
 
     $title = $_POST['title'];
     $theme = $_POST['theme'];
@@ -147,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         \"lyrics_2\": \"...\"
     }";
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" . $apiKey;
 
     $data = [
         "contents" => [

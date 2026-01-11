@@ -1,0 +1,24 @@
+# WMA Hub Root Security
+Options -Indexes
+
+# Bloquer l'accès aux fichiers sensibles
+<FilesMatch "^\.|\.sql$|Dockerfile|docker-compose\.yml|ANALYSE_DETAILLEE\.md|php\.ini|composer\.(json|lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Bloquer l'accès au dossier db
+RewriteEngine On
+RewriteRule ^db/.*$ - [F,L]
+RewriteRule ^brain/.*$ - [F,L]
+
+# Redirection vers HTTPS (commenté par défaut, à activer par l'utilisateur)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# En-têtes de sécurité de base
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

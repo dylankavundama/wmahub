@@ -1643,10 +1643,10 @@
                     class="social-icon-link">
                     <i class="fab fa-facebook-f"></i>
                 </a>
-                <a href="https://metal-server.nitrowebhost.co.uk:2096/webmaillogout.cgi" target="_blank"
-                    aria-label="Contactez-nous sur Telegram" rel="noopener noreferrer"
+                <a href="https://wa.me/243975203080" target="_blank"
+                    aria-label="Contactez-nous sur WhatsApp" rel="noopener noreferrer"
                     class="social-icon-link">
-                    <i class="fab fa-telegram"></i>
+                    <i class="fab fa-whatsapp"></i>
                 </a>
             </div>
         </div>
