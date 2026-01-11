@@ -40,4 +40,33 @@ function getDBConnection() {
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+/**
+ * Système de suivi analytique et erreurs
+ */
+if (php_sapi_name() !== 'cli') {
+    $db_stats = getDBConnection();
+    
+    // Suivi des visites
+    $current_page = $_SERVER['SCRIPT_NAME'];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    
+    // On n'enregistre que les pages principales, pas les API ou assets si possible
+    if (strpos($current_page, '.php') !== false && strpos($current_page, '/api/') === false) {
+        try {
+            $stmt_visit = $db_stats->prepare("INSERT INTO site_visits (page, ip_address) VALUES (?, ?)");
+            $stmt_visit->execute([$current_page, $ip]);
+        } catch (Exception $e) {}
+    }
+
+    // Gestionnaire d'erreurs personnalisé
+    set_error_handler(function($errno, $errstr, $errfile, $errline) use ($db_stats) {
+        if (!(error_reporting() & $errno)) return false;
+        try {
+            $stmt_err = $db_stats->prepare("INSERT INTO system_errors (message, file, line) VALUES (?, ?, ?)");
+            $stmt_err->execute([$errstr, $errfile, $errline]);
+        } catch (Exception $e) {}
+        return false; // Continuer la gestion d'erreur normale de PHP
+    });
+}
 ?>

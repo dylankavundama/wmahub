@@ -12,12 +12,66 @@ $db = getDBConnection();
 // Traitement des mises à jour
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_project_status'])) {
+        // Fetch project details for email before updating
+        $stmt_info = $db->prepare("SELECT title, user_id FROM projects WHERE id = ?");
+        $stmt_info->execute([$_POST['project_id']]);
+        $project_info = $stmt_info->fetch();
+
         $stmt = $db->prepare("UPDATE projects SET status = ? WHERE id = ?");
         $stmt->execute([$_POST['status'], $_POST['project_id']]);
+        
+        // Notify Artist
+        if ($project_info) {
+            $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'project_update', ?)");
+            $notif->execute([$project_info['user_id'], $_POST['project_id']]);
+
+            // --- ENVOI D'EMAIL À INFO@WMAHUB.COM ---
+            $to = "info@wmahub.com";
+            $status_label = match($_POST['status']) {
+                'en_attente' => 'En attente',
+                'en_preparation' => 'En préparation',
+                'distribue' => 'Distribué',
+                default => $_POST['status']
+            };
+            $project_title = $project_info['title'];
+            $subject = "Projet [" . $project_title . "] mis à jour : " . $status_label;
+            $admin_url = "https://wmahub.com/dashboards/admin/index.php?search=" . urlencode($project_title);
+            
+            $message = "
+            <html>
+            <head><title>Mise à jour statut projet</title></head>
+            <body style='font-family: sans-serif;'>
+                <h2>Mise à jour du statut d'un projet</h2>
+                <p><strong>Projet :</strong> " . htmlspecialchars($project_title) . "</p>
+                <p><strong>Nouveau statut :</strong> <span style='color: #ff6600; font-weight: bold;'>" . htmlspecialchars($status_label) . "</span></p>
+                <hr>
+                <p><a href='$admin_url' style='background: #ff6600; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Gérer le projet</a></p>
+            </body>
+            </html>
+            ";
+            
+            $headers = "MIME-Version: 1.0" . "\r\n";
+            $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+            $headers .= "From: WMA HUB <noreply@wmahub.com>" . "\r\n";
+
+            @mail($to, $subject, $message, $headers);
+            // ---------------------------------------
+        }
     }
     if (isset($_POST['update_payment_status'])) {
         $stmt = $db->prepare("UPDATE projects SET payment_status = ? WHERE id = ?");
         $stmt->execute([$_POST['payment_status'], $_POST['project_id']]);
+
+        // Notify Artist if paid
+        if ($_POST['payment_status'] === 'paye') {
+            $stmt_user = $db->prepare("SELECT user_id FROM projects WHERE id = ?");
+            $stmt_user->execute([$_POST['project_id']]);
+            $art = $stmt_user->fetch();
+            if ($art) {
+                $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'payment_received', ?)");
+                $notif->execute([$art['user_id'], $_POST['project_id']]);
+            }
+        }
     }
     if (isset($_POST['update_streams'])) {
         $stmt = $db->prepare("UPDATE projects SET streams = ? WHERE id = ?");
@@ -27,8 +81,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Récupérer tous les projets
-$projects = $db->query("SELECT p.*, u.name as user_name, u.email as user_email FROM projects p JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC")->fetchAll();
+// Récupérer les filtres
+$f_status = $_GET['f_status'] ?? 'all';
+$f_month = $_GET['f_month'] ?? 'all';
+$f_search = $_GET['search'] ?? '';
+
+// Construire la requête
+$query = "SELECT p.*, u.name as user_name, u.email as user_email FROM projects p JOIN users u ON p.user_id = u.id WHERE 1=1";
+$params = [];
+
+if ($f_status !== 'all') {
+    $query .= " AND p.status = ?";
+    $params[] = $f_status;
+}
+
+if ($f_month !== 'all') {
+    $query .= " AND DATE_FORMAT(p.created_at, '%Y-%m') = ?";
+    $params[] = $f_month;
+}
+
+if ($f_search !== '') {
+    $query .= " AND (p.title LIKE ? OR u.name LIKE ? OR p.artist_name LIKE ?)";
+    $params[] = "%$f_search%";
+    $params[] = "%$f_search%";
+    $params[] = "%$f_search%";
+}
+
+$query .= " ORDER BY p.created_at DESC";
+
+$stmt = $db->prepare($query);
+$stmt->execute($params);
+$projects = $stmt->fetchAll();
+
+// Récupérer les mois disponibles pour le filtre
+$months = $db->query("SELECT DISTINCT DATE_FORMAT(created_at, '%Y-%m') as m FROM projects ORDER BY m DESC")->fetchAll();
 
 // Stats calculation
 $total_projects = count($projects);
@@ -88,9 +174,16 @@ foreach($projects as $p) {
             <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter">WMA ADMIN</h1>
         </div>
         <nav class="flex-1">
-            <a href="index.php" class="nav-link active"><i class="fas fa-layer-group"></i> Gestion Projets</a>
-            <a href="employees.php" class="nav-link"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
-            <a href="finance.php" class="nav-link"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
+            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
+            <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
+            <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
+            <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
+            <a href="chat.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'active' : '' ?>"><i class="fas fa-comments"></i> Chat Équipe</a>
+            <a href="service_cards.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_cards.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Cartes de Service</a>
+            <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
+            <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
+            <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
         </nav>
         <div class="mt-auto pt-6 border-t border-white/5">
             <div class="flex items-center gap-4 mb-8 px-2">
@@ -113,9 +206,10 @@ foreach($projects as $p) {
             <div class="flex items-center gap-4">
                 <div class="relative hidden md:block">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"></i>
-                    <input type="text" id="tableSearch" class="search-bar pl-12" placeholder="Rechercher...">
+                    <input type="text" id="tableSearch" name="search" class="search-bar pl-12" placeholder="Rechercher..." value="<?= htmlspecialchars($f_search) ?>">
                 </div>
                 <button onclick="window.location.reload()" class="bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl transition-all border border-white/10"><i class="fas fa-sync-alt"></i></button>
+                <?php include '../../includes/header_notifications.php'; ?>
             </div>
         </header>
 
@@ -141,8 +235,40 @@ foreach($projects as $p) {
 
         <!-- Table Container -->
         <div class="glass-card p-0 overflow-hidden shadow-2xl border-white/5">
-            <div class="px-8 py-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="px-8 py-6 border-b border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <h3 class="text-lg font-bold flex items-center gap-3"><i class="fas fa-compact-disc text-orange-500"></i> Dernières demandes</h3>
+                
+                <form method="GET" class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] font-black uppercase text-gray-500">Statut:</label>
+                        <select name="f_status" class="custom-select" onchange="this.form.submit()">
+                            <option value="all">Tous</option>
+                            <option value="en_attente" <?= $f_status === 'en_attente' ? 'selected' : '' ?>>En attente</option>
+                            <option value="en_preparation" <?= $f_status === 'en_preparation' ? 'selected' : '' ?>>Préparation</option>
+                            <option value="distribue" <?= $f_status === 'distribue' ? 'selected' : '' ?>>Distribué</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <label class="text-[10px] font-black uppercase text-gray-500">Mois:</label>
+                        <select name="f_month" class="custom-select" onchange="this.form.submit()">
+                            <option value="all">Tous les mois</option>
+                            <?php foreach ($months as $m): ?>
+                                <?php 
+                                    $date = DateTime::createFromFormat('Y-m', $m['m']);
+                                    $label = ucfirst($date->format('F Y')); // Note: Month names will be in English unless locale is set
+                                ?>
+                                <option value="<?= $m['m'] ?>" <?= $f_month === $m['m'] ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <?php if ($f_status !== 'all' || $f_month !== 'all' || $f_search !== ''): ?>
+                        <a href="index.php" class="text-[10px] font-black uppercase text-orange-500 hover:text-orange-400">
+                            <i class="fas fa-times mr-1"></i>Reset
+                        </a>
+                    <?php endif; ?>
+                </form>
             </div>
             <div class="overflow-x-auto">
                 <table class="admin-table text-left" id="projectsTable">
@@ -186,7 +312,16 @@ foreach($projects as $p) {
     <script>
         const glow = document.getElementById('glow');
         document.addEventListener('mousemove', (e) => { glow.style.left = (e.clientX - 200) + 'px'; glow.style.top = (e.clientY - 200) + 'px'; });
-        document.getElementById('tableSearch').addEventListener('keyup', function() {
+        
+        // Handle search input for both instant feedback and form submission
+        const searchInput = document.getElementById('tableSearch');
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                const url = new URL(window.location.href);
+                url.searchParams.set('search', this.value);
+                window.location.href = url.href;
+                return;
+            }
             const value = this.value.toLowerCase();
             document.querySelectorAll('#projectsTable tbody tr').forEach(row => { row.style.display = row.innerText.toLowerCase().indexOf(value) > -1 ? '' : 'none'; });
         });

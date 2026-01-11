@@ -37,8 +37,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $taskId = $db->lastInsertId();
 
         // Notifier l'employé
-        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'tache', ?)");
+        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_task', ?)");
         $notifStmt->execute([$_POST['employee_id'], $taskId]);
+
+        // --- ENVOI D'EMAIL À L'EMPLOYÉ ---
+        $stmt_emp = $db->prepare("SELECT email, name FROM users WHERE id = ?");
+        $stmt_emp->execute([$_POST['employee_id']]);
+        $emp_info = $stmt_emp->fetch();
+
+        if ($emp_info && $emp_info['email']) {
+            $to = $emp_info['email'];
+            $subject = "🚀 Nouvelle mission attribuée : " . $_POST['task_title'];
+            $task_url = "https://wmahub.com/dashboards/admin/task_chat.php?id=" . $taskId;
+            
+            $message = "
+            <html>
+            <head><title>Nouvelle mission</title></head>
+            <body style='font-family: sans-serif;'>
+                <h2>Bonjour " . htmlspecialchars($emp_info['name']) . ",</h2>
+                <p>Une nouvelle mission vous a été attribuée sur WMA HUB.</p>
+                <p><strong>Mission :</strong> " . htmlspecialchars($_POST['task_title']) . "</p>
+                <hr>
+                <p><a href='$task_url' style='background: #ff6600; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Voir les détails et commencer</a></p>
+                <p style='font-size: 12px; color: #666; margin-top: 20px;'>Ceci est une notification automatique, merci de ne pas y répondre.</p>
+            </body>
+            </html>
+            ";
+            
+            $headers = "MIME-Version: 1.0" . "\r\n";
+            $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+            $headers .= "From: WMA HUB <noreply@wmahub.com>" . "\r\n";
+
+            @mail($to, $subject, $message, $headers);
+        }
+        // ----------------------------------
     }
     // Suppression d'une tâche
     if (isset($_POST['delete_task'])) {
@@ -137,22 +169,16 @@ $active_tasks = $db->query("SELECT t.*, u.name as employee_name FROM tasks t JOI
         </div>
 
         <nav class="flex-1">
-            <a href="index.php" class="nav-link">
-                <i class="fas fa-layer-group"></i>
-                Gestion Projets
-            </a>
-            <a href="employees.php" class="nav-link active">
-                <i class="fas fa-users-cog"></i>
-                Équipe & Staff
-            </a>
-            <a href="users.php" class="nav-link">
-                <i class="fas fa-user-friends"></i>
-                Utilisateurs
-            </a>
-            <a href="index.php#finance-section" class="nav-link">
-                <i class="fas fa-chart-pie"></i>
-                Rapports Financiers
-            </a>
+            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
+            <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
+            <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
+            <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
+            <a href="chat.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'active' : '' ?>"><i class="fas fa-comments"></i> Chat Équipe</a>
+            <a href="service_cards.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_cards.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Cartes de Service</a>
+            <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
+            <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
+            <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
         </nav>
 
         <div class="mt-auto pt-6 border-t border-white/5">

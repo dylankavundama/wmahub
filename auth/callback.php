@@ -74,6 +74,12 @@ if (isset($_GET['code'])) {
         $_SESSION['user_name'] = $name;
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['role'] = $user['role'];
+
+        // Log de connexion
+        try {
+            $stmt_log = $db->prepare("INSERT INTO login_logs (user_id) VALUES (?)");
+            $stmt_log->execute([$user['id']]);
+        } catch (Exception $e) {}
         
         if ($user['role'] === null) {
             header('Location: select-role.php');

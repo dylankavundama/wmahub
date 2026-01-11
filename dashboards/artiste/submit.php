@@ -65,10 +65,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Notifier tous les admins
         $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
-        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'projet', ?)");
+        $notifStmt = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_project', ?)");
         foreach ($admins as $admin) {
             $notifStmt->execute([$admin['id'], $projectId]);
         }
+
+        // --- ENVOI D'EMAIL À INFO@WMAHUB.COM ---
+        $to = "info@wmahub.com";
+        $subject = "Nouveau projet soumis : " . $title;
+        $admin_url = "https://wmahub.com/dashboards/admin/index.php?search=" . urlencode($title);
+        
+        $message = "
+        <html>
+        <head><title>Nouveau projet soumis</title></head>
+        <body style='font-family: sans-serif;'>
+            <h2>Un nouveau projet a été soumis sur WMA HUB</h2>
+            <p><strong>Artiste :</strong> " . htmlspecialchars($artist_name ?: $_SESSION['user_name']) . "</p>
+            <p><strong>Projet :</strong> " . htmlspecialchars($title) . "</p>
+            <p><strong>Pack :</strong> " . htmlspecialchars($promo_pack) . "</p>
+            <hr>
+            <p><a href='$admin_url' style='background: #ff6600; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Gérer le projet</a></p>
+        </body>
+        </html>
+        ";
+        
+        $headers = "MIME-Version: 1.0" . "\r\n";
+        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+        $headers .= "From: WMA HUB <noreply@wmahub.com>" . "\r\n";
+
+        @mail($to, $subject, $message, $headers);
+        // ---------------------------------------
         
         header('Location: submit.php?success=1');
         exit;

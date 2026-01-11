@@ -67,8 +67,10 @@ function getStatusLabel($status) {
         <aside class="sidebar" id="sidebar">
             <div class="flex items-center gap-4 mb-10 px-2"><img src="../../asset/trans.png" alt="Logo" class="h-10"><h1 class="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent">WMA HUB</h1></div>
             <nav class="flex-1">
-                <a href="index.php" class="nav-link active"><i class="fas fa-th-large"></i>Tableau de bord</a>
-                <a href="submit.php" class="nav-link"><i class="fas fa-plus-circle"></i>Soumettre</a>
+                <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-th-large"></i>Tableau de bord</a>
+                <a href="submit.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'submit.php' ? 'active' : '' ?>"><i class="fas fa-plus-circle"></i>Soumettre</a>
+                <a href="services.php" class="nav-link <?= strpos(basename($_SERVER['PHP_SELF']), 'services') !== false || strpos(basename($_SERVER['PHP_SELF']), 'writing') !== false || strpos(basename($_SERVER['PHP_SELF']), 'notepad') !== false ? 'active' : '' ?>"><i class="fas fa-magic"></i>Services</a>
+                <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i>Notifications</a>
                 <a href="#" class="nav-link"><i class="fas fa-music"></i>Catalogue</a>
                 <a href="#" class="nav-link"><i class="fas fa-chart-line"></i>Stats</a>
                 <a href="#" class="nav-link"><i class="fas fa-wallet"></i>Revenus</a>
@@ -84,7 +86,10 @@ function getStatusLabel($status) {
         <main class="main-content">
             <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                 <div><h2 class="text-4xl font-black mb-2">Bonjour, <span class="text-orange-500"><?= explode(' ', $_SESSION['user_name'])[0] ?></span>.</h2><p class="text-gray-400">Bienvenue dans votre centre créatif.</p></div>
-                <a href="submit.php" class="btn-primary"><i class="fas fa-rocket"></i>Nouvelle Sortie</a>
+                <div class="flex items-center gap-4 mt-4 md:mt-0">
+                    <a href="submit.php" class="btn-primary"><i class="fas fa-rocket"></i>Nouvelle Sortie</a>
+                    <?php include '../../includes/header_notifications.php'; ?>
+                </div>
             </header>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Projets</p><p class="text-3xl font-black"><?= count($projects) ?></p></div>

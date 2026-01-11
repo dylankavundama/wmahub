@@ -18,12 +18,54 @@ if (!$user || !$user['is_active']) {
     exit;
 }
 
-// Traitement des mises à jour de statut des tâches
+// Traitement des mises à jour de statut des tâches et encaissement de salaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_task_status'])) {
         $stmt = $db->prepare("UPDATE tasks SET status = ? WHERE id = ? AND user_id = ?");
         $stmt->execute([$_POST['task_status'], $_POST['task_id'], $_SESSION['user_id']]);
+
+        if ($_POST['task_status'] === 'termine') {
+            // Notifier les admins
+            $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
+            $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_task', ?)");
+            foreach ($admins as $admin) {
+                $notif->execute([$admin['id'], $_POST['task_id']]);
+            }
+        }
     }
+    
+    // Traitement de l'encaissement du salaire
+    if (isset($_POST['encaisser_salaire'])) {
+        $current_date = date('Y-m-d');
+        $current_day = (int)date('d');
+        
+        // Vérifier que c'est le 28 du mois
+        if ($current_day === 28) {
+            // Vérifier si l'employé a déjà encaissé ce mois
+            $current_month = date('Y-m');
+            $stmt = $db->prepare("SELECT id FROM salary_withdrawals WHERE user_id = ? AND DATE_FORMAT(date_encaissement, '%Y-%m') = ?");
+            $stmt->execute([$_SESSION['user_id'], $current_month]);
+            $already_withdrawn = $stmt->fetch();
+            
+            if (!$already_withdrawn) {
+                // Enregistrer l'encaissement
+                $stmt = $db->prepare("INSERT INTO salary_withdrawals (user_id, montant, date_encaissement) VALUES (?, ?, ?)");
+                $stmt->execute([$_SESSION['user_id'], $user['salary'], $current_date]);
+                
+                // Créer une dépense pour déduire de la caisse
+                $motif = "Salaire - " . $_SESSION['user_name'];
+                $stmt = $db->prepare("INSERT INTO expenses (project_id, motif, montant, date_depense) VALUES (NULL, ?, ?, ?)");
+                $stmt->execute([$motif, $user['salary'], $current_date]);
+                
+                $_SESSION['success_message'] = "Salaire encaissé avec succès !";
+            } else {
+                $_SESSION['error_message'] = "Vous avez déjà encaissé votre salaire ce mois.";
+            }
+        } else {
+            $_SESSION['error_message'] = "L'encaissement n'est disponible que le 28 de chaque mois.";
+        }
+    }
+    
     header('Location: index.php');
     exit;
 }
@@ -33,9 +75,35 @@ $stmt = $db->prepare("SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at 
 $stmt->execute([$_SESSION['user_id']]);
 $my_tasks = $stmt->fetchAll();
 
+// Récupérer l'historique des encaissements
+$stmt = $db->prepare("SELECT * FROM salary_withdrawals WHERE user_id = ? ORDER BY date_encaissement DESC");
+$stmt->execute([$_SESSION['user_id']]);
+$withdrawal_history = $stmt->fetchAll();
+
 // Stats calculation (Uniquement salaire ici, ou tâches)
 $in_progress_tasks = count(array_filter($my_tasks, fn($t) => $t['status'] === 'en_cours'));
 $completed_tasks = count(array_filter($my_tasks, fn($t) => $t['status'] === 'termine'));
+
+// Vérifier si l'employé peut encaisser son salaire
+$can_withdraw = false;
+$withdrawal_message = "";
+$current_day = (int)date('d');
+$current_month = date('Y-m');
+
+if ($current_day === 28) {
+    // Vérifier si déjà encaissé ce mois
+    $stmt = $db->prepare("SELECT id FROM salary_withdrawals WHERE user_id = ? AND DATE_FORMAT(date_encaissement, '%Y-%m') = ?");
+    $stmt->execute([$_SESSION['user_id'], $current_month]);
+    $already_withdrawn = $stmt->fetch();
+    
+    if ($already_withdrawn) {
+        $withdrawal_message = "Salaire déjà encaissé ce mois";
+    } else {
+        $can_withdraw = true;
+    }
+} else {
+    $withdrawal_message = "Disponible le 28 du mois";
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -70,7 +138,10 @@ $completed_tasks = count(array_filter($my_tasks, fn($t) => $t['status'] === 'ter
             <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter">WMA STAFF</h1>
         </div>
         <nav class="flex-1">
-            <a href="index.php" class="nav-link active"><i class="fas fa-tasks"></i> Mes Missions</a>
+            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Mes Missions</a>
+            <a href="chat.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'active' : '' ?>"><i class="fas fa-comments"></i> Chat Équipe</a>
+            <a href="service_card.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_card.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Carte de Service</a>
+            <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
         </nav>
         <div class="mt-auto pt-6 border-t border-white/5">
             <div class="flex items-center gap-4 mb-8 px-2">
@@ -90,14 +161,46 @@ $completed_tasks = count(array_filter($my_tasks, fn($t) => $t['status'] === 'ter
                 <h2 class="text-4xl font-black tracking-tighter text-white">Espace <span class="text-orange-500">Employé</span></h2>
                 <p class="text-gray-400 mt-2">Bienvenue sur votre tableau de bord personnel.</p>
             </div>
-            <button onclick="window.location.reload()" class="bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl border border-white/10"><i class="fas fa-sync-alt"></i></button>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.reload()" class="bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl border border-white/10 transition-all"><i class="fas fa-sync-alt"></i></button>
+                <?php include '../../includes/header_notifications.php'; ?>
+            </div>
         </header>
+
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
+                <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                <p class="text-green-500 font-bold"><?= $_SESSION['success_message'] ?></p>
+            </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+                <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                <p class="text-red-500 font-bold"><?= $_SESSION['error_message'] ?></p>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <div class="glass-card border-green-500/20 bg-green-500/5">
                 <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2">Revenu Mensuel</p>
-                <p class="text-4xl font-black text-white"><?= number_format($user['salary'], 0, '.', ' ') ?>$</p>
+                <p class="text-4xl font-black text-white mb-4"><?= number_format($user['salary'], 0, '.', ' ') ?>$</p>
+                
+                <?php if ($can_withdraw): ?>
+                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir encaisser votre salaire de <?= number_format($user['salary'], 0, '.', ' ') ?>$ ?');">
+                        <button type="submit" name="encaisser_salaire" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Encaisser
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <div class="bg-white/5 text-gray-400 text-center py-2 px-4 rounded-lg border border-white/10">
+                        <p class="text-[10px] font-bold uppercase tracking-wider"><?= $withdrawal_message ?></p>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="glass-card">
                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">En cours</p>
@@ -113,56 +216,51 @@ $completed_tasks = count(array_filter($my_tasks, fn($t) => $t['status'] === 'ter
             </div>
         </div>
 
-        <!-- Mes Tâches Assigned -->
+
+        </section>
+
+        <!-- Historique des Encaissements -->
         <section class="mb-12">
             <div class="flex items-center gap-3 mb-6">
-                <i class="fas fa-tasks text-orange-500"></i>
-                <h3 class="text-xl font-bold">Mes Missions & Tâches</h3>
+                <i class="fas fa-history text-green-500"></i>
+                <h3 class="text-xl font-bold">Historique des Encaissements</h3>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <?php foreach ($my_tasks as $task): ?>
-                    <div class="glass-card flex flex-col justify-between border-white/5">
-                        <div>
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-[10px] font-black uppercase px-2 py-1 rounded bg-white/5 text-gray-400">Assignée le <?= date('d/m/Y', strtotime($task['created_at'])) ?></span>
-                                <?php 
-                                    $statusClass = match($task['status']) {
-                                        'en_cours' => 'text-amber-500 bg-amber-500/10',
-                                        'termine' => 'text-green-500 bg-green-500/10',
-                                        default => 'text-gray-500 bg-white/5'
-                                    };
-                                    $statusLabel = match($task['status']) {
-                                        'en_cours' => 'En cours',
-                                        'termine' => 'Terminé',
-                                        default => $task['status']
-                                    };
-                                ?>
-                                <span class="text-[10px] font-black uppercase px-2 py-1 rounded <?= $statusClass ?>"><?= $statusLabel ?></span>
-                            </div>
-                            <h4 class="font-bold text-lg mb-2 text-white"><?= htmlspecialchars($task['title']) ?></h4>
-                            <p class="text-sm text-gray-500 line-clamp-3 mb-6"><?= htmlspecialchars($task['description']) ?></p>
-                        </div>
-                        <div class="mt-auto flex items-center gap-2">
-                            <a href="../admin/task_chat.php?id=<?= $task['id'] ?>" class="flex-1 bg-white/5 hover:bg-white/10 text-white text-center py-2 rounded-lg text-[10px] font-black uppercase transition-all border border-white/10">
-                                <i class="fas fa-comments mr-2"></i> Chat & Détails
-                            </a>
-                            <form method="POST" class="flex-1">
-                                <input type="hidden" name="task_id" value="<?= $task['id'] ?>">
-                                <select name="task_status" onchange="this.form.submit()" class="custom-select w-full !text-[10px] font-black uppercase">
-                                    <option value="en_cours" <?= $task['status'] === 'en_cours' ? 'selected' : '' ?>>En cours</option>
-                                    <option value="termine" <?= $task['status'] === 'termine' ? 'selected' : '' ?>>Terminé ✓</option>
-                                </select>
-                                <input type="hidden" name="update_task_status" value="1">
-                            </form>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (empty($my_tasks)): ?>
-                    <div class="col-span-full py-12 text-center glass-card border-dashed">
-                        <i class="fas fa-check-double text-4xl text-gray-800 mb-4 block"></i>
-                        <p class="text-xs text-gray-500 uppercase font-black tracking-widest">Aucune tâche assignée pour le moment</p>
-                    </div>
-                <?php endif; ?>
+            <div class="glass-card p-0 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="text-[10px] text-gray-500 uppercase tracking-widest border-b border-white/5">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Montant</th>
+                                <th class="px-6 py-4">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($withdrawal_history as $hist): ?>
+                                <tr class="border-b border-white/5 hover:bg-white/2">
+                                    <td class="px-6 py-4 text-sm font-medium">
+                                        <?= date('d/m/Y', strtotime($hist['date_encaissement'])) ?>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-black text-green-500">
+                                        <?= number_format($hist['montant'], 0, '.', ' ') ?>$
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="text-[9px] font-black uppercase px-2 py-1 rounded bg-green-500/10 text-green-500 border border-green-500/20">
+                                            Payload Confirmé ✓
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($withdrawal_history)): ?>
+                                <tr>
+                                    <td colspan="3" class="px-6 py-12 text-center text-gray-500 uppercase font-black tracking-widest text-xs">
+                                        Aucun historique pour le moment
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>

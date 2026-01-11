@@ -45,12 +45,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($message) || $image_path) {
             $stmt = $db->prepare("INSERT INTO task_messages (task_id, sender_id, message, image_path) VALUES (?, ?, ?, ?)");
             $stmt->execute([$task_id, $_SESSION['user_id'], $message, $image_path]);
+
+            // Notify receiver
+            if ($_SESSION['role'] === 'admin') {
+                $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_message', ?)");
+                $notif->execute([$task['emp_id'], $task_id]);
+            } else {
+                $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
+                $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'new_message', ?)");
+                foreach ($admins as $admin) {
+                    $notif->execute([$admin['id'], $task_id]);
+                }
+            }
         }
     }
     
     if (isset($_POST['update_status'])) {
         $stmt = $db->prepare("UPDATE tasks SET status = ? WHERE id = ?");
         $stmt->execute([$_POST['status'], $task_id]);
+
+        // Notifier l'employé
+        if ($_SESSION['role'] === 'admin') {
+            $notif = $db->prepare("INSERT INTO notifications (user_id, type, reference_id) VALUES (?, 'task_update', ?)");
+            $notif->execute([$task['emp_id'], $task_id]);
+        }
     }
 
     header("Location: task_chat.php?id=$task_id");
@@ -88,7 +106,7 @@ $messages = $stmt->fetchAll();
     
     <header class="glass-header flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="<?= $_SESSION['role'] === 'admin' ? 'employees.php' : 'index.php' ?>" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all">
+            <a href="<?= $_SESSION['role'] === 'admin' ? 'tasks.php' : 'index.php' ?>" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all">
                 <i class="fas fa-chevron-left"></i>
             </a>
             <div>
