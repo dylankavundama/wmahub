@@ -91,9 +91,10 @@
                     <li><a href="#actualites" class="nav-link">Actualités</a></li>
                     <?php if (isset($_SESSION['user_id'])): 
                         $dashboardUrl = 'dashboards/artiste/index.php';
-                        if ($_SESSION['role'] === 'admin') {
+                        $role = $_SESSION['role'] ?? '';
+                        if ($role === 'admin') {
                             $dashboardUrl = 'dashboards/admin/index.php';
-                        } elseif ($_SESSION['role'] === 'employe') {
+                        } elseif ($role === 'employe') {
                             $dashboardUrl = 'dashboards/employe/index.php';
                         }
                     ?>

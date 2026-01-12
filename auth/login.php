@@ -3,9 +3,10 @@ require_once __DIR__ . '/../includes/config.php';
 
 // Si déjà connecté, rediriger vers le dashboard approprié
 if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['role'] === 'artiste') {
+    $role = $_SESSION['role'] ?? '';
+    if ($role === 'artiste') {
         header('Location: ../dashboards/artiste/index.php');
-    } elseif ($_SESSION['role'] === 'employe' || $_SESSION['role'] === 'admin') {
+    } elseif ($role === 'employe' || $role === 'admin') {
         header('Location: ../dashboards/admin/index.php');
     }
     exit;
