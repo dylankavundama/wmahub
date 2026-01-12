@@ -7,24 +7,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'artiste') {
     exit;
 }
 
-$pageTitle = 'Dashboard Artiste - WMA Hub';
-include __DIR__ . '/../../includes/header.php';
+$pageTitle = 'Mes Statistiques - WMA Hub';
 
 $db = getDBConnection();
 
-// Récupérer les projets de l'utilisateur
-$stmt = $db->prepare("SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC");
+// Récupérer les projets de l'utilisateur avec leurs streams
+$stmt = $db->prepare("SELECT title, artist_name, streams, genre, type, date_sortie FROM projects WHERE user_id = ? ORDER BY streams DESC");
 $stmt->execute([$_SESSION['user_id']]);
 $projects = $stmt->fetchAll();
 
-function getStatusLabel($status) {
-    switch ($status) {
-        case 'en_attente': return 'En attente';
-        case 'en_preparation': return 'En préparation';
-        case 'distribue': return 'Distribué';
-        default: return str_replace('_', ' ', ucfirst($status));
-    }
-}
+$total_streams = array_sum(array_column($projects, 'streams'));
+$max_streams_single = !empty($projects) ? $projects[0]['streams'] : 0;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -34,7 +27,7 @@ function getStatusLabel($status) {
     <title><?= $pageTitle ?></title>
     <link rel="icon" type="image/png" href="../../asset/icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; margin: 0; min-height: 100vh; overflow-x: hidden; }
@@ -47,12 +40,9 @@ function getStatusLabel($status) {
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.5); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; padding: 1.5rem; transition: all 0.4s ease; }
-        .badge { padding: 0.4rem 0.8rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-        .badge-pending { background: rgba(255, 165, 0, 0.1); color: #ffa500; border: 1px solid rgba(255, 165, 0, 0.2); }
-        .badge-success { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
-        .badge-info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
         .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 80; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .btn-primary { background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%); box-shadow: 0 10px 20px -5px rgba(255, 102, 0, 0.4); transition: all 0.3s ease; text-decoration: none; display: inline-flex; items-center; gap: 0.5rem; color: #fff; font-weight: bold; padding: 1rem 2rem; border-radius: 1rem; }
+        .stat-bar-bg { background: rgba(255, 255, 255, 0.05); height: 12px; border-radius: 6px; overflow: hidden; position: relative; }
+        .stat-bar-fill { background: linear-gradient(90deg, #ff6600, #ffb380); height: 100%; border-radius: 6px; transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
     </style>
 </head>
 <body>
@@ -75,7 +65,7 @@ function getStatusLabel($status) {
             <nav class="flex-1">
                 <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-th-large"></i>Tableau de bord</a>
                 <a href="submit.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'submit.php' ? 'active' : '' ?>"><i class="fas fa-plus-circle"></i>Soumettre</a>
-                <a href="services.php" class="nav-link <?= strpos(basename($_SERVER['PHP_SELF']), 'services') !== false || strpos(basename($_SERVER['PHP_SELF']), 'writing') !== false || strpos(basename($_SERVER['PHP_SELF']), 'notepad') !== false ? 'active' : '' ?>"><i class="fas fa-magic"></i>Services</a>
+                <a href="services.php" class="nav-link <?= strpos(basename($_SERVER['PHP_SELF']), 'services') !== false ? 'active' : '' ?>"><i class="fas fa-magic"></i>Services</a>
                 <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i>Notifications</a>
                 <a href="catalogue.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'catalogue.php' ? 'active' : '' ?>"><i class="fas fa-music"></i>Catalogue</a>
                 <a href="stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i>Stats</a>
@@ -89,55 +79,83 @@ function getStatusLabel($status) {
                 <a href="../../auth/logout.php" class="nav-link !text-red-500 hover:!bg-red-500/10"><i class="fas fa-power-off"></i>Déconnexion</a>
             </div>
         </aside>
+
         <main class="main-content">
-            <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                <div><h2 class="text-4xl font-black mb-2">Bonjour, <span class="text-orange-500"><?= explode(' ', $_SESSION['user_name'])[0] ?></span>.</h2><p class="text-gray-400">Bienvenue dans votre centre créatif.</p></div>
-                <div class="flex items-center gap-4 mt-4 md:mt-0">
-                    <a href="submit.php" class="btn-primary"><i class="fas fa-rocket"></i>Nouvelle Sortie</a>
-                    <?php include '../../includes/header_notifications.php'; ?>
-                </div>
+            <header class="mb-12">
+                <h2 class="text-4xl font-black mb-2">Performances & <span class="text-orange-500">Statistiques</span></h2>
+                <p class="text-gray-400">Analysez l'impact de votre musique sur les plateformes.</p>
             </header>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Projets</p><p class="text-3xl font-black"><?= count($projects) ?></p></div>
-                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Vues Totales</p><p class="text-3xl font-black text-orange-500"><?= number_format(array_sum(array_column($projects, 'streams')), 0, '.', ' ') ?></p></div>
-                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Distribués</p><p class="text-3xl font-black text-green-500"><?= count(array_filter($projects, fn($p) => $p['status'] === 'distribue')) ?></p></div>
-                <div class="glass-card"><p class="text-xs text-gray-500 font-bold uppercase mb-1">Revenus</p><p class="text-3xl font-black">0.00 $</p></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="glass-card">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Streams Totaux</p>
+                    <p class="text-4xl font-black text-orange-500"><?= number_format($total_streams, 0, '.', ' ') ?></p>
+                </div>
+                <div class="glass-card">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Meilleur Titre</p>
+                    <p class="text-xl font-bold truncate"><?= !empty($projects) ? htmlspecialchars($projects[0]['title']) : 'Aucun' ?></p>
+                </div>
+                <div class="glass-card">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Projets Actifs</p>
+                    <p class="text-4xl font-black text-white"><?= count($projects) ?></p>
+                </div>
             </div>
-            <div class="glass-card p-0 overflow-hidden shadow-2xl">
-                <div class="px-8 py-6 border-b border-white/5 flex items-center justify-between"><h3 class="text-lg font-bold">Sorties récentes</h3><a href="#" class="text-xs font-bold text-orange-500">Voir tout</a></div>
-                <table class="w-full text-left">
-                    <thead><tr class="text-[10px] uppercase font-black text-gray-500 border-b border-white/5"><th class="px-8 py-4">Titre</th><th class="px-8 py-4">Statut</th><th class="px-8 py-4">Vues Score</th><th class="px-8 py-4">Sortie</th></tr></thead>
-                    <tbody class="divide-y divide-white/5">
-                        <?php if (empty($projects)): ?><tr><td colspan="3" class="px-8 py-20 text-center text-gray-500">Aucun projet trouvé.</td></tr>
-                        <?php else: foreach ($projects as $project): ?>
-                            <tr class="hover:bg-white/[0.02] group">
-                                <td class="px-8 py-5">
-                                    <p class="font-bold group-hover:text-orange-500 transition-colors"><?= htmlspecialchars($project['title']) ?></p>
-                                    <p class="text-xs text-gray-500"><?= htmlspecialchars($project['artist_name']) ?></p>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <?php $s = $project['status']; $b = "badge-" . ($s == 'distribue' ? 'success' : ($s == 'en_preparation' ? 'info' : 'pending')); ?>
-                                    <span class="badge <?= $b ?>"><?= getStatusLabel($s) ?></span>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <div class="flex items-center gap-2">
-                                        <i class="fas fa-chart-bar text-orange-500/50"></i>
-                                        <span class="font-bold"><?= number_format($project['streams'], 0, '.', ' ') ?></span>
-                                    </div>
-                                </td>
-                                <td class="px-8 py-5 text-sm text-gray-400"><?= date('d/m/Y', strtotime($project['date_sortie'])) ?></td>
-                            </tr>
-                        <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
+
+            <div class="glass-card p-8 shadow-2xl">
+                <h3 class="text-xl font-bold mb-8 flex items-center gap-3">
+                    <i class="fas fa-chart-bar text-orange-500"></i>
+                    Répartition des Streams par Projet
+                </h3>
+
+                <?php if (empty($projects)): ?>
+                    <div class="py-20 text-center text-gray-500 uppercase font-black tracking-widest text-xs">
+                        Aucune donnée statistique disponible.
+                    </div>
+                <?php else: foreach ($projects as $project): 
+                    $width = $max_streams_single > 0 ? ($project['streams'] / $max_streams_single) * 100 : 0;
+                ?>
+                    <div class="mb-8 last:mb-0">
+                        <div class="flex justify-between items-end mb-2">
+                            <div>
+                                <h4 class="font-bold text-white uppercase tracking-tight"><?= htmlspecialchars($project['title']) ?></h4>
+                                <p class="text-[10px] text-gray-500 uppercase font-black"><?= htmlspecialchars($project['genre']) ?> • <?= htmlspecialchars($project['type']) ?></p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-black text-orange-400"><?= number_format($project['streams'], 0, '.', ' ') ?></span>
+                                <span class="text-[10px] text-gray-600 font-black uppercase ml-1">Vues Score</span>
+                            </div>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div class="stat-bar-fill" style="width: 0%;" data-width="<?= $width ?>%"></div>
+                        </div>
+                    </div>
+                <?php endforeach; endif; ?>
             </div>
         </main>
     </div>
+
     <script>
         const s = document.getElementById('sidebar'), o = document.getElementById('overlay'), t = document.getElementById('sidebarToggle'), g = document.getElementById('glow');
         function ts() { s.classList.toggle('active'); o.classList.toggle('active'); }
-        t.onclick = ts; o.onclick = ts;
+        if(t) t.onclick = ts; if(o) o.onclick = ts;
         document.onmousemove = (e) => { g.style.left = (e.clientX - g.offsetWidth / 2) + 'px'; g.style.top = (e.clientY - g.offsetHeight / 2) + 'px'; };
+
+        // Animate progress bars on load
+        window.addEventListener('scroll', () => {
+             document.querySelectorAll('.stat-bar-fill').forEach(bar => {
+                const rect = bar.getBoundingClientRect();
+                if(rect.top < window.innerHeight && rect.bottom >= 0) {
+                    bar.style.width = bar.getAttribute('data-width');
+                }
+            });
+        }, { passive: true });
+        
+        // Initial trigger
+        setTimeout(() => {
+            document.querySelectorAll('.stat-bar-fill').forEach(bar => {
+                bar.style.width = bar.getAttribute('data-width');
+            });
+        }, 300);
     </script>
 </body>
 </html>

@@ -87,7 +87,7 @@
                     <li><a href="#accueil" class="nav-link active">Accueil</a></li>
                     <li><a href="#qui-sommes-nous" class="nav-link">Qui sommes-nous</a></li>
                     <!-- <li><a href="#notre-equipe" class="nav-link">Notre équipe</a></li> -->
-                    <li><a href="#distribution" class="nav-link">Distribution</a></li>
+                    <!-- <li><a href="#distribution" class="nav-link">Distribution</a></li> -->
                     <li><a href="#actualites" class="nav-link">Actualités</a></li>
                     <?php if (isset($_SESSION['user_id'])): 
                         $dashboardUrl = 'dashboards/artiste/index.php';

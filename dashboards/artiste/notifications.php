@@ -45,9 +45,9 @@ $db = getDBConnection();
             <a href="index.php" class="nav-link"><i class="fas fa-th-large"></i>Tableau de bord</a>
             <a href="submit.php" class="nav-link"><i class="fas fa-plus-circle"></i>Soumettre</a>
             <a href="notifications.php" class="nav-link active"><i class="fas fa-bell"></i>Notifications</a>
-            <a href="#" class="nav-link"><i class="fas fa-music"></i>Catalogue</a>
-            <a href="#" class="nav-link"><i class="fas fa-chart-line"></i>Stats</a>
-            <a href="#" class="nav-link"><i class="fas fa-wallet"></i>Revenus</a>
+            <a href="catalogue.php" class="nav-link"><i class="fas fa-music"></i>Catalogue</a>
+            <a href="stats.php" class="nav-link"><i class="fas fa-chart-line"></i>Stats</a>
+            <a href="#" class="nav-link disabled opacity-50 cursor-not-allowed"><i class="fas fa-wallet"></i>Revenus</a>
         </nav>
         <div class="mt-auto pt-6 border-t border-white/5">
             <div class="flex items-center gap-3 mb-6">
