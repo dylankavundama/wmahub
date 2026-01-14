@@ -28,8 +28,21 @@ $history = $stmt->fetchAll();
     <style>
         body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
         .bg-glow { position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
-        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
-        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; }
+        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; transition: all 0.3s ease; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
+        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
+        
+        /* Mobile Enhancements */
+        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
+        
+        @media (max-width: 1024px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.active { transform: translateX(0); width: 280px; padding: 2rem 1.5rem; }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 1.5rem; } 
+            .mobile-header { display: flex; }
+        }
+        
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.5); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
         .glass-card { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; padding: 2rem; }
@@ -38,7 +51,6 @@ $history = $stmt->fetchAll();
         .btn-primary { background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%); color: #fff; font-weight: bold; padding: 1rem 2rem; border-radius: 1rem; transition: all 0.3s ease; display: inline-flex; items-center; gap: 0.5rem; }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(255, 102, 0, 0.4); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); width: 0; padding: 0; } .main-content { margin-left: 0; } }
         .lyrics-box { background: rgba(255, 255, 255, 0.03); border-radius: 1.5rem; padding: 2rem; min-height: 400px; font-family: 'Courier New', Courier, monospace; line-height: 1.8; white-space: pre-wrap; font-size: 0.9rem; }
         .loader { width: 24px; height: 24px; border: 3px solid #fff; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
         @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -46,12 +58,22 @@ $history = $stmt->fetchAll();
 </head>
 <body>
     <div class="bg-glow"></div>
-    <aside class="sidebar">
+    <div class="mobile-header">
+        <div class="flex items-center gap-3">
+            <img src="../../asset/trans.png" alt="Logo" class="h-8">
+            <span class="font-bold tracking-tighter">WMA ARTISTE</span>
+        </div>
+        <button id="sidebarToggle" class="text-white text-2xl p-2"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
             <div class="flex items-center gap-4 mb-10 px-2">
                 <img src="../../asset/trans.png" alt="Logo" class="h-10">
                 <div>
                     <h1 class="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent leading-none">WMA HUB</h1>
-                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We Farm Your Talent</p>
+                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We move, WMAFam</p>
                 </div>
             </div>
         <nav class="flex-1">
@@ -166,6 +188,18 @@ $history = $stmt->fetchAll();
     <!-- Modal Historique (Simplifié par inject direct dans l'UI) -->
 
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (overlay) overlay.addEventListener('click', toggleSidebar);
+
         const form = document.getElementById('lyricsForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');

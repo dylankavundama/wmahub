@@ -96,9 +96,15 @@ $messages = $stmt->fetchAll();
         .message-bubble { max-width: 70%; padding: 1rem; border-radius: 1.5rem; margin-bottom: 1rem; position: relative; }
         .msg-left { background: rgba(255, 255, 255, 0.05); border-bottom-left-radius: 0.2rem; align-self: flex-start; }
         .msg-right { background: rgba(255, 102, 0, 0.1); border-bottom-right-radius: 0.2rem; align-self: flex-end; border: 1px solid rgba(255, 102, 0, 0.2); }
-        .glass-header { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem 2rem; }
-        .glass-footer { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem 2rem; }
+        .glass-header { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem 2rem; position: sticky; top: 0; z-index: 50; }
+        .glass-footer { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem 2rem; position: sticky; bottom: 0; z-index: 50; }
         .custom-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; color: #fff; padding: 0.8rem 1.5rem; outline: none; width: 100%; }
+        
+        @media (max-width: 768px) {
+            .chat-container { padding: 1rem; }
+            .message-bubble { max-width: 85%; }
+            .glass-header, .glass-footer { padding: 1rem; }
+        }
     </style>
 </head>
 <body>

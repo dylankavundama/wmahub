@@ -154,8 +154,8 @@ foreach($projects as $p) {
         body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
         .glow-spot { position: fixed; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255, 102, 0, 0.05) 0%, transparent 70%); border-radius: 50%; z-index: -1; filter: blur(80px); pointer-events: none; }
-        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
-        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; }
+        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; transition: all 0.3s ease; }
+        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.4); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; font-size: 0.9rem; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; padding: 1.5rem; cursor: default; }
@@ -165,19 +165,41 @@ foreach($projects as $p) {
         .admin-table th { text-transform: uppercase; font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.3); }
         .custom-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; color: #fff; font-size: 0.75rem; padding: 0.5rem 1rem; outline: none; cursor: pointer; }
         .search-bar { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 0.8rem 1.5rem; color: #fff; width: 300px; outline: none; }
-        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); width: 0; padding: 0; } .main-content { margin-left: 0; } }
+        
+        /* Mobile Enhancements */
+        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
+        
+        @media (max-width: 1024px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.active { transform: translateX(0); width: 280px; padding: 2rem 1.5rem; }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 1.5rem; } 
+            .mobile-header { display: flex; }
+            .search-bar { width: 100%; }
+        }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
     <div id="glow" class="glow-spot"></div>
 
-    <aside class="sidebar">
+    <div class="mobile-header">
+        <div class="flex items-center gap-3">
+            <img src="../../asset/trans.png" alt="Logo" class="h-8">
+            <span class="font-bold tracking-tighter">WMA ADMIN</span>
+        </div>
+        <button id="sidebarToggle" class="text-white text-2xl p-2"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="flex items-center gap-4 mb-12 px-2">
             <img src="../../asset/trans.png" alt="Logo" class="h-10">
             <div>
                 <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We Farm Your Talent</p>
+                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
             </div>
         </div>
         <nav class="flex-1">
@@ -185,7 +207,7 @@ foreach($projects as $p) {
             <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
             <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
             <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
-            <a href="chat.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'active' : '' ?>"><i class="fas fa-comments"></i> Chat Équipe</a>
+            <a href="project_files.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'project_files.php' ? 'active' : '' ?>"><i class="fas fa-folder-open"></i> Fichier Projet</a>
             <a href="service_cards.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_cards.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Cartes de Service</a>
             <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
             <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
@@ -317,21 +339,40 @@ foreach($projects as $p) {
         </div>
     </main>
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (overlay) overlay.addEventListener('click', toggleSidebar);
+
         const glow = document.getElementById('glow');
-        document.addEventListener('mousemove', (e) => { glow.style.left = (e.clientX - 200) + 'px'; glow.style.top = (e.clientY - 200) + 'px'; });
+        document.addEventListener('mousemove', (e) => { 
+            if (glow) {
+                glow.style.left = (e.clientX - 200) + 'px'; 
+                glow.style.top = (e.clientY - 200) + 'px'; 
+            }
+        });
         
         // Handle search input for both instant feedback and form submission
         const searchInput = document.getElementById('tableSearch');
-        searchInput.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                const url = new URL(window.location.href);
-                url.searchParams.set('search', this.value);
-                window.location.href = url.href;
-                return;
-            }
-            const value = this.value.toLowerCase();
-            document.querySelectorAll('#projectsTable tbody tr').forEach(row => { row.style.display = row.innerText.toLowerCase().indexOf(value) > -1 ? '' : 'none'; });
-        });
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('search', this.value);
+                    window.location.href = url.href;
+                    return;
+                }
+                const value = this.value.toLowerCase();
+                document.querySelectorAll('#projectsTable tbody tr').forEach(row => { row.style.display = row.innerText.toLowerCase().indexOf(value) > -1 ? '' : 'none'; });
+            });
+        }
     </script>
 </body>
 </html>

@@ -27,24 +27,46 @@ $notes = $stmt->fetchAll();
     <style>
         body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
         .bg-glow { position: fixed; inset: 0; background: radial-gradient(circle at 100% 100%, #1e1b4b 0%, #0a0a0c 100%); z-index: -1; }
-        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
-        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; }
+        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; transition: all 0.3s ease; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
+        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
+        
+        /* Mobile Enhancements */
+        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
+        
+        @media (max-width: 1024px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.active { transform: translateX(0); width: 280px; padding: 2rem 1.5rem; }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 1.5rem; } 
+            .mobile-header { display: flex; }
+        }
+        
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.5); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; padding: 1.5rem; transition: all 0.3s ease; }
         .glass-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 102, 0, 0.2); }
         .btn-primary { background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%); color: #fff; font-weight: bold; padding: 1rem 2rem; border-radius: 1rem; transition: all 0.3s ease; display: inline-flex; items-center; gap: 0.5rem; }
-        @media (max-width: 1024px) { .sidebar { display: none; } .main-content { margin-left: 0; } }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
-    <aside class="sidebar">
+    <div class="mobile-header">
+        <div class="flex items-center gap-3">
+            <img src="../../asset/trans.png" alt="Logo" class="h-8">
+            <span class="font-bold tracking-tighter">WMA ARTISTE</span>
+        </div>
+        <button id="sidebarToggle" class="text-white text-2xl p-2"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
             <div class="flex items-center gap-4 mb-10 px-2">
                 <img src="../../asset/trans.png" alt="Logo" class="h-10">
                 <div>
                     <h1 class="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent leading-none">WMA HUB</h1>
-                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We Farm Your Talent</p>
+                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We move, WMAFam</p>
                 </div>
             </div>
         <nav class="flex-1">
@@ -106,6 +128,18 @@ $notes = $stmt->fetchAll();
     </main>
 
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (overlay) overlay.addEventListener('click', toggleSidebar);
+
         async function createNewNote() {
             try {
                 const response = await fetch('../../api/gemini.php?action=create_note', { method: 'POST' });

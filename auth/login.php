@@ -61,13 +61,13 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
             position: absolute;
             top: 50%;
             left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
+            width: 100vw;
+            height: 56.25vw; /* 16:9 base */
+            min-height: 100vh;
+            min-width: 177.77vh; /* 100 * 16 / 9 for portrait cover */
             transform: translate(-50%, -50%);
-            object-fit: cover;
             filter: brightness(0.4) contrast(1.1);
+            pointer-events: none;
         }
 
         /* Overlay to prevent interaction with the video and add texture */
@@ -195,6 +195,7 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
     <div class="login-card">
         <div class="logo-container">
             <img src="../asset/trans.png" alt="WMA Hub">
+            <p class="text-[10px] text-[#ff6600] font-black uppercase tracking-[2px] mt-3">We move, WMAFam</p>
         </div>
         
         <h1 class="text-3xl font-bold mb-2">Bienvenue sur WMA Hub</h1>
@@ -207,7 +208,7 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
 
         <div class="footer-text">
             En vous connectant, vous acceptez nos <br>
-            <a href="#">Conditions d'Utilisation</a> & <a href="#">Politique de Confidentialité</a>.
+            <a href="../terms.php">Conditions d'Utilisation</a> & <a href="../privacy.php">Politique de Confidentialité</a>.
         </div>
     </div>
 </body>

@@ -25,53 +25,155 @@ $card = $stmt->fetch();
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
         .glow-spot { position: fixed; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255, 102, 0, 0.05) 0%, transparent 70%); border-radius: 50%; z-index: -1; filter: blur(80px); pointer-events: none; }
-        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
-        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; }
+        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; transition: all 0.3s ease; }
+        .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.4); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; font-size: 0.9rem; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; padding: 1.5rem; }
         
-        /* 3D Card Styles */
-        .card-container { perspective: 1000px; width: 350px; height: 500px; cursor: pointer; }
-        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
-        .card-container.flipped .card-inner { transform: rotateY(180deg); }
-        .card-face { position: absolute; width:100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; }
-        .card-front { background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0c 100%); border: 1px solid rgba(255, 102, 0, 0.2); }
-        .card-back { background: linear-gradient(-135deg, #1a1a2e 0%, #0a0a0c 100%); border: 1px solid rgba(255, 102, 0, 0.2); transform: rotateY(180deg); }
+        /* Mobile Enhancements */
+        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
         
-        /* Card Design Elements */
-        .card-header { height: 100px; background: linear-gradient(90deg, #ff6600, #ff9933); clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); padding: 15px; display: flex; align-items: flex-start; justify-content: space-between; }
-        .card-title { font-weight: 900; letter-spacing: -1px; font-size: 1.2rem; color: #fff; }
-        .photo-placeholder { width: 140px; height: 140px; border-radius: 15px; border: 4px solid #fff; background: #222; margin: -50px auto 20px; overflow: hidden; position: relative; z-index: 10; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
-        .info-row { padding: 0 25px; margin-bottom: 15px; text-align: left; }
-        .info-label { font-size: 10px; text-transform: uppercase; color: #ff6600; font-weight: 800; }
-        .info-value { font-size: 14px; font-weight: 600; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
+        @media (max-width: 1024px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.active { transform: translateX(0); width: 280px; padding: 2rem 1.5rem; }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 1.5rem; } 
+            .mobile-header { display: flex; }
+        }
+
+        /* 3D Card Effects */
+        .card-perspective {
+            perspective: 2000px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .card-container {
+            width: 400px;
+            height: 250px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+        }
+        .card-container.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #1a1a1c 0%, #0a0a0c 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .card-front {
+            background: linear-gradient(135deg, #2a2a2e 0%, #121214 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
         
-        .qr-placeholder { width: 80px; height: 80px; background: #fff; margin: 20px auto; border-radius: 10px; padding: 5px; }
+        /* Holographic Overlay */
+        .hologram {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                125deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.05) 45%,
+                rgba(255,255,255,0.1) 50%,
+                rgba(255,255,255,0.05) 55%,
+                rgba(255,255,255,0) 100%
+            );
+            background-size: 200% 200%;
+            pointer-events: none;
+            z-index: 5;
+            transition: background-position 0.1s linear;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; z-index: 10; position: relative; }
+        .card-title { font-weight: 900; font-size: 14px; letter-spacing: 2px; color: #ff6600; text-shadow: 0 0 10px rgba(255,102,0,0.3); }
+        .card-body-layout { display: flex; gap: 20px; flex: 1; position: relative; z-index: 10; }
+        .photo-placeholder { width: 95px; height: 115px; background: #000; border: 2px solid rgba(255,102,0,0.3); border-radius: 12px; overflow: hidden; flex-shrink: 0; }
+        .info-row { margin-bottom: 8px; }
+        .info-label { font-[9px] font-black uppercase text-gray-500 tracking-wider; margin-bottom: 2px; }
+        .info-value { font-[11px] font-bold text-white uppercase; }
         
-        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); width: 0; padding: 0; } .main-content { margin-left: 0; } }
+        .shiny-overlay {
+            position: absolute;
+            top: -150%;
+            left: -150%;
+            width: 400%;
+            height: 400%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .input-glass {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            color: #fff;
+            padding: 0.8rem 1.25rem;
+            outline: none;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #ff6600;
+            box-shadow: 0 0 20px rgba(255, 102, 0, 0.1);
+        }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
     <div id="glow" class="glow-spot"></div>
 
-    <aside class="sidebar">
+    <div class="mobile-header">
+        <div class="flex items-center gap-3">
+            <img src="../../asset/trans.png" alt="Logo" class="h-8">
+            <span class="font-bold tracking-tighter">WMA STAFF</span>
+        </div>
+        <button id="sidebarToggle" class="text-white text-2xl p-2"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="flex items-center gap-4 mb-12 px-2">
             <img src="../../asset/trans.png" alt="Logo" class="h-10">
             <div>
                 <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We Farm Your Talent</p>
+                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
             </div>
         </div>
         <nav class="flex-1">
             <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Dashboard</a>
             <a href="missions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'missions.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Mes Missions</a>
-            <a href="chat.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'chat.php' ? 'active' : '' ?>"><i class="fas fa-comments"></i> Chat Équipe</a>
+            <a href="project_files.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'project_files.php' ? 'active' : '' ?>"><i class="fas fa-folder-open"></i> Fichier Projet</a>
             <a href="service_card.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_card.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Carte de Service</a>
             <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
         </nav>
@@ -103,23 +205,28 @@ $card = $stmt->fetch();
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Nom Complet</label>
-                            <input type="text" name="full_name" value="<?= htmlspecialchars($card['full_name'] ?? $_SESSION['user_name']) ?>" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all" required>
+                            <input type="text" name="full_name" value="<?= htmlspecialchars($card['full_name'] ?? $_SESSION['user_name']) ?>" class="input-glass" required>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Fonction / Poste</label>
-                            <input type="text" name="role_title" value="<?= htmlspecialchars($card['role'] ?? 'Agent WMA') ?>" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all" required>
+                            <input type="text" name="role_title" value="<?= htmlspecialchars($card['role'] ?? 'Agent WMA') ?>" class="input-glass" required>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Matricule</label>
-                            <input type="text" name="matricule" value="<?= htmlspecialchars($card['matricule'] ?? '') ?>" placeholder="Ex: WMA-2024-001" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all">
+                            <div class="relative">
+                                <input type="text" name="matricule" id="matriculeInput" value="<?= htmlspecialchars($card['matricule'] ?? '') ?>" placeholder="Ex: WMA-2024-001" class="input-glass pr-12">
+                                <button type="button" onclick="copyToClipboard('matriculeInput')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-orange-500 transition-all p-2">
+                                    <i class="fas fa-copy text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Département</label>
-                            <input type="text" name="department" value="<?= htmlspecialchars($card['department'] ?? 'Distribution') ?>" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all">
+                            <input type="text" name="department" value="<?= htmlspecialchars($card['department'] ?? 'Distribution') ?>" class="input-glass">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Groupe Sanguin</label>
-                            <select name="blood_group" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all">
+                            <select name="blood_group" class="input-glass">
                                 <option value="" <?= !($card['blood_group'] ?? '') ? 'selected' : '' ?>>Non spécifié</option>
                                 <?php foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg): ?>
                                     <option value="<?= $bg ?>" <?= ($card['blood_group'] ?? '') === $bg ? 'selected' : '' ?>><?= $bg ?></option>
@@ -128,7 +235,7 @@ $card = $stmt->fetch();
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Contact d'urgence</label>
-                            <input type="text" name="emergency_contact" value="<?= htmlspecialchars($card['emergency_contact'] ?? '') ?>" placeholder="Nom & Téléphone" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all">
+                            <input type="text" name="emergency_contact" value="<?= htmlspecialchars($card['emergency_contact'] ?? '') ?>" placeholder="Nom & Téléphone" class="input-glass">
                         </div>
                     </div>
                     <div>
@@ -156,61 +263,70 @@ $card = $stmt->fetch();
                     <?php endif; ?>
                 </div>
 
-                <div class="card-container" onclick="this.classList.toggle('flipped')">
-                    <div class="card-inner" id="serviceCard">
-                        <!-- FRONT FACE -->
-                        <div class="card-face card-front" id="cardFront">
-                            <div class="card-header">
-                                <div class="card-title">WMA STAFF</div>
-                                <img src="../../asset/trans.png" class="h-8 opacity-90 shadow-sm" alt="WMA">
-                            </div>
-                            <div class="photo-placeholder">
-                                <img id="previewPhoto" src="<?= $card['photo_path'] ? '../../' . $card['photo_path'] : '../../asset/aspi.jpg' ?>" class="w-full h-full object-cover">
-                            </div>
-                            <h4 id="previewName" class="text-xl font-black mb-1 uppercase tracking-tighter"><?= htmlspecialchars($card['full_name'] ?? $_SESSION['user_name']) ?></h4>
-                            <p id="previewRole" class="text-orange-500 font-bold text-xs uppercase mb-8"><?= htmlspecialchars($card['role'] ?? 'Agent WMA') ?></p>
-                            
-                            <div class="info-row">
-                                <div class="info-label">Matricule</div>
-                                <div id="previewMatricule" class="info-value"><?= htmlspecialchars($card['matricule'] ?? 'N/A') ?></div>
-                            </div>
-                            <div class="info-row">
-                                <div class="info-label">Département</div>
-                                <div id="previewDept" class="info-value"><?= htmlspecialchars($card['department'] ?? 'Général') ?></div>
-                            </div>
-
-                            <div class="mt-auto p-4 border-t border-white/5 flex justify-between items-center bg-white/5">
-                                <span class="text-[8px] text-gray-500 font-black">ID OFFICIEL WMA HUB</span>
-                                <span class="text-[8px] text-white font-bold italic">Member since <?= date('Y', strtotime($_SESSION['user_created_at'] ?? 'now')) ?></span>
-                            </div>
-                        </div>
-
-                        <!-- BACK FACE -->
-                        <div class="card-face card-back" id="cardBack">
-                            <div class="p-6 h-full flex flex-col">
-                                <div class="flex justify-between items-center mb-10">
-                                    <img src="../../asset/trans.png" class="h-6 opacity-40">
-                                    <span class="text-[10px] font-bold text-orange-500">WM-Staff-ID</span>
+                <div class="card-perspective">
+                    <div class="card-container" id="3dCard">
+                        <div class="shiny-overlay" id="shinyOverlay"></div>
+                        <div class="card-inner" id="serviceCard">
+                            <!-- FRONT FACE -->
+                            <div class="card-face card-front" id="cardFront">
+                                <div class="hologram" id="hologramFront"></div>
+                                <div class="card-header">
+                                    <div class="card-title">WMA STAFF</div>
+                                    <img src="../../asset/trans.png" class="h-8 opacity-90" alt="WMA">
                                 </div>
-
-                                <div class="space-y-6 flex-1">
-                                    <div class="text-left">
-                                        <div class="info-label">Groupe Sanguin</div>
-                                        <div id="previewBG" class="font-bold text-xl text-red-500"><?= htmlspecialchars($card['blood_group'] ?? '??') ?></div>
+                                <div class="card-body-layout">
+                                    <div class="photo-placeholder">
+                                        <img id="previewPhoto" src="<?= $card['photo_path'] ? '../../' . $card['photo_path'] : '../../asset/aspi.jpg' ?>" class="w-full h-full object-cover">
                                     </div>
-                                    <div class="text-left">
-                                        <div class="info-label">Contact d'urgence</div>
-                                        <div id="previewEmergency" class="text-xs font-semibold"><?= htmlspecialchars($card['emergency_contact'] ?? 'Non fourni') ?></div>
+                                    <div class="flex-1">
+                                        <h4 id="previewName" class="text-xl font-black mb-1 uppercase tracking-tighter leading-tight"><?= htmlspecialchars($card['full_name'] ?? $_SESSION['user_name']) ?></h4>
+                                        <p id="previewRole" class="text-orange-500 font-bold text-[10px] uppercase mb-6"><?= htmlspecialchars($card['role'] ?? 'Agent WMA') ?></p>
+                                        
+                                        <div class="info-row">
+                                            <div class="info-label">Matricule</div>
+                                            <div id="previewMatricule" class="info-value"><?= htmlspecialchars($card['matricule'] ?? 'N/A') ?></div>
+                                        </div>
+                                        <div class="info-row">
+                                            <div class="info-label">Département</div>
+                                            <div id="previewDept" class="info-value"><?= htmlspecialchars($card['department'] ?? 'Général') ?></div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="qr-placeholder flex items-center justify-center">
-                                    <i class="fas fa-qrcode text-4xl text-black"></i>
+                                <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center relative z-10">
+                                    <span class="text-[7px] text-gray-500 font-black">ID OFFICIEL WMA HUB</span>
+                                    <span class="text-[7px] text-orange-500 font-bold">GEN-2024</span>
                                 </div>
-                                <p class="text-[8px] text-gray-500 mt-4 leading-relaxed">Cette carte est strictement personnelle. <br> En cas de perte, veuillez contacter l'administration de WMA HUB. Toute utilisation frauduleuse est passible de poursuites.</p>
-                                
-                                <div class="mt-auto pt-4 border-t border-white/5">
-                                    <img src="../../asset/icon.png" class="h-4 mx-auto opacity-20">
+                            </div>
+
+                            <!-- BACK FACE -->
+                            <div class="card-face card-back" id="cardBack">
+                                <div class="hologram" id="hologramBack"></div>
+                                <div class="p-6 h-full flex flex-col">
+                                    <div class="flex justify-between items-center mb-8">
+                                        <img src="../../asset/trans.png" class="h-5 opacity-40">
+                                        <span class="text-[8px] font-bold text-orange-500/50">WMA-SECURE-ID</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-6 flex-1">
+                                        <div class="text-left">
+                                            <div class="info-label">Groupe Sanguin</div>
+                                            <div id="previewBG" class="font-bold text-xl text-red-500"><?= htmlspecialchars($card['blood_group'] ?? '??') ?></div>
+                                        </div>
+                                        <div class="text-left">
+                                            <div class="info-label">Urgence</div>
+                                            <div id="previewEmergency" class="text-[9px] font-semibold leading-tight"><?= htmlspecialchars($card['emergency_contact'] ?? 'Non fourni') ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-end justify-between mt-auto">
+                                        <div class="qr-placeholder w-16 h-16 bg-white rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-qrcode text-3xl text-black"></i>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-[6px] text-gray-500 leading-tight">Cette carte est la propriété <br> de WMA HUB. En cas de perte <br> contactez +243 812 345 678</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -219,9 +335,14 @@ $card = $stmt->fetch();
 
                 <div class="mt-8 flex gap-4">
                     <?php if (($card['status'] ?? '') === 'approved'): ?>
-                        <button onclick="downloadCard('jpg')" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2">
-                            <i class="fas fa-download"></i> Télécharger (JPG)
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="downloadCard('jpg')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-bold transition-all flex items-center gap-2 text-sm">
+                                <i class="fas fa-file-image"></i> JPG
+                            </button>
+                            <button onclick="downloadCard('pdf')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-xl font-bold transition-all flex items-center gap-2 text-sm">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                        </div>
                     <?php else: ?>
                         <div class="bg-white/5 border border-white/10 text-gray-500 px-6 py-3 rounded-xl font-bold flex items-center gap-2 cursor-not-allowed">
                             <i class="fas fa-lock text-sm"></i> Téléchargement indisponible
@@ -236,8 +357,76 @@ $card = $stmt->fetch();
     </main>
 
     <script>
-        const glow = document.getElementById('glow');
-        document.addEventListener('mousemove', (e) => { glow.style.left = (e.clientX - 200) + 'px'; glow.style.top = (e.clientY - 200) + 'px'; });
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (overlay) overlay.addEventListener('click', toggleSidebar);
+
+        function flipCard() {
+            document.querySelector('.card-container').classList.toggle('flipped');
+        }
+
+        const card3d = document.getElementById('3dCard');
+        const shiny = document.getElementById('shinyOverlay');
+        const hologramFront = document.getElementById('hologramFront');
+        const hologramBack = document.getElementById('hologramBack');
+
+        document.addEventListener('mousemove', (e) => {
+            // Glow effect
+            if (glow) {
+                glow.style.left = (e.clientX - 200) + 'px';
+                glow.style.top = (e.clientY - 200) + 'px';
+            }
+
+            // 3D Card Tilt
+            if (card3d) {
+                const rect = card3d.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (centerY - y) / 10;
+                const rotateY = (x - centerX) / 10;
+                
+                if (!card3d.classList.contains('flipped')) {
+                    card3d.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                } else {
+                    card3d.style.transform = `rotateY(180deg) rotateX(${rotateX}deg) rotateY(${-rotateY}deg)`;
+                }
+
+                // Shiny overlay effect
+                if (shiny) {
+                    shiny.style.left = `${(x / rect.width) * 100 - 150}%`;
+                    shiny.style.top = `${(y / rect.height) * 100 - 150}%`;
+                }
+
+                // Hologram effect
+                const holoX = (x / rect.width) * 100;
+                const holoY = (y / rect.height) * 100;
+                if (hologramFront) hologramFront.style.backgroundPosition = `${holoX}% ${holoY}%`;
+                if (hologramBack) hologramBack.style.backgroundPosition = `${holoX}% ${holoY}%`;
+            }
+        });
+
+        // Reset tilt on mouse leave
+        if (card3d) {
+            card3d.addEventListener('mouseleave', () => {
+                card3d.style.transform = card3d.classList.contains('flipped') ? 'rotateY(180deg)' : 'rotateZ(0deg)';
+            });
+            
+            card3d.addEventListener('click', () => {
+                card3d.classList.toggle('flipped');
+            });
+        }
 
         // Live Preview
         const form = document.getElementById('cardForm');
@@ -261,6 +450,24 @@ $card = $stmt->fetch();
                 reader.readAsDataURL(this.files[0]);
             }
         });
+
+        // Copy to clipboard
+        function copyToClipboard(inputId) {
+            const input = document.getElementById(inputId);
+            input.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const btn = input.nextElementSibling;
+            const icon = btn.querySelector('i');
+            icon.classList.remove('fa-copy');
+            icon.classList.add('fa-check', 'text-green-500');
+            
+            setTimeout(() => {
+                icon.classList.remove('fa-check', 'text-green-500');
+                icon.classList.add('fa-copy');
+            }, 2000);
+        }
 
         // Submit Form
         form.addEventListener('submit', async (e) => {
@@ -286,34 +493,63 @@ $card = $stmt->fetch();
 
         // Download Card
         async function downloadCard(format) {
-            const cardInner = document.querySelector('.card-inner');
-            const isFlipped = document.querySelector('.card-container').classList.contains('flipped');
+            const { jsPDF } = window.jspdf;
+            const isFlipped = document.getElementById('3dCard').classList.contains('flipped');
             
-            // Ensure front is visible for capture
-            if (isFlipped) document.querySelector('.card-container').classList.remove('flipped');
-            
+            // Reset rotation for capture
+            document.getElementById('3dCard').style.transform = 'rotateY(0deg)';
+            if (isFlipped) document.getElementById('3dCard').classList.remove('flipped');
+            await new Promise(r => setTimeout(r, 100));
+
             // Front Capture
-            const canvasFront = await html2canvas(document.getElementById('cardFront'), { scale: 2 });
+            const canvasFront = await html2canvas(document.getElementById('cardFront'), { scale: 2, useCORS: true });
             
             // Flip for back capture
-            document.querySelector('.card-container').classList.add('flipped');
-            // Wait for flip animation
-            await new Promise(r => setTimeout(r, 800));
+            document.getElementById('3dCard').classList.add('flipped');
+            await new Promise(r => setTimeout(r, 600));
+            document.getElementById('3dCard').style.transform = 'rotateY(180deg)';
+            await new Promise(r => setTimeout(r, 100));
+
+            const canvasBack = await html2canvas(document.getElementById('cardBack'), { scale: 2, useCORS: true });
             
-            const canvasBack = await html2canvas(document.getElementById('cardBack'), { scale: 2 });
+            if (format === 'jpg') {
+                const link = document.createElement('a');
+                link.download = `wma-card-front.jpg`;
+                link.href = canvasFront.toDataURL("image/jpeg", 0.9);
+                link.click();
+                link.download = `wma-card-back.jpg`;
+                link.href = canvasBack.toDataURL("image/jpeg", 0.9);
+                link.click();
+            } else if (format === 'pdf') {
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: [210, 297] // A4
+                });
+
+                const imgPropsFront = pdf.getImageProperties(canvasFront.toDataURL("image/jpeg", 1.0));
+                const imgPropsBack = pdf.getImageProperties(canvasBack.toDataURL("image/jpeg", 1.0));
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                // Card dimensions on PDF (approx CR80 size)
+                const cardWidth = 85.6; 
+                const cardHeight = 54;
+                
+                // Add Front
+                pdf.addImage(canvasFront.toDataURL("image/jpeg", 1.0), 'JPEG', 10, 10, cardWidth, cardHeight);
+                // Add Back
+                pdf.addImage(canvasBack.toDataURL("image/jpeg", 1.0), 'JPEG', 10, 70, cardWidth, cardHeight);
+                
+                pdf.save(`wma-card-${Date.now()}.pdf`);
+            }
             
-            // Download logic
-            const link = document.createElement('a');
-            link.download = `wma-card-${format === 'jpg' ? 'front.jpg' : 'back.jpg'}`;
-            link.href = canvasFront.toDataURL("image/jpeg", 0.9);
-            link.click();
-            
-            link.download = `wma-card-back.jpg`;
-            link.href = canvasBack.toDataURL("image/jpeg", 0.9);
-            link.click();
-            
-            // Reset state
-            if (!isFlipped) document.querySelector('.card-container').classList.remove('flipped');
+            // Restore rotation state
+            if (!isFlipped) {
+                document.getElementById('3dCard').classList.remove('flipped');
+                document.getElementById('3dCard').style.transform = 'rotateY(0deg)';
+            }
         }
     </script>
 </body>

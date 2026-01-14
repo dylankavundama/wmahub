@@ -76,12 +76,22 @@ $top_pages = $db->query("
     <div class="bg-glow"></div>
     <div id="glow" class="glow-spot"></div>
 
-    <aside class="sidebar">
+    <div class="mobile-header">
+        <div class="flex items-center gap-3">
+            <img src="../../asset/trans.png" alt="Logo" class="h-8">
+            <span class="font-bold tracking-tighter">WMA ADMIN</span>
+        </div>
+        <button id="sidebarToggle" class="text-white text-2xl p-2"><i class="fas fa-bars"></i></button>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="flex items-center gap-4 mb-12 px-2">
             <img src="../../asset/trans.png" alt="Logo" class="h-10">
             <div>
                 <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We Farm Your Talent</p>
+                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
             </div>
         </div>
         <nav class="flex-1">
@@ -89,7 +99,7 @@ $top_pages = $db->query("
             <a href="employees.php" class="nav-link"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
             <a href="tasks.php" class="nav-link"><i class="fas fa-tasks"></i> Gestion Tâches</a>
             <a href="salaries.php" class="nav-link"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
-            <a href="chat.php" class="nav-link"><i class="fas fa-comments"></i> Chat Équipe</a>
+            <a href="project_files.php" class="nav-link"><i class="fas fa-folder-open"></i> Fichier Projet</a>
             <a href="service_cards.php" class="nav-link"><i class="fas fa-id-card"></i> Cartes de Service</a>
             <a href="notifications.php" class="nav-link"><i class="fas fa-bell"></i> Notifications</a>
             <a href="finance.php" class="nav-link"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
@@ -252,10 +262,24 @@ $top_pages = $db->query("
     </main>
 
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (overlay) overlay.addEventListener('click', toggleSidebar);
+
         const glow = document.getElementById('glow');
         document.addEventListener('mousemove', (e) => {
-            glow.style.left = (e.clientX - 200) + 'px';
-            glow.style.top = (e.clientY - 200) + 'px';
+            if (glow) {
+                glow.style.left = (e.clientX - 200) + 'px';
+                glow.style.top = (e.clientY - 200) + 'px';
+            }
         });
     </script>
 </body>

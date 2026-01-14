@@ -96,7 +96,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .dashboard-wrapper { display: flex; min-height: 100vh; }
         .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; transition: all 0.3s ease; display: flex; flex-direction: column; padding: 2rem 1.5rem; }
         .main-content { flex: 1; margin-left: 280px; padding: 2rem; transition: all 0.3s ease; }
-        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); } .sidebar.active { transform: translateX(0); } .main-content { margin-left: 0; padding: 1.5rem; } .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 90; backdrop-filter: blur(4px); } .sidebar-overlay.active { display: block; } .mobile-header { display: flex; } }
+        
+        /* Mobile Enhancements */
+        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
+        
+        @media (max-width: 1024px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.active { transform: translateX(0); width: 280px; padding: 2rem 1.5rem; }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; padding: 1.5rem; } 
+            .mobile-header { display: flex; }
+        }
+        
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.5); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
         .glass-card { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2rem; box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8); }
@@ -110,7 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         input[type="radio"]:checked + .custom-option, input[type="checkbox"]:checked + .custom-option { background: rgba(255, 102, 0, 0.1); border-color: #ff6600; color: #ff6600; }
         .btn-submit { background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%); color: #fff; padding: 1.5rem; border-radius: 1.25rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 15px 35px -5px rgba(255, 102, 0, 0.4); width: 100%; }
         .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 20px 45px -5px rgba(255, 102, 0, 0.6); }
-        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 80; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .file-input-label { display: block; padding: 1.25rem; background: rgba(255, 255, 255, 0.03); border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 1.25rem; text-align: center; cursor: pointer; transition: all 0.3s ease; }
         .file-input-label:hover { background: rgba(255, 102, 0, 0.05); border-color: rgba(255, 102, 0, 0.3); }
         .form-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 2rem; }
@@ -121,9 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="bg-glow"></div>
     <div class="glow-spot" id="glow"></div>
     <div class="mobile-header">
-        <div class="flex items-center gap-3"><img src="../../asset/trans.png" alt="Logo" class="h-8"><span class="font-bold">WMA HUB</span></div>
-        <button id="sidebarToggle" class="text-white text-2xl"><i class="fas fa-bars"></i></button>
+        <div class="flex items-center gap-3">
+            <img src="../../asset/trans.png" alt="Logo" class="h-8">
+            <span class="font-bold tracking-tighter">WMA ARTISTE</span>
+        </div>
+        <button id="sidebarToggle" class="text-white text-2xl p-2"><i class="fas fa-bars"></i></button>
     </div>
+
     <div class="sidebar-overlay" id="overlay"></div>
     <div class="dashboard-wrapper">
         <aside class="sidebar" id="sidebar">
@@ -131,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <img src="../../asset/trans.png" alt="Logo" class="h-10">
                 <div>
                     <h1 class="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent leading-none">WMA HUB</h1>
-                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We Farm Your Talent</p>
+                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] mt-1">We move, WMAFam</p>
                 </div>
             </div>
             <nav class="flex-1">
@@ -268,10 +283,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </main>
     </div>
     <script>
-        const s = document.getElementById('sidebar'), o = document.getElementById('overlay'), t = document.getElementById('sidebarToggle'), g = document.getElementById('glow');
-        function ts() { s.classList.toggle('active'); o.classList.toggle('active'); }
-        if(t) t.onclick = ts; if(o) o.onclick = ts;
-        document.onmousemove = (e) => { g.style.left = (e.clientX - g.offsetWidth / 2) + 'px'; g.style.top = (e.clientY - g.offsetHeight / 2) + 'px'; };
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if (toggle) toggle.addEventListener('click', toggleSidebar);
+        if (overlay) overlay.addEventListener('click', toggleSidebar);
+
+        const glow = document.getElementById('glow');
+        document.onmousemove = (e) => {
+            if (glow) {
+                glow.style.left = (e.clientX - (glow.offsetWidth || 0) / 2) + 'px';
+                glow.style.top = (e.clientY - (glow.offsetHeight || 0) / 2) + 'px';
+            }
+        };
         function updateFileName(input, targetId) {
             const fileName = input.files[0] ? input.files[0].name : "Cliquez pour téléverser";
             const target = document.getElementById(targetId);
