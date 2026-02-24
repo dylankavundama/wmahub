@@ -4,6 +4,16 @@ require_once __DIR__ . '/../includes/config.php';
 // Cette page reçoit le code d'autorisation de Google
 if (isset($_GET['code'])) {
     $code = $_GET['code'];
+    $state = $_GET['state'] ?? '';
+
+    // Validation du state pour prévenir les attaques CSRF
+    if (empty($state) || !isset($_SESSION['oauth_state']) || $state !== $_SESSION['oauth_state']) {
+        header('Location: login.php?error=invalid_state');
+        exit;
+    }
+    
+    // Une fois validé, on supprime le state de la session
+    unset($_SESSION['oauth_state']);
 
     // Échange du code contre un token d'accès
     $token_url = 'https://oauth2.googleapis.com/token';
@@ -63,6 +73,15 @@ if (isset($_GET['code'])) {
         $_SESSION['user_email'] = $email;
         $_SESSION['role'] = null; // Il devra choisir son rôle
         
+        // Notifier l'équipe admin par email
+        require_once __DIR__ . '/../includes/mailer.php';
+        notifyAdmin('registration', 'Nouvel Utilisateur Inscrit', [
+            'Nom' => $name,
+            'Email' => $email,
+            'Méthode' => 'Google OAuth',
+            'Date' => date('d/m/Y H:i')
+        ], 'https://wmahub.com/dashboards/admin/users.php');
+        
         header('Location: select-role.php');
     } else {
         // Mettre à jour les infos si nécessaire
@@ -85,12 +104,20 @@ if (isset($_GET['code'])) {
             header('Location: select-role.php');
         } elseif ($user['role'] === 'artiste') {
             header('Location: ../dashboards/artiste/index.php');
+        } elseif ($user['role'] === 'distributeur') {
+            // Définir un flag pour le message de bienvenue si certifié
+            if ($user['is_certified']) {
+                $_SESSION['show_welcome_certified'] = true;
+            }
+            header('Location: ../dashboards/distributeur/index.php');
         } elseif ($user['role'] === 'employe') {
             if ($user['is_active']) {
                 header('Location: ../dashboards/employe/index.php');
             } else {
                 header('Location: pending.php');
             }
+        } elseif ($user['role'] === 'superadmin') {
+            header('Location: ../dashboards/superadmin/index.php');
         } else {
             header('Location: ../dashboards/admin/index.php');
         }

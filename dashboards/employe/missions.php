@@ -13,11 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $task_id = $_POST['task_id'];
     $new_status = $_POST['status'];
     
-    $stmt = $db->prepare("UPDATE tasks SET status = ? WHERE id = ? AND user_id = ?");
-    $stmt->execute([$new_status, $task_id, $_SESSION['user_id']]);
+    $stmt = $db->prepare("UPDATE tasks SET status = ?, revenue = CASE WHEN ? = 'termine' THEN 1.00 ELSE revenue END WHERE id = ? AND user_id = ?");
+    $stmt->execute([$new_status, $new_status, $task_id, $_SESSION['user_id']]);
     
     // Notification si terminé
     if ($new_status === 'termine') {
+        // Bonus notification for the employee
+        createNotification($_SESSION['user_id'], 'bonus_awarded', "Félicitations ! Vous avez gagné un bonus de 1.00$ pour la mission : " . $task_id, $task_id);
+
         $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
         foreach ($admins as $admin) {
             createNotification($admin['id'], 'task_update', "L'employé " . $_SESSION['user_name'] . " a terminé la mission : " . $task_id, $task_id);

@@ -6,19 +6,29 @@ if (isset($_SESSION['user_id'])) {
     $role = $_SESSION['role'] ?? '';
     if ($role === 'artiste') {
         header('Location: ../dashboards/artiste/index.php');
-    } elseif ($role === 'employe' || $role === 'admin') {
+        exit;
+    } elseif ($role === 'admin') {
         header('Location: ../dashboards/admin/index.php');
+        exit;
+    } elseif ($role === 'employe') {
+        header('Location: ../dashboards/employe/index.php');
+        exit;
     }
+    // Fallback si le rôle n'est pas reconnu mais qu'il est connecté
+    header('Location: select-role.php');
     exit;
 }
 
-// URL de connexion Google (Version simplifiée sans bibliothèque tierce pour le moment)
+// URL de connexion Google
+$state = bin2hex(random_bytes(16));
+$_SESSION['oauth_state'] = $state;
+
 $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build_query([
     'response_type' => 'code',
     'client_id'     => GOOGLE_CLIENT_ID,
     'redirect_uri'  => GOOGLE_REDIRECT_URL,
     'scope'         => 'openid email profile',
-    'state'         => bin2hex(random_bytes(16))
+    'state'         => $state
 ]);
 ?>
 <!DOCTYPE html>
@@ -27,7 +37,7 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - WMA Hub</title>
-    <link rel="icon" type="image/png" href="../asset/icon.png">
+    <link rel="icon" type="image/jpeg" href="../asset/placeholder.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -183,7 +193,7 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
     <!-- Video Background -->
     <div class="video-background">
         <iframe 
-            src="https://www.youtube.com/embed/R2a9kSeTnBs?autoplay=1&mute=1&loop=1&playlist=R2a9kSeTnBs&controls=0&showinfo=0&rel=0&iv_load_policy=3" 
+            src="https://www.youtube.com/embed/oi-65YnBRUU?autoplay=1&mute=1&loop=1&playlist=oi-65YnBRUU&controls=0&showinfo=0&rel=0&iv_load_policy=3" 
             frameborder="0" 
             allow="autoplay; encrypted-media" 
             allowfullscreen>

@@ -1,0 +1,107 @@
+/* Shared Admin Dashboard Styles */
+
+/* FOUC Fix: Handled inline in pages to avoid delays */
+
+/* Animation keyframes used by loader */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Input & Select Fields */
+.custom-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.custom-select:focus {
+    border-color: #ff6600;
+    background: rgba(255, 102, 0, 0.05);
+}
+
+.custom-select option {
+    background: #0a0a0c;
+    color: #fff;
+}
+
+.search-bar {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 0.8rem 1.5rem;
+    color: #fff;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+    border-color: #ff6600;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1);
+}
+
+.search-bar::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Glass Cards & Layout */
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+}
+
+/* Custom Table Styles */
+.admin-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.75rem;
+}
+
+.admin-table tr {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-table td,
+.admin-table th {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+}
+
+.admin-table th {
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar Styling for Dark Theme */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a0c;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ff6600;
+}

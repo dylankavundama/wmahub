@@ -1,4 +1,23 @@
-<?php require_once __DIR__ . '/includes/config.php'; ?>
+<?php 
+require_once __DIR__ . '/includes/config.php'; 
+
+// Récupérer le nombre de visiteurs pour la section Présence Mondiale
+$db_index = getDBConnection();
+$visitor_count = 150;
+try {
+    $stmt_index = $db_index->query("SELECT count FROM visitor_stats WHERE id = 1");
+    if ($row = $stmt_index->fetch()) {
+        $visitor_count = $row['count'];
+    }
+} catch (Exception $e) {}
+
+// Récupérer les avis des artistes
+$reviews = [];
+try {
+    $stmt_reviews = $db_index->query("SELECT r.*, u.name as artist_name FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.status = 'approved' ORDER BY r.created_at DESC LIMIT 10");
+    $reviews = $stmt_reviews->fetchAll();
+} catch (Exception $e) {}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -7,7 +26,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="WMA Hub - Plateforme de distribution musicale pour artistes et labels">
     <title>WMAHUB - La Plateforme de Distribution musicale</title>
-    <link rel="icon" type="image/png" href="asset/icon.png">
+    <link rel="icon" type="image/jpeg" href="asset/placeholder.jpg">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -86,7 +105,7 @@
                 <ul class="nav-menu" id="navMenu">
                     <li><a href="#accueil" class="nav-link active">Accueil</a></li>
                     <li><a href="#qui-sommes-nous" class="nav-link">Qui sommes-nous</a></li>
-                    <!-- <li><a href="#notre-equipe" class="nav-link">Notre équipe</a></li> -->
+                    <li><a href="equipe.php" class="nav-link">Notre équipe</a></li>
                     <!-- <li><a href="#distribution" class="nav-link">Distribution</a></li> -->
                     <li><a href="#actualites" class="nav-link">Actualités</a></li>
                     <?php if (isset($_SESSION['user_id'])): 
@@ -127,7 +146,7 @@
                                 <img src="asset/aspi.jpg" alt="WMA Hub - Distribution Musicale" class="hero-portrait" loading="eager">
                                 <div class="hero-image-overlay"></div>
                                 <div class="hero-slide-logo">
-                                    <img src="asset/icon.png" alt="WMA Hub Logo" class="slide-logo-img" loading="eager">
+                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="eager">
                                 </div>
                                 <div class="orange-shape-left"></div>
                             </div>
@@ -157,7 +176,7 @@
                                 <img src="asset/neski.jpg" alt="Neski - Artiste WMA Hub" class="hero-portrait" loading="lazy">
                                 <div class="hero-image-overlay"></div>
                                 <div class="hero-slide-logo">
-                                    <img src="asset/icon.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
                                 </div>
                                 <div class="orange-shape-left"></div>
                             </div>
@@ -187,7 +206,7 @@
                                 <img src="asset/artiste/ss.png" alt="Artiste WMA Hub" class="hero-portrait" loading="lazy">
                                 <div class="hero-image-overlay"></div>
                                 <div class="hero-slide-logo">
-                                    <img src="asset/icon.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
                                 </div>
                                 <div class="orange-shape-left"></div>
                             </div>
@@ -217,7 +236,7 @@
                                 <img src="asset/artiste/41163.png" alt="Artiste WMA Hub" class="hero-portrait" loading="lazy">
                                 <div class="hero-image-overlay"></div>
                                 <div class="hero-slide-logo">
-                                    <img src="asset/icon.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
                                 </div>
                                 <div class="orange-shape-left"></div>
                             </div>
@@ -248,7 +267,7 @@
                                 <img src="asset/artiste/rr.png" alt="Artiste WMA Hub" class="hero-portrait" loading="lazy">
                                 <div class="hero-image-overlay"></div>
                                 <div class="hero-slide-logo">
-                                    <img src="asset/icon.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
                                 </div>
                                 <div class="orange-shape-left"></div>
                             </div>
@@ -283,7 +302,7 @@
                                 <img src="asset/barr.jpg" alt="Barr - Artiste WMA Hub" class="hero-portrait" loading="lazy">
                                 <div class="hero-image-overlay"></div>
                                 <div class="hero-slide-logo">
-                                    <img src="asset/icon.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
                                 </div>
                                 <div class="orange-shape-left"></div>
                             </div>
@@ -1397,6 +1416,31 @@
         <!--    </div>-->
         <!--</section>-->
 
+        <!-- Banner Rejoindre l'Équipe -->
+        <section class="team-banner py-20 relative overflow-hidden" style="background: #0a0a0c;">
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute inset-0" style="background: radial-gradient(circle at 70% 30%, #ff6600 0%, transparent 50%);"></div>
+            </div>
+            <div class="container relative z-10">
+                <div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-10 scroll-animate opacity-0 translate-y-8">
+                    <div class="max-w-2xl text-center md:text-left">
+                        <h2 class="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-none">
+                             <span class="text-primary">L'ÉQUIPE</span> WMA HUB
+                        </h2>
+                        <p class="text-gray-400 text-lg md:text-xl font-medium leading-relaxed mb-0">
+                           Les passionnés qui font bouger les lignes de l'industrie musicale en Afrique.
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <a href="equipe.php" class="inline-flex items-center gap-4 bg-primary hover:bg-orange-600 text-white font-black text-lg uppercase tracking-wider px-10 py-6 rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-primary/20 group">
+                            Découvrir
+                            <i class="fas fa-arrow-right group-hover:translate-x-2 transition-transform"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="news-section bg-white transition-colors duration-300" id="actualites">
                 <div class="container">
                     <h2 class="section-title text-primary scroll-animate opacity-0 translate-y-8 transition-colors duration-300">
@@ -1533,42 +1577,85 @@
                                 <p class="stat-label-3d">Artistes actifs</p>
                             </div>
                         </div>
+                        <div class="presence-stat-card">
+                            <div class="stat-icon-3d"><i class="fas fa-chart-line"></i></div>
+                            <div class="stat-content">
+                                <h3 class="stat-number-3d" data-target="<?= $visitor_count ?>">0</h3>
+                                <p class="stat-label-3d">Visiteurs totaux</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="youtube-channel bg-gray-50 transition-colors duration-300">
+        <section class="artist-reviews bg-gray-900 py-20 overflow-hidden" id="avis">
             <div class="container">
-                <h2 class="section-title scroll-animate opacity-0 translate-y-8 text-primary transition-colors duration-300 hidden">Notre Chaîne YouTube</h2>
-                <p class="text-center text-gray-700 mb-8 scroll-animate opacity-0 translate-y-8 transition-colors duration-300" style="animation-delay: 0.1s;">
-                    Découvrez nos dernières vidéos
-                </p>
-                <div class="youtube-embed-wrapper scroll-animate opacity-0 translate-y-8 transition-opacity duration-300" style="animation-delay: 0.2s;">
-                    <div class="youtube-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-                        <img src="asset/icon.png" alt="WMA Hub - Chargement de la vidéo" class="youtube-placeholder" id="youtubePlaceholder" loading="eager">
-                        <iframe 
-                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; opacity: 0; transition: opacity 0.5s ease;"
-                            src="https://www.youtube.com/embed/R2a9kSeTnBs?si=IMK8_sxfPqPn2T2O" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen
-                            loading="lazy"
-                            title="Chaîne YouTube WMA Hub"
-                            id="youtubeIframe">
-                        </iframe>
+                <h2 class="section-title text-center text-white mb-12 scroll-animate opacity-0 translate-y-8">
+                    <i class="fas fa-star text-primary mr-3"></i>Ce que disent nos artistes
+                </h2>
+                
+                <?php if (empty($reviews)): ?>
+                    <div class="text-center text-gray-500 py-10">
+                        <p>Aucun avis pour le moment. Soyez le premier artiste à partager votre expérience !</p>
                     </div>
-                </div>
-                <div class="text-center mt-8 scroll-animate opacity-0 translate-y-8 transition-opacity duration-300" style="animation-delay: 0.3s;">
-                    <a href="https://www.youtube.com/results?search_query=wmahub" 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       class="btn btn-primary inline-flex items-center gap-2 hover:bg-primary-dark transition-all duration-300">
-                        <i class="fab fa-youtube text-xl mr-2"></i>
-                      Découvrir nos vidéos
-                    </a>
-                </div>
+                <?php else: ?>
+                    <div class="reviews-slider-wrapper relative">
+                        <div class="reviews-track flex gap-8 animate-scroll">
+                            <?php 
+                            // Double the reviews to handle seamless scrolling
+                            $displayReviews = array_merge($reviews, $reviews);
+                            foreach ($displayReviews as $review): 
+                            ?>
+                                <div class="review-card flex-shrink-0 w-[400px] bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl relative">
+                                    <div class="flex items-center gap-4 mb-6">
+                                        <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl border border-primary/30">
+                                            <i class="fas fa-user-astronaut"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-lg"><?= htmlspecialchars($review['artist_name']) ?></h4>
+                                            <div class="flex text-primary text-sm">
+                                                <?php for ($i = 0; $i < 5; $i++): ?>
+                                                    <i class="fas fa-star <?= $i < $review['stars'] ? '' : 'text-gray-600' ?>"></i>
+                                                <?php endfor; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-300 italic leading-relaxed">
+                                        <i class="fas fa-quote-left text-primary/30 mr-2 text-2xl"></i>
+                                        <?= htmlspecialchars($review['comment']) ?>
+                                    </p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
+
+        <style>
+            .animate-scroll {
+                display: flex;
+                animation: scroll 40s linear infinite;
+                width: max-content;
+            }
+            .animate-scroll:hover {
+                animation-play-state: paused;
+            }
+            @keyframes scroll {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+            .review-card {
+                transition: transform 0.3s ease, border-color 0.3s ease;
+            }
+            .review-card:hover {
+                transform: translateY(-5px);
+                border-color: rgba(255, 102, 0, 0.4);
+            }
+        </style>
+
+ 
 
         
         <section class="trusted-by bg-gray-50 transition-colors duration-300">
@@ -1586,7 +1673,7 @@
                 <div class="ceo-content">
                     <div class="ceo-image-wrapper">
                         <div class="ceo-image-container">
-                            <img src="asset/cc.jpg"CEO dMA Hub" class="ceo-image scroll-animate opacity-0 translate-y-8" loading="lazy" style="animation-delay: 0.1s;">
+                            <img src="asset/cc.jpg" alt="CEO dMA Hub" class="ceo-image scroll-animate opacity-0 translate-y-8" loading="lazy" style="animation-delay: 0.1s;">
                             <div class="ceo-image-frame"></div>
                         </div>
                     </div>
@@ -1606,52 +1693,21 @@
         </section>
     </main>
 
-    <footer class="footer bg-gray-900 transition-colors duration-300" role="contentinfo">
-        <div class="container">
-            <p class="text-white transition-colors duration-300">&copy; Copyright 2025 WMAHUB. <br> Tous droits réservés.</p>
-            <p class="text-white mt-4 text-sm transition-colors duration-300">
-                Développé par 
-                <a href="https://portfolio-dylan.vercel.app/" target="_blank" rel="noopener noreferrer" 
-                   class="text-primary hover:text-orange-400 transition-colors duration-300 font-semibold">
-                    Dylan Kavundama
+        <section class="py-16 bg-primary">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl md:text-5xl font-black text-white mb-4 uppercase tracking-tighter">
+                    Devenir distributeur <span class="text-black">sur WMA Hub</span>
+                </h2>
+                <p class="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
+                    Rejoignez la révolution de la distribution musicale et amplifiez votre impact dès aujourd'hui.
+                </p>
+                <a href="auth/login.php" class="inline-block bg-white text-primary hover:bg-black hover:text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300">
+                    Commencer l'aventure
                 </a>
-            </p>
-            <div class="footer-logos">
-                <img src="asset/trans.png" alt="WMA Hub Logo blanc"
-                    style="height: 80px; filter: brightness(0) invert(1);">
-                <img src="asset/logo/one.png" alt="ONERPM Logo" style="height: 30px;">
-                <img src="asset/logo/spo.png" alt="Spotify Logo" style="height: 30px;">
-                <img src="asset/logo/ub.png" alt="UB Logo" style="height: 70px;">
-                <img src="asset/logo/le.png" alt="Label Engine Logo blanc"
-                    style="height: 100px; filter: brightness(0) invert(1);">
-                <img src="asset/logo/you.png" alt="YouTube Logo">
+            </div>
+        </section>
 
-                <img src="asset/logo/dream.png" alt="Dream Logo" style="height: 50px;">
-            </div>
-            <div class="social-icons">
-                <a href="https://www.instagram.com/wmahub?igsh=YW5tcjQxbWZ5NW1y" target="_blank"
-                    aria-label="Suivez-nous sur Instagram" rel="noopener noreferrer"
-                    class="social-icon-link">
-                    <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://wa.me/243975278131" target="_blank" aria-label="Contactez-nous sur WhatsApp"
-                    rel="noopener noreferrer"
-                    class="social-icon-link">
-                    <i class="fab fa-whatsapp"></i>
-                </a>
-                <a href="https://www.facebook.com/share/173a8UbLZf/" target="_blank"
-                    aria-label="Suivez-nous sur Facebook" rel="noopener noreferrer"
-                    class="social-icon-link">
-                    <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://wa.me/243975203080" target="_blank"
-                    aria-label="Contactez-nous sur WhatsApp" rel="noopener noreferrer"
-                    class="social-icon-link">
-                    <i class="fab fa-whatsapp"></i>
-                </a>
-            </div>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <div id="whatsappDialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"
         aria-describedby="dialog-description">

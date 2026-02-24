@@ -25,8 +25,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Récupérer tous les utilisateurs triés par rôle
-$users = $db->query("SELECT * FROM users ORDER BY FIELD(role, 'admin', 'employe', 'artiste'), created_at DESC")->fetchAll();
+// Logique de tri
+$sortField = $_GET['sort'] ?? 'created_at';
+$sortOrder = $_GET['order'] ?? 'DESC';
+
+$allowedFields = ['name', 'role', 'created_at'];
+if (!in_array($sortField, $allowedFields)) $sortField = 'created_at';
+if (!in_array($sortOrder, ['ASC', 'DESC'])) $sortOrder = 'DESC';
+
+$orderBy = ($sortField === 'role') 
+    ? "FIELD(role, 'admin', 'employe', 'artiste') $sortOrder, created_at DESC" 
+    : "$sortField $sortOrder";
+
+// Récupérer tous les utilisateurs avec le tri choisi
+$users = $db->query("SELECT * FROM users ORDER BY $orderBy")->fetchAll();
+
+function getSortURL($field, $currentSort, $currentOrder) {
+    $newOrder = ($currentSort === $field && $currentOrder === 'ASC') ? 'DESC' : 'ASC';
+    return "users.php?sort=$field&order=$newOrder";
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -34,22 +51,53 @@ $users = $db->query("SELECT * FROM users ORDER BY FIELD(role, 'admin', 'employe'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Gestion Utilisateurs</title>
-    <link rel="icon" type="image/png" href="../../asset/icon.png">
+    
+    <!-- Scripts et CSS Prioritaires -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/admin-shared.css">
+    
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #0a0a0c !important; 
+            color: #fff; 
+            min-height: 100vh; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Loader haute priorité */
+        #wma-global-loader {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-spin {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 102, 0, 0.1);
+            border-top-color: #ff6600;
+            border-radius: 50%;
+            animation: wma-spin 1s linear infinite;
+        }
+
+        @keyframes wma-spin { to { transform: rotate(360deg); } }
+        
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
         .glow-spot { position: fixed; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255, 102, 0, 0.05) 0%, transparent 70%); border-radius: 50%; z-index: -1; filter: blur(80px); pointer-events: none; }
         .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; transition: all 0.3s ease; }
         .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.4); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; font-size: 0.9rem; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
-        
-        /* Mobile Enhancements */
-        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
         
         @media (max-width: 1024px) { 
             .sidebar { transform: translateX(-100%); } 
@@ -61,6 +109,9 @@ $users = $db->query("SELECT * FROM users ORDER BY FIELD(role, 'admin', 'employe'
     </style>
 </head>
 <body>
+    <div id="wma-global-loader">
+        <div class="loader-spin"></div>
+    </div>
     <div class="bg-glow"></div>
     <div id="glow" class="glow-spot"></div>
 
@@ -84,6 +135,10 @@ $users = $db->query("SELECT * FROM users ORDER BY FIELD(role, 'admin', 'employe'
         </div>
         <nav class="flex-1">
             <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
+            <a href="subscriptions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'subscriptions.php' ? 'active' : '' ?>"><i class="fas fa-crown"></i> Abonnements</a>
+            <a href="payments.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'active' : '' ?>"><i class="fas fa-history"></i> Paiements</a>
+            <a href="artists.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'artists.php' ? 'active' : '' ?>"><i class="fas fa-microphone-alt"></i> Artistes</a>
+            <a href="distributors.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'distributors.php' ? 'active' : '' ?>"><i class="fas fa-truck-loading"></i> Distributeurs</a>
             <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
             <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
             <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
@@ -115,10 +170,25 @@ $users = $db->query("SELECT * FROM users ORDER BY FIELD(role, 'admin', 'employe'
                 <table class="admin-table text-left" id="usersTable">
                     <thead>
                         <tr class="text-[10px] text-gray-500 uppercase tracking-widest">
-                            <th class="px-8">Utilisateur</th>
-                            <th>Rôle</th>
-                            <th>Date d'inscription</th>
-                            <th>Actions</th>
+                            <th class="px-8 py-4">
+                                <a href="<?= getSortURL('name', $sortField, $sortOrder) ?>" class="hover:text-orange-500 transition-colors flex items-center gap-2">
+                                    Utilisateur
+                                    <i class="fas fa-sort<?= $sortField === 'name' ? ($sortOrder === 'ASC' ? '-up' : '-down') : '' ?> opacity-50"></i>
+                                </a>
+                            </th>
+                            <th class="py-4">
+                                <a href="<?= getSortURL('role', $sortField, $sortOrder) ?>" class="hover:text-orange-500 transition-colors flex items-center gap-2">
+                                    Rôle
+                                    <i class="fas fa-sort<?= $sortField === 'role' ? ($sortOrder === 'ASC' ? '-up' : '-down') : '' ?> opacity-50"></i>
+                                </a>
+                            </th>
+                            <th class="py-4">
+                                <a href="<?= getSortURL('created_at', $sortField, $sortOrder) ?>" class="hover:text-orange-500 transition-colors flex items-center gap-2">
+                                    Date d'inscription
+                                    <i class="fas fa-sort<?= $sortField === 'created_at' ? ($sortOrder === 'ASC' ? '-up' : '-down') : '' ?> opacity-50"></i>
+                                </a>
+                            </th>
+                            <th class="py-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,6 +263,13 @@ $users = $db->query("SELECT * FROM users ORDER BY FIELD(role, 'admin', 'employe'
             document.querySelectorAll('#usersTable tbody tr').forEach(row => {
                 row.style.display = row.innerText.toLowerCase().indexOf(value) > -1 ? '' : 'none';
             });
+        });
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('wma-global-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
         });
     </script>
 </body>

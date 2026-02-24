@@ -18,17 +18,35 @@ if (!$user || !$user['is_active']) {
     exit;
 }
 
+// Calculer les bonus en attente (missions terminées non encore payées)
+$stmt_bonus = $db->prepare("SELECT SUM(revenue) FROM tasks WHERE user_id = ? AND status = 'termine' AND is_paid = 0");
+$stmt_bonus->execute([$_SESSION['user_id']]);
+$pending_bonuses = (float)($stmt_bonus->fetchColumn() ?: 0);
+$total_monthly_revenue = (float)$user['salary'] + $pending_bonuses;
+
 // Traitement des mises à jour de statut des tâches et encaissement de salaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_task_status'])) {
-        $stmt = $db->prepare("UPDATE tasks SET status = ? WHERE id = ? AND user_id = ?");
-        $stmt->execute([$_POST['task_status'], $_POST['task_id'], $_SESSION['user_id']]);
+        $stmt = $db->prepare("UPDATE tasks SET status = ?, completed_at = CASE WHEN ? = 'termine' THEN CURRENT_TIMESTAMP ELSE completed_at END, rating = CASE WHEN ? = 'termine' AND rating IS NULL THEN 3 ELSE rating END WHERE id = ? AND user_id = ?");
+        $stmt->execute([$_POST['task_status'], $_POST['task_status'], $_POST['task_status'], $_POST['task_id'], $_SESSION['user_id']]);
 
         if ($_POST['task_status'] === 'termine') {
             // Notifier les admins via createNotification
             $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
+            require_once __DIR__ . '/../../includes/mailer.php';
             foreach ($admins as $admin) {
                 createNotification($admin['id'], 'task_update', "L'employé " . $_SESSION['user_name'] . " a terminé la mission : " . $_POST['task_id'], $_POST['task_id']);
+                
+                // --- ENVOI D'EMAIL AUX ADMINS ---
+                $stmt_task = $db->prepare("SELECT title FROM tasks WHERE id = ?");
+                $stmt_task->execute([$_POST['task_id']]);
+                $task_title = $stmt_task->fetchColumn();
+                
+                notifyAdmin('employee', "Mission terminée par " . $_SESSION['user_name'], [
+                    'Mission' => $task_title,
+                    'Employé' => $_SESSION['user_name'],
+                    'Status' => 'TERMINÉ ✓'
+                ], "https://wmahub.com/dashboards/admin/task_chat.php?id=" . $_POST['task_id']);
             }
         }
     }
@@ -47,22 +65,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $already_withdrawn = $stmt->fetch();
             
             if (!$already_withdrawn) {
-                // Enregistrer l'encaissement
+                // Enregistrer l'encaissement (Salaire + Bonus)
                 $stmt = $db->prepare("INSERT INTO salary_withdrawals (user_id, montant, date_encaissement) VALUES (?, ?, ?)");
-                $stmt->execute([$_SESSION['user_id'], $user['salary'], $current_date]);
+                $stmt->execute([$_SESSION['user_id'], $total_monthly_revenue, $current_date]);
                 
+                // Marquer les tâches comme payées
+                $stmt_pay_tasks = $db->prepare("UPDATE tasks SET is_paid = 1 WHERE user_id = ? AND status = 'termine' AND is_paid = 0");
+                $stmt_pay_tasks->execute([$_SESSION['user_id']]);
+
                 // Notifier les admins
                 $admins = $db->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll();
                 foreach ($admins as $admin) {
-                    createNotification($admin['id'], 'payment_received', "Salaire encaissé par " . $_SESSION['user_name'] . " (" . $user['salary'] . "$)", null);
+                    createNotification($admin['id'], 'payment_received', "Salaire encaissé par " . $_SESSION['user_name'] . " (" . number_format($total_monthly_revenue, 2) . "$ dont " . number_format($pending_bonuses, 2) . "$ de bonus)", null);
                 }
 
                 // Créer une dépense pour déduire de la caisse
-                $motif = "Salaire - " . $_SESSION['user_name'];
+                $motif = "Salaire & Bonus - " . $_SESSION['user_name'];
                 $stmt = $db->prepare("INSERT INTO expenses (project_id, motif, montant, date_depense) VALUES (NULL, ?, ?, ?)");
-                $stmt->execute([$motif, $user['salary'], $current_date]);
+                $stmt->execute([$motif, $total_monthly_revenue, $current_date]);
                 
-                $_SESSION['success_message'] = "Salaire encaissé avec succès !";
+                $_SESSION['success_message'] = "Salaire et bonus encaissés avec succès !";
             } else {
                 $_SESSION['error_message'] = "Vous avez déjà encaissé votre salaire ce mois.";
             }
@@ -116,8 +138,10 @@ if ($current_day === 28) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Espace Employé</title>
-    <link rel="icon" type="image/png" href="../../asset/icon.png">
+    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8882238368661853"
+     crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -236,11 +260,15 @@ if ($current_day === 28) {
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <div class="glass-card border-green-500/20 bg-green-500/5">
-                <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2">Revenu Mensuel</p>
-                <p class="text-4xl font-black text-white mb-4"><?= number_format($user['salary'], 0, '.', ' ') ?>$</p>
+                <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2">Revenu Mensuel Est.</p>
+                <p class="text-4xl font-black text-white mb-1"><?= number_format($total_monthly_revenue, 2, '.', ' ') ?>$</p>
+                <div class="flex flex-col gap-1 mb-4">
+                    <p class="text-[9px] text-gray-400 font-bold">Fixe: <?= number_format($user['salary'], 0) ?>$</p>
+                    <p class="text-[9px] text-orange-400 font-bold">Bonus: <?= number_format($pending_bonuses, 2) ?>$</p>
+                </div>
                 
                 <?php if ($can_withdraw): ?>
-                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir encaisser votre salaire de <?= number_format($user['salary'], 0, '.', ' ') ?>$ ?');">
+                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir encaisser votre revenu de <?= number_format($total_monthly_revenue, 2, '.', ' ') ?>$ ?');">
                         <button type="submit" name="encaisser_salaire" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2">
                             <i class="fas fa-money-bill-wave"></i>
                             Encaisser

@@ -84,40 +84,9 @@ function closeDialog() {
     }
 }
 
-/**
- * Envoie un message WhatsApp avec le nom et l'adresse de l'utilisateur.
- * @deprecated Remplacé par le formulaire plus complet.
- */
-function sendToWhatsApp() {
-    const name = document.getElementById("userName").value.trim();
-    const address = document.getElementById("userAddress").value.trim();
-
-    if (!name || !address) {
-        alert("Veuillez remplir votre nom et votre adresse pour continuer.");
-        return;
-    }
-
-    const message = `Bonjour WMAHUB, je souhaite distribuer ma musique.\nNom: ${name}\nAdresse: ${address}`;
-    const phoneNumber = "243975203080";
-
-    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-
-    closeDialog();
-}
-
-
-//==================================================
-// RÉCUPÉRATION ET AFFICHAGE DES ACTUALITÉS
-//==================================================
-
-/**
- * Récupère les actualités depuis une API et les affiche sur la page.
- */
-
-
 // Appeler la fonction au chargement de la page
 // window.addEventListener('load', fetchNews);
+
 
 //==================================================
 // ANIMATION DU GRAPHIQUE DONUT CHART

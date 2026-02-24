@@ -25,43 +25,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_task'])) {
         $image_path = 'uploads/tasks/' . $filename;
     }
 
+    $revenue = $_POST['revenue'] ?? 0;
+
     if ($title && $employee_id) {
-        $stmt = $db->prepare("INSERT INTO tasks (user_id, title, description, image_path) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$employee_id, $title, $description, $image_path]);
+        $stmt = $db->prepare("INSERT INTO tasks (user_id, title, description, image_path, revenue) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$employee_id, $title, $description, $image_path, $revenue]);
         $taskId = $db->lastInsertId();
 
         // Notifier l'employé
         createNotification($employee_id, 'new_task', "Une nouvelle mission vous a été attribuée : $title", $taskId);
 
         // --- ENVOI D'EMAIL À L'EMPLOYÉ ---
+        require_once __DIR__ . '/../../includes/mailer.php';
         $stmt_emp = $db->prepare("SELECT email, name FROM users WHERE id = ?");
         $stmt_emp->execute([$employee_id]);
         $emp_info = $stmt_emp->fetch();
 
         if ($emp_info && $emp_info['email']) {
-            $to = $emp_info['email'];
-            $subject = "🚀 Nouvelle mission attribuée : " . $title;
-            $task_url = "https://wmahub.com/dashboards/admin/task_chat.php?id=" . $taskId;
-            
-            $message = "
-            <html>
-            <head><title>Nouvelle mission</title></head>
-            <body style='font-family: sans-serif;'>
-                <h2>Bonjour " . htmlspecialchars($emp_info['name']) . ",</h2>
-                <p>Une nouvelle mission vous a été attribuée sur WMA HUB.</p>
-                <p><strong>Mission :</strong> " . htmlspecialchars($title) . "</p>
-                <hr>
-                <p><a href='$task_url' style='background: #ff6600; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Voir les détails et commencer</a></p>
-                <p style='font-size: 12px; color: #666; margin-top: 20px;'>Ceci est une notification automatique, merci de ne pas y répondre.</p>
-            </body>
-            </html>
-            ";
-            
-            $headers = "MIME-Version: 1.0" . "\r\n";
-            $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-            $headers .= "From: WMA HUB <noreply@wmahub.com>" . "\r\n";
-
-            @mail($to, $subject, $message, $headers);
+            notifyNewTask($emp_info['email'], $emp_info['name'], $title, $taskId);
         }
         // ----------------------------------
         
@@ -122,22 +103,53 @@ $completed = $completed_count;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Gestion Tâches</title>
-    <link rel="icon" type="image/png" href="../../asset/icon.png">
+    
+    <!-- Scripts et CSS Prioritaires -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/admin-shared.css">
+    
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #0a0a0c !important; 
+            color: #fff; 
+            min-height: 100vh; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Loader haute priorité */
+        #wma-global-loader {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-spin {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 102, 0, 0.1);
+            border-top-color: #ff6600;
+            border-radius: 50%;
+            animation: wma-spin 1s linear infinite;
+        }
+
+        @keyframes wma-spin { to { transform: rotate(360deg); } }
+        
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
         .glow-spot { position: fixed; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255, 102, 0, 0.05) 0%, transparent 70%); border-radius: 50%; z-index: -1; filter: blur(80px); pointer-events: none; }
         .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; transition: all 0.3s ease; }
         .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.4); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; font-size: 0.9rem; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
-        
-        /* Mobile Enhancements */
-        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
         
         @media (max-width: 1024px) { 
             .sidebar { transform: translateX(-100%); } 
@@ -149,6 +161,9 @@ $completed = $completed_count;
     </style>
 </head>
 <body>
+    <div id="wma-global-loader">
+        <div class="loader-spin"></div>
+    </div>
     <div class="bg-glow"></div>
     <div id="glow" class="glow-spot"></div>
 
@@ -173,6 +188,8 @@ $completed = $completed_count;
 
         <nav class="flex-1">
             <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
+            <a href="subscriptions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'subscriptions.php' ? 'active' : '' ?>"><i class="fas fa-crown"></i> Abonnements</a>
+            <a href="revenues.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'revenues.php' ? 'active' : '' ?>"><i class="fas fa-wallet"></i> Revenus Gérés</a>
             <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
             <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
             <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
@@ -384,9 +401,15 @@ $completed = $completed_count;
                     </select>
                 </div>
                 
-                <div>
-                    <label class="text-[10px] font-black uppercase text-gray-500 mb-2 block tracking-widest">Titre de la mission</label>
-                    <input type="text" name="task_title" required class="search-bar w-full" placeholder="Ex: Publication réseaux sociaux">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-gray-500 mb-2 block tracking-widest">Titre de la mission</label>
+                        <input type="text" name="task_title" required class="search-bar w-full" placeholder="Ex: Publication réseaux sociaux">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-gray-500 mb-2 block tracking-widest">Rémunération / Bonus ($)</label>
+                        <input type="number" name="revenue" step="0.01" min="0" value="0" class="search-bar w-full" placeholder="0.00">
+                    </div>
                 </div>
                 
                 <div>
@@ -436,6 +459,13 @@ $completed = $completed_count;
             if (glow) {
                 glow.style.left = (e.clientX - 200) + 'px';
                 glow.style.top = (e.clientY - 200) + 'px';
+            }
+        });
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('wma-global-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
             }
         });
     </script>

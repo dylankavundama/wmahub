@@ -14,12 +14,47 @@ $db = getDBConnection();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA ADMIN - Fichier Projet</title>
+    
+    <!-- Scripts et CSS Prioritaires -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="../../css/admin-shared.css">
+    
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #0a0a0c !important; 
+            color: #fff; 
+            min-height: 100vh; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Loader haute priorité */
+        #wma-global-loader {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-spin {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 102, 0, 0.1);
+            border-top-color: #ff6600;
+            border-radius: 50%;
+            animation: wma-spin 1s linear infinite;
+        }
+
+        @keyframes wma-spin { to { transform: rotate(360deg); } }
+        
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
         .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; display: flex; flex-direction: column; padding: 2rem 1.5rem; position: fixed; left: 0; top: 0; z-index: 100; transition: transform 0.3s ease; }
         .main-content { margin-left: 280px; min-height: 100vh; transition: margin-left 0.3s ease; }
@@ -44,6 +79,9 @@ $db = getDBConnection();
     </style>
 </head>
 <body>
+    <div id="wma-global-loader">
+        <div class="loader-spin"></div>
+    </div>
     <div class="bg-glow"></div>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
@@ -66,11 +104,12 @@ $db = getDBConnection();
             </div>
         </div>
         <nav class="flex-1 overflow-y-auto pr-2">
-            <a href="index.php" class="nav-link"><i class="fas fa-layer-group"></i> Gestion Projets</a>
-            <a href="employees.php" class="nav-link"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
+            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
+            <a href="subscriptions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'subscriptions.php' ? 'active' : '' ?>"><i class="fas fa-crown"></i> Abonnements</a>
+            <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
             <a href="tasks.php" class="nav-link"><i class="fas fa-tasks"></i> Gestion Tâches</a>
             <a href="salaries.php" class="nav-link"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
-            <a href="project_files.php" class="nav-link active"><i class="fas fa-folder-open"></i> Fichier Projet</a>
+            <a href="project_files.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'project_files.php' ? 'active' : '' ?>"><i class="fas fa-folder-open"></i> Fichier Projet</a>
             <a href="service_cards.php" class="nav-link"><i class="fas fa-id-card"></i> Cartes de Service</a>
             <a href="notifications.php" class="nav-link"><i class="fas fa-bell"></i> Notifications</a>
             <a href="finance.php" class="nav-link"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
@@ -80,16 +119,36 @@ $db = getDBConnection();
     </aside>
 
     <main class="main-content">
-        <header class="p-8 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <h2 class="text-2xl font-black">Fichier Projet</h2>
-                <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest">Espace collaboratif Admin & Staff</p>
+        <header class="p-8 border-b border-white/5 flex flex-col items-start gap-6">
+            <div class="w-full flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h2 class="text-2xl font-black">Fichier Projet</h2>
+                    <p class="text-[10px] text-orange-500 font-black uppercase tracking-widest">Espace collaboratif Admin & Staff</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="px-6 py-3 bg-orange-500 rounded-xl font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-orange-500/20 whitespace-nowrap">
+                        <i class="fas fa-plus mr-2"></i> Partager un fichier
+                    </button>
+                    <?php include '../../includes/header_notifications.php'; ?>
+                </div>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="px-6 py-3 bg-orange-500 rounded-xl font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-orange-500/20 whitespace-nowrap">
-                    <i class="fas fa-plus mr-2"></i> Partager un fichier
-                </button>
-                <?php include '../../includes/header_notifications.php'; ?>
+
+            <!-- Barre de Recherche et Filtres -->
+            <div class="w-full grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-8 relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                    <input type="text" id="fileSearch" class="custom-input pl-12" placeholder="Rechercher un fichier par titre ou description...">
+                </div>
+                <div class="md:col-span-4">
+                    <select id="fileFilter" class="custom-input">
+                        <option value="all">Tous les types</option>
+                        <option value="pdf">Documents PDF</option>
+                        <option value="audio">Audio / MP3</option>
+                        <option value="video">Vidéo / MP4</option>
+                        <option value="image">Images</option>
+                        <option value="other">Autres formats</option>
+                    </select>
+                </div>
             </div>
         </header>
 
@@ -99,6 +158,70 @@ $db = getDBConnection();
             </div>
         </div>
     </main>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel w-full max-w-2xl p-8 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
+                <div class="flex items-center gap-4">
+                    <div id="detailIcon" class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 text-2xl">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div>
+                        <h3 id="detailTitle" class="text-xl font-bold truncate max-w-md">Titre du fichier</h3>
+                        <p id="detailType" class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-1">TYPE DE FICHIER</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <span class="block text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">Description</span>
+                    <p id="detailDescription" class="text-gray-400 text-sm leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5">
+                        Aucune description fournie.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <span class="block text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">Partagé par</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <span id="detailSender" class="text-sm font-bold">Nom de l'expéditeur</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">Date de partage</span>
+                        <span id="detailDate" class="text-sm font-medium">--/--/----</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <span class="block text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">Taille du fichier</span>
+                        <span id="detailSize" class="text-sm font-mono">0 KB</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">Actions</span>
+                        <div class="flex items-center gap-2" id="detailActions">
+                            <!-- Dynamic actions -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-white/5 flex justify-end">
+                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="px-8 py-3 bg-white/5 rounded-xl font-bold text-gray-400 hover:bg-white/10 hover:text-white transition-all">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Upload Modal -->
     <div id="uploadModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -136,6 +259,8 @@ $db = getDBConnection();
         const container = document.getElementById('filesContainer');
         const uploadForm = document.getElementById('uploadForm');
 
+        let allFiles = [];
+
         function getFileIcon(type) {
             if (type.includes('pdf')) return 'fa-file-pdf text-red-500';
             if (type.includes('audio') || type.includes('mp3')) return 'fa-file-audio text-blue-500';
@@ -143,6 +268,7 @@ $db = getDBConnection();
             if (type.includes('word') || type.includes('officedocument.word')) return 'fa-file-word text-blue-400';
             if (type.includes('excel') || type.includes('officedocument.spreadsheet')) return 'fa-file-excel text-green-500';
             if (type.includes('powerpoint') || type.includes('officedocument.presentation')) return 'fa-file-powerpoint text-orange-600';
+            if (type.includes('image')) return 'fa-file-image text-green-400';
             return 'fa-file text-gray-400';
         }
 
@@ -160,44 +286,121 @@ $db = getDBConnection();
                 const response = await fetch('../../api/project_files.php?action=get_files');
                 const data = await response.json();
                 if (data.success) {
-                    container.innerHTML = '';
-                    data.files.forEach(file => {
-                        const date = new Date(file.created_at).toLocaleString('fr-FR', {
-                            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                        });
-                        
-                        const div = document.createElement('div');
-                        div.className = 'file-card';
-                        div.innerHTML = `
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
-                                    <i class="fas ${getFileIcon(file.file_type)} text-2xl"></i>
-                                </div>
-                                <div class="flex gap-2">
-                                    <a href="../../${file.file_path}" download class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all">
-                                        <i class="fas fa-download text-xs"></i>
-                                    </a>
-                                    <button onclick="deleteFile(${file.id})" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
-                                        <i class="fas fa-trash text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h4 class="font-bold text-sm mb-1 truncate">${file.title}</h4>
-                            <p class="text-[10px] text-gray-500 mb-4 line-clamp-2 h-8">${file.description || 'Aucune description'}</p>
-                            
-                            <div class="pt-4 border-t border-white/5 flex items-center justify-between">
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase text-orange-500">${file.sender_name}</span>
-                                    <span class="text-[8px] text-gray-600">${date}</span>
-                                </div>
-                                <span class="text-[8px] font-mono text-gray-500">${formatBytes(file.file_size)}</span>
-                            </div>
-                        `;
-                        container.appendChild(div);
-                    });
+                    allFiles = data.files;
+                    renderFiles(allFiles);
                 }
             } catch (e) { console.error(e); }
         }
+
+        function renderFiles(files) {
+            container.innerHTML = '';
+            if (files.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-20 text-center">
+                        <i class="fas fa-folder-open text-gray-700 text-5xl mb-4"></i>
+                        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs">Aucun fichier trouvé</p>
+                    </div>
+                `;
+                return;
+            }
+
+            files.forEach(file => {
+                const date = new Date(file.created_at).toLocaleString('fr-FR', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+                
+                const div = document.createElement('div');
+                div.className = 'file-card cursor-pointer';
+                div.onclick = (e) => {
+                    if (e.target.closest('a') || e.target.closest('button')) return;
+                    showFileDetails(file);
+                };
+                div.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                            <i class="fas ${getFileIcon(file.file_type)} text-2xl"></i>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="../../${file.file_path}" download class="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all">
+                                <i class="fas fa-download text-xs"></i>
+                            </a>
+                            <button onclick="deleteFile(${file.id})" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-sm mb-1 truncate">${file.title}</h4>
+                    <p class="text-[10px] text-gray-500 mb-4 line-clamp-2 h-8">${file.description || 'Aucune description'}</p>
+                    
+                    <div class="pt-4 border-t border-white/5 flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black uppercase text-orange-500">${file.sender_name}</span>
+                            <span class="text-[8px] text-gray-600">${date}</span>
+                        </div>
+                        <span class="text-[8px] font-mono text-gray-500">${formatBytes(file.file_size)}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function showFileDetails(file) {
+            const date = new Date(file.created_at).toLocaleString('fr-FR', {
+                day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            document.getElementById('detailTitle').textContent = file.title;
+            document.getElementById('detailType').textContent = file.file_type;
+            document.getElementById('detailDescription').textContent = file.description || "Aucune description fournie.";
+            document.getElementById('detailSender').textContent = file.sender_name;
+            document.getElementById('detailDate').textContent = date;
+            document.getElementById('detailSize').textContent = formatBytes(file.file_size);
+            
+            const iconWrap = document.getElementById('detailIcon');
+            iconWrap.innerHTML = `<i class="fas ${getFileIcon(file.file_type)}"></i>`;
+
+            const actionsWrap = document.getElementById('detailActions');
+            actionsWrap.innerHTML = `
+                <a href="../../${file.file_path}" download class="px-4 py-2 bg-orange-500 rounded-lg text-white font-bold text-xs flex items-center gap-2 hover:scale-105 transition-all">
+                    <i class="fas fa-download"></i> Télécharger
+                </a>
+                <button onclick="deleteFile(${file.id}); document.getElementById('detailModal').classList.add('hidden');" class="px-4 py-2 bg-red-500 rounded-lg text-white font-bold text-xs flex items-center gap-2 hover:scale-105 transition-all">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        // Recherche et Filtrage
+        const searchInput = document.getElementById('fileSearch');
+        const filterSelect = document.getElementById('fileFilter');
+
+        function filterFiles() {
+            const query = searchInput.value.toLowerCase().trim();
+            const filter = filterSelect.value;
+
+            const filtered = allFiles.filter(file => {
+                const matchesSearch = file.title.toLowerCase().includes(query) || 
+                                     (file.description && file.description.toLowerCase().includes(query));
+                
+                let matchesFilter = true;
+                if (filter !== 'all') {
+                    if (filter === 'pdf') matchesFilter = file.file_type.includes('pdf');
+                    else if (filter === 'audio') matchesFilter = file.file_type.includes('audio') || file.file_type.includes('mp3');
+                    else if (filter === 'video') matchesFilter = file.file_type.includes('video') || file.file_type.includes('mp4');
+                    else if (filter === 'image') matchesFilter = file.file_type.includes('image');
+                    else if (filter === 'other') matchesFilter = !['pdf', 'audio', 'video', 'mp3', 'mp4', 'image'].some(t => file.file_type.toLowerCase().includes(t));
+                }
+
+                return matchesSearch && matchesFilter;
+            });
+
+            renderFiles(filtered);
+        }
+
+        searchInput.addEventListener('input', filterFiles);
+        filterSelect.addEventListener('change', filterFiles);
 
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -292,6 +495,13 @@ $db = getDBConnection();
         if (sidebarOverlay) sidebarOverlay.onclick = toggleMenu;
 
         loadFiles();
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('wma-global-loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
+        });
     </script>
 </body>
 </html>

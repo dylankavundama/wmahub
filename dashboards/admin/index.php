@@ -7,7 +7,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
+require_once __DIR__ . '/../../includes/performance_functions.php';
 $db = getDBConnection();
+// Traitement automatique des récompenses mensuelles le 28
+processMonthlyAwards();
 
 // Traitement des mises à jour
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -30,36 +33,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $lbl = $status_labels[$_POST['status']] ?? $_POST['status'];
             createNotification($project_info['user_id'], 'project_update', "Le statut de votre projet '" . $project_info['title'] . "' est passé à : $lbl", $_POST['project_id']);
 
-            // --- ENVOI D'EMAIL À INFO@WMAHUB.COM ---
-            $to = "info@wmahub.com";
-            $status_label = match($_POST['status']) {
-                'en_attente' => 'En attente',
-                'en_preparation' => 'En préparation',
-                'distribue' => 'Distribué',
-                default => $_POST['status']
-            };
-            $project_title = $project_info['title'];
-            $subject = "Projet [" . $project_title . "] mis à jour : " . $status_label;
-            $admin_url = "https://wmahub.com/dashboards/admin/index.php?search=" . urlencode($project_title);
+            // --- ENVOI D'EMAIL VIA SMTP ---
+            require_once __DIR__ . '/../../includes/mailer.php';
             
-            $message = "
-            <html>
-            <head><title>Mise à jour statut projet</title></head>
-            <body style='font-family: sans-serif;'>
-                <h2>Mise à jour du statut d'un projet</h2>
-                <p><strong>Projet :</strong> " . htmlspecialchars($project_title) . "</p>
-                <p><strong>Nouveau statut :</strong> <span style='color: #ff6600; font-weight: bold;'>" . htmlspecialchars($status_label) . "</span></p>
-                <hr>
-                <p><a href='$admin_url' style='background: #ff6600; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;'>Gérer le projet</a></p>
-            </body>
-            </html>
-            ";
+            // Récupérer l'email et le nom de l'artiste
+            $stmt_artist = $db->prepare("SELECT email, name FROM users WHERE id = ?");
+            $stmt_artist->execute([$project_info['user_id']]);
+            $artist = $stmt_artist->fetch();
             
-            $headers = "MIME-Version: 1.0" . "\r\n";
-            $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-            $headers .= "From: WMA HUB <noreply@wmahub.com>" . "\r\n";
-
-            @mail($to, $subject, $message, $headers);
+            if ($artist) {
+                // Email à l'artiste
+                notifyStatusChange(
+                    $artist['email'],
+                    $artist['name'],
+                    $project_info['title'],
+                    $_POST['status']
+                );
+            }
             // ---------------------------------------
         }
     }
@@ -77,9 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-    if (isset($_POST['update_streams'])) {
-        $stmt = $db->prepare("UPDATE projects SET streams = ? WHERE id = ?");
-        $stmt->execute([$_POST['streams'], $_POST['project_id']]);
+    if (isset($_POST['update_stats'])) {
+        $stmt = $db->prepare("UPDATE projects SET streams = ?, revenue = ? WHERE id = ?");
+        $stmt->execute([$_POST['streams'], $_POST['revenue'], $_POST['project_id']]);
     }
     header('Location: index.php');
     exit;
@@ -125,20 +115,29 @@ $total_projects = count($projects);
 $distributed_count = count(array_filter($projects, fn($p) => $p['status'] === 'distribue'));
 $pending_payment = count(array_filter($projects, fn($p) => $p['payment_status'] !== 'paye'));
 
-// Récupérer les revenus totaux pour l'affichage rapide
-$total_revenue = 0;
+// Récupérer les revenus des packs promotionnels
+$total_packs_revenue = 0;
+// Récupérer le total des revenus générés par les projets (colonne revenue)
+$total_projects_revenue = 0;
+
+$prices = [
+    'Starter' => (float)getSetting('pack_starter_usd', 15),
+    'Pro' => (float)getSetting('pack_pro_usd', 35),
+    'Premium' => (float)getSetting('pack_premium_usd', 75)
+];
+
 foreach($projects as $p) {
     if($p['payment_status'] === 'paye') {
-        $price = match($p['promo_pack']) {
-            'Starter' => 50,
-            'Standard' => 90,
-            'Pro' => 150,
-            'Premium' => 350,
-            default => 0
-        };
-        $total_revenue += $price;
+        $price = $prices[$p['promo_pack']] ?? 0;
+        $total_packs_revenue += $price;
     }
+    $total_projects_revenue += (float)$p['revenue'];
 }
+
+// Déduire les retraits approuvés du total des revenus projets
+$stmt_paid_out = $db->query("SELECT SUM(amount) FROM withdrawals WHERE status = 'approved'");
+$total_paid_out = $stmt_paid_out->fetchColumn() ?: 0;
+$total_projects_revenue -= $total_paid_out;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -146,29 +145,59 @@ foreach($projects as $p) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Administration</title>
-    <link rel="icon" type="image/png" href="../../asset/icon.png">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8882238368661853"
+     crossorigin="anonymous"></script>
+    <!-- Scripts et CSS Prioritaires -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/admin-shared.css">
+    
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #0a0a0c; color: #fff; min-height: 100vh; overflow-x: hidden; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #0a0a0c !important; 
+            color: #fff; 
+            min-height: 100vh; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Loader haute priorité */
+        #wma-global-loader {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-spin {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 102, 0, 0.1);
+            border-top-color: #ff6600;
+            border-radius: 50%;
+            animation: wma-spin 1s linear infinite;
+        }
+
+        @keyframes wma-spin { to { transform: rotate(360deg); } }
+        
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0c 100%); z-index: -1; }
         .glow-spot { position: fixed; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255, 102, 0, 0.05) 0%, transparent 70%); border-radius: 50%; z-index: -1; filter: blur(80px); pointer-events: none; }
         .sidebar { width: 280px; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100vh; position: fixed; left: 0; top: 0; z-index: 100; display: flex; flex-direction: column; padding: 2rem 1.5rem; transition: all 0.3s ease; }
+        .sidebar nav { overflow-y: auto; overflow-x: hidden; padding-right: 0.5rem; }
+        .sidebar nav::-webkit-scrollbar { width: 4px; }
+        .sidebar nav::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
+        .sidebar nav::-webkit-scrollbar-thumb { background: rgba(255, 102, 0, 0.3); border-radius: 10px; }
+        .sidebar nav::-webkit-scrollbar-thumb:hover { background: rgba(255, 102, 0, 0.5); }
         .main-content { margin-left: 280px; padding: 2rem; min-height: 100vh; transition: all 0.3s ease; }
         .nav-link { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; color: rgba(255, 255, 255, 0.4); border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; margin-bottom: 0.5rem; text-decoration: none; font-size: 0.9rem; }
         .nav-link:hover, .nav-link.active { background: rgba(255, 102, 0, 0.1); color: #ff6600; transform: translateX(5px); }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; padding: 1.5rem; cursor: default; }
-        .admin-table { width: 100%; border-collapse: separate; border-spacing: 0 0.75rem; }
-        .admin-table tr { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .admin-table td, .admin-table th { padding: 1.25rem 1.5rem; vertical-align: middle; }
-        .admin-table th { text-transform: uppercase; font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.3); }
-        .custom-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.75rem; color: #fff; font-size: 0.75rem; padding: 0.5rem 1rem; outline: none; cursor: pointer; }
-        .search-bar { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 0.8rem 1.5rem; color: #fff; width: 300px; outline: none; }
-        
-        /* Mobile Enhancements */
-        .mobile-header { display: none; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 90; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 95; backdrop-filter: blur(4px); }
         
         @media (max-width: 1024px) { 
             .sidebar { transform: translateX(-100%); } 
@@ -176,11 +205,13 @@ foreach($projects as $p) {
             .sidebar-overlay.active { display: block; }
             .main-content { margin-left: 0; padding: 1.5rem; } 
             .mobile-header { display: flex; }
-            .search-bar { width: 100%; }
         }
     </style>
 </head>
 <body>
+    <div id="wma-global-loader">
+        <div class="loader-spin"></div>
+    </div>
     <div class="bg-glow"></div>
     <div id="glow" class="glow-spot"></div>
 
@@ -204,6 +235,12 @@ foreach($projects as $p) {
         </div>
         <nav class="flex-1">
             <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
+            <a href="subscriptions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'subscriptions.php' ? 'active' : '' ?>"><i class="fas fa-crown"></i> Abonnements</a>
+            <a href="payments.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'active' : '' ?>"><i class="fas fa-history"></i> Paiements</a>
+            <a href="artists.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'artists.php' ? 'active' : '' ?>"><i class="fas fa-microphone-alt"></i> Artistes</a>
+            <a href="distributors.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'distributors.php' ? 'active' : '' ?>"><i class="fas fa-truck-loading"></i> Distributeurs</a>
+            <a href="revenues.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'revenues.php' ? 'active' : '' ?>"><i class="fas fa-wallet"></i> Revenus Gérés</a>
+            <a href="payouts.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'payouts.php' ? 'active' : '' ?>"><i class="fas fa-money-bill-transfer"></i> Retraits & Payouts</a>
             <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
             <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
             <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
@@ -213,6 +250,12 @@ foreach($projects as $p) {
             <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
             <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
             <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
+            <?php if ($_SESSION['role'] === 'superadmin'): ?>
+                <div class="mt-4 pt-4 border-t border-white/5">
+                    <p class="text-[9px] text-yellow-500/50 font-black uppercase tracking-widest px-4 mb-2">Master Controls</p>
+                    <a href="../superadmin/index.php" class="nav-link !text-yellow-500 hover:!bg-yellow-500/10"><i class="fas fa-crown"></i> Console Superadmin</a>
+                </div>
+            <?php endif; ?>
         </nav>
         <div class="mt-auto pt-6 border-t border-white/5">
             <div class="flex items-center gap-4 mb-8 px-2">
@@ -257,9 +300,13 @@ foreach($projects as $p) {
                 <p class="text-4xl font-black text-amber-500"><?= $pending_payment ?></p>
             </div>
             <a href="finance.php" class="glass-card border-green-500/20 hover:border-green-500/40 block">
-                <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2">Revenus (Payé)</p>
-                <p class="text-4xl font-black text-white"><?= number_format($total_revenue, 0, '.', ' ') ?>$</p>
+                <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-2">Ventes Packs</p>
+                <p class="text-4xl font-black text-white"><?= number_format($total_packs_revenue, 0, '.', ' ') ?>$</p>
             </a>
+            <div class="glass-card border-blue-500/20">
+                <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-2">Total Revenus Projets (Net)</p>
+                <p class="text-4xl font-black text-white"><?= number_format($total_projects_revenue, 2, '.', ' ') ?>$</p>
+            </div>
         </div>
 
         <!-- Table Container -->
@@ -301,7 +348,7 @@ foreach($projects as $p) {
             </div>
             <div class="overflow-x-auto">
                 <table class="admin-table text-left" id="projectsTable">
-                    <thead><tr><th class="px-8">Projet & Artiste</th><th>Contact</th><th>Assets & Pack</th><th>Statut</th><th>Paiement</th><th>Streaming (Vues)</th></tr></thead>
+                    <thead><tr><th class="px-8">Projet & Artiste</th><th>Contact</th><th>Fichier Audio</th><th>Assets & Pack</th><th>Statut</th><th>Paiement</th><th>Streaming & Revenus ($)</th></tr></thead>
                     <tbody>
                         <?php foreach ($projects as $project): ?>
                             <tr>
@@ -309,10 +356,33 @@ foreach($projects as $p) {
                                     <div class="font-bold text-white"><?= htmlspecialchars($project['title']) ?></div>
                                     <div class="text-[10px] text-orange-500 font-black uppercase"><?= htmlspecialchars($project['artist_name'] ?: $project['user_name']) ?></div>
                                 </td>
-                                <td><div class="text-xs"><?= htmlspecialchars($project['phone']) ?></div><div class="text-[10px] text-gray-500"><?= htmlspecialchars($project['city']) ?></div></td>
+                                 <td>
+                                    <div class="text-xs font-bold text-white"><?= htmlspecialchars($project['full_name'] ?: 'N/A') ?></div>
+                                    <div class="text-xs text-gray-400"><?= htmlspecialchars($project['email'] ?: 'N/A') ?></div>
+                                    <div class="text-xs text-orange-500"><?= htmlspecialchars($project['phone']) ?></div>
+                                    <div class="text-[10px] text-gray-500"><?= htmlspecialchars($project['city']) ?></div>
+                                 </td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <?php if ($project['audio_file']): ?>
+                                            <button onclick="playAudio('<?= $project['id'] ?>', '../artiste/uploads/<?= $project['audio_file'] ?>')" class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 hover:bg-blue-500 hover:text-white transition-all border border-blue-500/30" title="Écouter" id="play-btn-<?= $project['id'] ?>">
+                                                <i class="fas fa-play text-[10px]"></i>
+                                            </button>
+                                            <a href="../artiste/uploads/<?= $project['audio_file'] ?>" download class="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500 hover:text-white transition-all border border-green-500/30" title="Télécharger">
+                                                <i class="fas fa-download text-[10px]"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <button disabled class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-600 border border-white/5 opacity-50 cursor-not-allowed" title="Aucun fichier">
+                                                <i class="fas fa-play text-[10px]"></i>
+                                            </button>
+                                            <button disabled class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-600 border border-white/5 opacity-50 cursor-not-allowed" title="Aucun fichier">
+                                                <i class="fas fa-download text-[10px]"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
                                 <td>
                                     <div class="flex items-center gap-3">
-                                        <?php if ($project['audio_file']): ?><a href="../artiste/uploads/<?= $project['audio_file'] ?>" target="_blank" class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500"><i class="fas fa-play text-[10px]"></i></a><?php endif; ?>
                                         <?php if ($project['cover_file']): ?><a href="../artiste/uploads/<?= $project['cover_file'] ?>" target="_blank" class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><i class="fas fa-image text-[10px]"></i></a><?php endif; ?>
                                         <div class="text-[10px] font-black text-orange-500 uppercase bg-orange-500/10 px-2 py-1 rounded">Pack <?= htmlspecialchars($project['promo_pack']) ?></div>
                                     </div>
@@ -320,15 +390,21 @@ foreach($projects as $p) {
                                 <td><form method="POST"><input type="hidden" name="project_id" value="<?= $project['id'] ?>"><select name="status" onchange="this.form.submit()" class="custom-select"><option value="en_attente" <?= $project['status'] === 'en_attente' ? 'selected' : '' ?>>En attente</option><option value="en_preparation" <?= $project['status'] === 'en_preparation' ? 'selected' : '' ?>>Préparation</option><option value="distribue" <?= $project['status'] === 'distribue' ? 'selected' : '' ?>>Distribué</option></select><input type="hidden" name="update_project_status" value="1"></form></td>
                                 <td><form method="POST"><input type="hidden" name="project_id" value="<?= $project['id'] ?>"><select name="payment_status" onchange="this.form.submit()" class="custom-select <?= $project['payment_status'] === 'paye' ? '!text-green-500' : '!text-amber-500' ?>"><option value="en_attente" <?= $project['payment_status'] === 'en_attente' ? 'selected' : '' ?>>Non payé</option><option value="paye" <?= $project['payment_status'] === 'paye' ? 'selected' : '' ?>>Payé ✓</option></select><input type="hidden" name="update_payment_status" value="1"></form></td>
                                 <td>
-                                    <form method="POST" class="flex items-center gap-2">
+                                    <form method="POST" class="flex flex-col gap-2">
                                         <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
-                                        <div class="relative">
-                                            <input type="number" name="streams" value="<?= $project['streams'] ?>" class="custom-select !w-32 !pr-8" min="0">
-                                            <i class="fas fa-chart-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative flex-1">
+                                                <input type="number" name="streams" value="<?= $project['streams'] ?>" class="custom-select !w-full !pr-8" min="0" placeholder="Vues">
+                                                <i class="fas fa-chart-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
+                                            </div>
+                                            <div class="relative flex-1">
+                                                <input type="number" step="0.01" name="revenue" value="<?= $project['revenue'] ?>" class="custom-select !w-full !pr-8" min="0" placeholder="Revenu $">
+                                                <i class="fas fa-dollar-sign absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
+                                            </div>
+                                            <button type="submit" name="update_stats" class="p-2 bg-orange-500/10 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white transition-all">
+                                                <i class="fas fa-save"></i>
+                                            </button>
                                         </div>
-                                        <button type="submit" name="update_streams" class="p-2 bg-orange-500/10 text-orange-500 rounded-lg hover:bg-orange-500 hover:text-white transition-all">
-                                            <i class="fas fa-save"></i>
-                                        </button>
                                     </form>
                                 </td>
                             </tr>
@@ -372,6 +448,52 @@ foreach($projects as $p) {
                 const value = this.value.toLowerCase();
                 document.querySelectorAll('#projectsTable tbody tr').forEach(row => { row.style.display = row.innerText.toLowerCase().indexOf(value) > -1 ? '' : 'none'; });
             });
+        }
+        window.addEventListener('load', () => {
+             const loader = document.getElementById('wma-global-loader');
+             if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+             }
+        });
+
+        let currentAudio = null;
+        let currentPlayingId = null;
+
+        function playAudio(id, url) {
+            const btn = document.getElementById(`play-btn-${id}`);
+            const icon = btn.querySelector('i');
+
+            if (currentPlayingId === id && currentAudio) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    icon.className = 'fas fa-pause text-[10px]';
+                } else {
+                    currentAudio.pause();
+                    icon.className = 'fas fa-play text-[10px]';
+                }
+                return;
+            }
+
+            if (currentAudio) {
+                currentAudio.pause();
+                if (currentPlayingId) {
+                    const prevBtn = document.getElementById(`play-btn-${currentPlayingId}`);
+                    if (prevBtn) prevBtn.querySelector('i').className = 'fas fa-play text-[10px]';
+                }
+            }
+
+            currentAudio = new Audio(url);
+            currentPlayingId = id;
+            
+            currentAudio.play();
+            icon.className = 'fas fa-pause text-[10px]';
+
+            currentAudio.onended = () => {
+                icon.className = 'fas fa-play text-[10px]';
+                currentAudio = null;
+                currentPlayingId = null;
+            };
         }
     </script>
 </body>
