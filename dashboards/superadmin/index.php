@@ -93,6 +93,7 @@ $pageTitle = 'Superadmin Dashboard - WMA HUB';
             <a href="artists.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'artists.php' ? 'active' : '' ?>"><i class="fas fa-microphone-alt"></i> Artistes</a>
             <a href="distributors.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'distributors.php' ? 'active' : '' ?>"><i class="fas fa-truck-loading"></i> Distributeurs</a>
             <a href="admins.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'admins.php' ? 'active' : '' ?>"><i class="fas fa-user-shield"></i> Gestion des Admins</a>
+            <a href="../admin/hero_slider.php" class="nav-link"><i class="fas fa-images"></i> Gestion Slider</a>
             <a href="settings.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'active' : '' ?>"><i class="fas fa-cogs"></i> Paramètres</a>
             <a href="../admin/index.php" class="nav-link"><i class="fas fa-arrow-left"></i> Retour au Panel Admin</a>
         </nav>
@@ -261,5 +262,6 @@ $pageTitle = 'Superadmin Dashboard - WMA HUB';
             }
         });
     </script>
+    <?php include_once __DIR__ . '/../../includes/language_selector.php'; ?>
 </body>
 </html>

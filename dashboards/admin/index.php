@@ -249,6 +249,7 @@ $total_projects_revenue -= $total_paid_out;
             <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
             <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
             <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
+            <a href="hero_slider.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'hero_slider.php' ? 'active' : '' ?>"><i class="fas fa-images"></i> Gestion Slider</a>
             <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
             <?php if ($_SESSION['role'] === 'superadmin'): ?>
                 <div class="mt-4 pt-4 border-t border-white/5">
@@ -357,26 +358,30 @@ $total_projects_revenue -= $total_paid_out;
                                     <div class="text-[10px] text-orange-500 font-black uppercase"><?= htmlspecialchars($project['artist_name'] ?: $project['user_name']) ?></div>
                                 </td>
                                  <td>
-                                    <div class="text-xs font-bold text-white"><?= htmlspecialchars($project['full_name'] ?: 'N/A') ?></div>
-                                    <div class="text-xs text-gray-400"><?= htmlspecialchars($project['email'] ?: 'N/A') ?></div>
+                                    <div class="text-xs font-bold text-white"><?= htmlspecialchars($project['full_name'] ?? 'N/A') ?></div>
+                                    <div class="text-xs text-gray-400"><?= htmlspecialchars($project['email'] ?? $project['user_email'] ?? 'N/A') ?></div>
                                     <div class="text-xs text-orange-500"><?= htmlspecialchars($project['phone']) ?></div>
                                     <div class="text-[10px] text-gray-500"><?= htmlspecialchars($project['city']) ?></div>
                                  </td>
-                                <td>
+                                 <td>
                                     <div class="flex items-center gap-2">
                                         <?php if ($project['audio_file']): ?>
-                                            <button onclick="playAudio('<?= $project['id'] ?>', '../artiste/uploads/<?= $project['audio_file'] ?>')" class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 hover:bg-blue-500 hover:text-white transition-all border border-blue-500/30" title="Écouter" id="play-btn-<?= $project['id'] ?>">
-                                                <i class="fas fa-play text-[10px]"></i>
+                                            <button onclick="playAudio('<?= $project['id'] ?>', '../artiste/uploads/<?= $project['audio_file'] ?>')" 
+                                                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all border border-blue-500/30 text-[10px] font-bold" 
+                                                    title="Écouter" id="play-btn-<?= $project['id'] ?>">
+                                                <i class="fas fa-play"></i> LIRE
                                             </button>
-                                            <a href="../artiste/uploads/<?= $project['audio_file'] ?>" download class="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500 hover:text-white transition-all border border-green-500/30" title="Télécharger">
-                                                <i class="fas fa-download text-[10px]"></i>
+                                            <a href="../artiste/uploads/<?= $project['audio_file'] ?>" download 
+                                               class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white transition-all border border-green-500/30 text-[10px] font-bold" 
+                                               title="Télécharger">
+                                                <i class="fas fa-download"></i> SAVE
                                             </a>
                                         <?php else: ?>
-                                            <button disabled class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-600 border border-white/5 opacity-50 cursor-not-allowed" title="Aucun fichier">
-                                                <i class="fas fa-play text-[10px]"></i>
+                                            <button disabled class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-gray-600 border border-white/5 opacity-50 cursor-not-allowed text-[10px] font-bold">
+                                                <i class="fas fa-play"></i> LIRE
                                             </button>
-                                            <button disabled class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-600 border border-white/5 opacity-50 cursor-not-allowed" title="Aucun fichier">
-                                                <i class="fas fa-download text-[10px]"></i>
+                                            <button disabled class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-gray-600 border border-white/5 opacity-50 cursor-not-allowed text-[10px] font-bold">
+                                                <i class="fas fa-download"></i> SAVE
                                             </button>
                                         <?php endif; ?>
                                     </div>
@@ -467,10 +472,10 @@ $total_projects_revenue -= $total_paid_out;
             if (currentPlayingId === id && currentAudio) {
                 if (currentAudio.paused) {
                     currentAudio.play();
-                    icon.className = 'fas fa-pause text-[10px]';
+                    icon.className = 'fas fa-pause';
                 } else {
                     currentAudio.pause();
-                    icon.className = 'fas fa-play text-[10px]';
+                    icon.className = 'fas fa-play';
                 }
                 return;
             }
@@ -479,7 +484,7 @@ $total_projects_revenue -= $total_paid_out;
                 currentAudio.pause();
                 if (currentPlayingId) {
                     const prevBtn = document.getElementById(`play-btn-${currentPlayingId}`);
-                    if (prevBtn) prevBtn.querySelector('i').className = 'fas fa-play text-[10px]';
+                    if (prevBtn) prevBtn.querySelector('i').className = 'fas fa-play';
                 }
             }
 
@@ -487,14 +492,15 @@ $total_projects_revenue -= $total_paid_out;
             currentPlayingId = id;
             
             currentAudio.play();
-            icon.className = 'fas fa-pause text-[10px]';
+            icon.className = 'fas fa-pause';
 
             currentAudio.onended = () => {
-                icon.className = 'fas fa-play text-[10px]';
+                icon.className = 'fas fa-play';
                 currentAudio = null;
                 currentPlayingId = null;
             };
         }
     </script>
+    <?php include_once __DIR__ . '/../../includes/language_selector.php'; ?>
 </body>
 </html>

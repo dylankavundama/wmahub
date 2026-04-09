@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $max_size = ini_get('post_max_size');
         $error = "Le fichier est trop volumineux. La limite maximale autorisée par le serveur est de $max_size.";
     } else {
+        $is_ajax = isset($_POST['is_ajax']);
         $required_fields = [
             'nom_complet' => 'Nom et Prénom',
             'nom_artiste' => "Nom d'Artiste",
@@ -71,15 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt = $db->prepare("INSERT INTO projects 
-            (user_id, full_name, email, title, artist_name, type, genre, date_sortie, details, phone, city, languages, provided_files, promo_pack, authorization, audio_file, cover_file) 
+            (user_id, title, artist_name, full_name, email, type, genre, date_sortie, details, phone, city, languages, provided_files, promo_pack, authorization, audio_file, cover_file) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         $stmt->execute([
             $_SESSION['user_id'],
-            $_POST['nom_complet'] ?? '',
-            $_POST['email'] ?? '',
             $_POST['titre_projet'] ?? '',
             $_POST['nom_artiste'] ?? '',
+            $_POST['nom_complet'] ?? '',
+            $_POST['email'] ?? '',
             $_POST['type_projet'] ?? 'Single',
             $_POST['genre'] ?? '',
             $_POST['date_sortie'] ?? date('Y-m-d'),
@@ -119,11 +120,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['date_sortie'] ?? date('Y-m-d')
         );
 
-        header('Location: submit.php?success=1&pid=' . $projectId . '&title=' . urlencode($titreProjet) . '&artist=' . urlencode($nomArtiste) . '&pack=' . urlencode($_POST['pack_promo'] ?? 'Aucun'));
+        $redirect_url = 'submit.php?success=1&pid=' . $projectId . '&title=' . urlencode($titreProjet) . '&artist=' . urlencode($nomArtiste) . '&pack=' . urlencode($_POST['pack_promo'] ?? 'Aucun');
+        
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'redirect' => $redirect_url]);
+            exit;
+        }
+
+        header('Location: ' . $redirect_url);
         exit;
     } catch (Exception $e) {
         $error = "Une erreur est survenue : " . $e->getMessage();
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $error]);
+            exit;
+        }
     }
+    }
+    
+    if ($is_ajax && $error) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => $error]);
+        exit;
     }
     }
 }
@@ -158,12 +178,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(255, 102, 0, 0.3); }
         .custom-option { padding: 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); color: #94a3b8; font-weight: 600; transition: all 0.3s ease; text-align: center; }
         .file-input-label { display: block; padding: 32px; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 20px; text-align: center; color: #94a3b8; cursor: pointer; transition: all 0.3s ease; }
-        .file-input-label:hover { border-color: #ff6600; color: #fff; background: rgba(255, 102, 0, 0.05); }
+        .file-input-label:hover { border-color: #ff6600; color: #fff; background: rgba(102, 255, 0, 0.05); }
+        
+        /* Upload Progress Loader Styles */
+        #upload-loader { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .progress-container { width: 90%; max-width: 400px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; height: 16px; overflow: hidden; margin-top: 24px; position: relative; }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #ff6600, #ff8c00); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 20px rgba(255, 102, 0, 0.5); }
+        .progress-text { margin-top: 16px; font-weight: 700; color: #fff; letter-spacing: 1px; font-size: 1.1rem; }
+        .loader-info { margin-top: 8px; color: #94a3b8; font-size: 0.8rem; font-weight: 500; }
     </style>
 </head>
 <body>
     <div id="wma-global-loader">
         <div class="loader-spin"></div>
+    </div>
+    
+    <!-- Upload Progress Loader -->
+    <div id="upload-loader">
+        <div class="loader-spin mb-4" style="width: 60px; height: 60px;"></div>
+        <h3 class="text-2xl font-black tracking-tighter text-white">Traitement du Projet</h3>
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        <p class="progress-text">Téléchargement : 0%</p>
+        <p class="loader-info">Veuillez ne pas fermer cette page...</p>
     </div>
     <div class="bg-glow"></div>
     
@@ -253,9 +291,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </header>
 
             <?php if ($error): ?>
-                <div class="mb-8 p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-4">
+                <div id="error-container" class="mb-8 p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-4">
                     <i class="fas fa-exclamation-circle text-2xl"></i>
-                    <p class="font-bold"><?= htmlspecialchars($error) ?></p>
+                    <p class="font-bold error-message"><?= htmlspecialchars($error) ?></p>
+                </div>
+            <?php else: ?>
+                <div id="error-container" class="hidden mb-8 p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-4">
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                    <p class="font-bold error-message"></p>
                 </div>
             <?php endif; ?>
 
@@ -307,7 +350,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
             <?php else: ?>
-                <form method="POST" enctype="multipart/form-data" class="glass-card p-8 md:p-12 space-y-12">
+                <form id="projectSubmitForm" method="POST" enctype="multipart/form-data" class="glass-card p-8 md:p-12 space-y-12">
+                    <input type="hidden" name="is_ajax" value="1">
                      <section>
                         <h3 class="text-xl font-bold mb-8 flex items-center gap-3 uppercase tracking-tighter"><i class="fas fa-user-circle text-orange-500"></i> 1. Informations Personnelles</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -493,6 +537,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setTimeout(() => loader.style.display = 'none', 500);
             }
         });
+
+        // AJAX Form Submission with Progress
+        const form = document.getElementById('projectSubmitForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const xhr = new XMLHttpRequest();
+                
+                const uploadLoader = document.getElementById('upload-loader');
+                const progressBar = uploadLoader.querySelector('.progress-bar');
+                const progressText = uploadLoader.querySelector('.progress-text');
+                const errorContainer = document.getElementById('error-container');
+                const errorMessage = errorContainer.querySelector('.error-message');
+                
+                // Reset error container
+                errorContainer.classList.add('hidden');
+                
+                // Show loader
+                uploadLoader.style.display = 'flex';
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Téléchargement : 0%';
+                
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressText.textContent = 'Téléchargement : ' + percent + '%';
+                        
+                        if (percent === 100) {
+                            progressText.textContent = 'Traitement final en cours...';
+                        }
+                    }
+                });
+                
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                window.location.href = response.redirect;
+                            } else {
+                                uploadLoader.style.display = 'none';
+                                errorMessage.textContent = response.error;
+                                errorContainer.classList.remove('hidden');
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        } catch (e) {
+                            console.error('Response error:', xhr.responseText);
+                            uploadLoader.style.display = 'none';
+                            alert('Une erreur inattendue est survenue.');
+                        }
+                    } else {
+                        uploadLoader.style.display = 'none';
+                        alert('Erreur serveur : ' + xhr.status);
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    uploadLoader.style.display = 'none';
+                    alert('Erreur réseau. Veuillez vérifier votre connexion.');
+                };
+                
+                xhr.open('POST', window.location.href);
+                xhr.send(formData);
+            });
+        }
     </script>
 </body>
 </html>

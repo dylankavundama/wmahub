@@ -238,5 +238,6 @@ function getStatusLabel($status) {
             }
         };
     </script>
+    <?php include_once __DIR__ . '/../../includes/language_selector.php'; ?>
 </body>
 </html>

@@ -221,5 +221,6 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
             <a href="../terms.php">Conditions d'Utilisation</a> & <a href="../privacy.php">Politique de Confidentialité</a>.
         </div>
     </div>
+    <?php include_once __DIR__ . '/../includes/language_selector.php'; ?>
 </body>
 </html>

@@ -17,6 +17,13 @@ try {
     $stmt_reviews = $db_index->query("SELECT r.*, u.name as artist_name FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.status = 'approved' ORDER BY r.created_at DESC LIMIT 10");
     $reviews = $stmt_reviews->fetchAll();
 } catch (Exception $e) {}
+
+// Récupérer les slides du hero slider
+$hero_slides = [];
+try {
+    $stmt_slides = $db_index->query("SELECT * FROM hero_slides WHERE is_active = 1 ORDER BY id DESC");
+    $hero_slides = $stmt_slides->fetchAll();
+} catch (Exception $e) {}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -106,7 +113,7 @@ try {
                     <li><a href="#accueil" class="nav-link active">Accueil</a></li>
                     <li><a href="#qui-sommes-nous" class="nav-link">Qui sommes-nous</a></li>
                     <li><a href="equipe.php" class="nav-link">Notre équipe</a></li>
-                    <!-- <li><a href="#distribution" class="nav-link">Distribution</a></li> -->
+                    <li><a href="#services-artiste" class="nav-link">Services</a></li>
                     <li><a href="#actualites" class="nav-link">Actualités</a></li>
                     <?php if (isset($_SESSION['user_id'])): 
                         $dashboardUrl = 'dashboards/artiste/index.php';
@@ -138,192 +145,59 @@ try {
         <div class="hero-slider-wrapper">
             <!-- Slides Container -->
             <div class="hero-slides-container">
-                <!-- Slide 1 -->
-                <div class="hero-slide active">
-                    <div class="hero-split-container">
-                        <div class="hero-image-section">
-                            <div class="hero-image-wrapper">
-                                <img src="asset/aspi.jpg" alt="WMA Hub - Distribution Musicale" class="hero-portrait" loading="eager">
-                                <div class="hero-image-overlay"></div>
-                                <div class="hero-slide-logo">
-                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="eager">
+                <?php if (empty($hero_slides)): ?>
+                    <!-- Fallback Slide if no active slides in DB -->
+                    <div class="hero-slide active">
+                        <div class="hero-split-container">
+                            <div class="hero-image-section">
+                                <div class="hero-image-wrapper">
+                                    <img src="asset/aspi.jpg" alt="WMA Hub" class="hero-portrait" loading="eager">
+                                    <div class="hero-image-overlay"></div>
+                                    <div class="orange-shape-left"></div>
                                 </div>
-                                <div class="orange-shape-left"></div>
                             </div>
-                        </div>
-                        <div class="hero-text-section">
-                            <div class="hero-text-content">
-                                <h1 class="hero-main-title">
-                                    LA MUSIQUE EST UNE FORCE.<br>
-                                    AMPLIFIEZ SON IMPACT.
-                                </h1>
-                                <p class="hero-subtitle">
-                                    WMA HUB EST UNE PLATEFORME DE DISTRIBUTION MUSICALE MODERNE ET VISIONNAIRE.
-                                </p>
-                                <a href="#" class="btn-hero-modern" id="distributeBtn">
-                                    Rejoignez WMA Hub
-                                </a>
+                            <div class="hero-text-section">
+                                <div class="hero-text-content">
+                                    <h1 class="hero-main-title">BIENVENUE CHEZ WMA HUB</h1>
+                                    <p class="hero-subtitle">Votre partenaire de distribution musicale.</p>
+                                    <a href="auth/login.php" class="btn-hero-modern">Commencer</a>
+                                </div>
+                                <div class="orange-shape-right"></div>
                             </div>
-                            <div class="orange-shape-right"></div>
                         </div>
                     </div>
-                </div>
-                                <!-- Slide 5 -->
-                <div class="hero-slide">
-                    <div class="hero-split-container">
-                        <div class="hero-image-section">
-                            <div class="hero-image-wrapper">
-                                <img src="asset/neski.jpg" alt="Neski - Artiste WMA Hub" class="hero-portrait" loading="lazy">
-                                <div class="hero-image-overlay"></div>
-                                <div class="hero-slide-logo">
-                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                <?php else: ?>
+                    <?php foreach ($hero_slides as $index => $slide): ?>
+                        <div class="hero-slide <?= $index === 0 ? 'active' : '' ?>">
+                            <div class="hero-split-container">
+                                <div class="hero-image-section">
+                                    <div class="hero-image-wrapper">
+                                        <img src="<?= htmlspecialchars($slide['image_path']) ?>" alt="WMA Hub Slider" class="hero-portrait" <?= $index === 0 ? 'loading="eager"' : 'loading="lazy"' ?>>
+                                        <div class="hero-image-overlay"></div>
+                                        <div class="hero-slide-logo">
+                                            <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" <?= $index === 0 ? 'loading="eager"' : 'loading="lazy"' ?>>
+                                        </div>
+                                        <div class="orange-shape-left"></div>
+                                    </div>
                                 </div>
-                                <div class="orange-shape-left"></div>
-                            </div>
-                        </div>
-                        <div class="hero-text-section">
-                            <div class="hero-text-content">
-                                <h1 class="hero-main-title">
-                                    VOTRE MUSIQUE<br>
-                                    VOTRE SUCCÈS.
-                                </h1>
-                                <p class="hero-subtitle">
-                                    DISTRIBUEZ VOTRE MUSIQUE ET GÉNÉREZ DES REVENUS AVEC WMA HUB, VOTRE PARTENAIRE DE CONFIANCE.
-                                </p>
-                                <a href="#" class="btn-hero-modern" id="distributeBtn5">
-                                    Commencer maintenant
-                                </a>
-                            </div>
-                            <div class="orange-shape-right"></div>
-                        </div>
-                    </div>
-                </div>
-               <!-- Slide 4 -->
-                <div class="hero-slide">
-                    <div class="hero-split-container">
-                        <div class="hero-image-section">
-                            <div class="hero-image-wrapper">
-                                <img src="asset/artiste/ss.png" alt="Artiste WMA Hub" class="hero-portrait" loading="lazy">
-                                <div class="hero-image-overlay"></div>
-                                <div class="hero-slide-logo">
-                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
+                                <div class="hero-text-section">
+                                    <div class="hero-text-content">
+                                        <h1 class="hero-main-title">
+                                            <?= $slide['title'] // HTML allowed here for <br> ?>
+                                        </h1>
+                                        <p class="hero-subtitle">
+                                            <?= htmlspecialchars($slide['subtitle']) ?>
+                                        </p>
+                                        <a href="<?= htmlspecialchars($slide['button_link']) ?>" class="btn-hero-modern" id="distributeBtn_<?= $slide['id'] ?>">
+                                            <?= htmlspecialchars($slide['button_text']) ?>
+                                        </a>
+                                    </div>
+                                    <div class="orange-shape-right"></div>
                                 </div>
-                                <div class="orange-shape-left"></div>
                             </div>
                         </div>
-                        <div class="hero-text-section">
-                            <div class="hero-text-content">
-                                <h1 class="hero-main-title">
-                                    +720 ARTISTES<br>
-                                    NOUS FONT CONFIANCE.
-                                </h1>
-                                <p class="hero-subtitle">
-                                    REJOIGNEZ UNE COMMUNAUTÉ D'ARTISTES ET DE LABELS QUI TRANSFORMENT L'INDUSTRIE MUSICALE.
-                                </p>
-                                <a href="#" class="btn-hero-modern" id="distributeBtn4">
-                                    Rejoindre la communauté
-                                </a>
-                            </div>
-                            <div class="orange-shape-right"></div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Slide 2 -->
-                <div class="hero-slide">
-                    <div class="hero-split-container">
-                        <div class="hero-image-section">
-                            <div class="hero-image-wrapper">
-                                <img src="asset/artiste/41163.png" alt="Artiste WMA Hub" class="hero-portrait" loading="lazy">
-                                <div class="hero-image-overlay"></div>
-                                <div class="hero-slide-logo">
-                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
-                                </div>
-                                <div class="orange-shape-left"></div>
-                            </div>
-                        </div>
-                        <div class="hero-text-section">
-                            <div class="hero-text-content">
-                                <h1 class="hero-main-title">
-                                    DISTRIBUEZ VOTRE MUSIQUE<br>
-                                    SUR PLUS DE 200 PLATEFORMES.
-                                </h1>
-                                <p class="hero-subtitle">
-                                    ACCÉDEZ AUX PRINCIPALES PLATEFORMES DE STREAMING MONDIALES EN UNE SEULE FOIS.
-                                </p>
-                                <a href="#" class="btn-hero-modern" id="distributeBtn2">
-                                    Distribuer ma musique
-                                </a>
-                            </div>
-                            <div class="orange-shape-right"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Slide 3 -->
-                <div class="hero-slide">
-                    <div class="hero-split-container">
-                        <div class="hero-image-section">
-                            <div class="hero-image-wrapper">
-                                <img src="asset/artiste/rr.png" alt="Artiste WMA Hub" class="hero-portrait" loading="lazy">
-                                <div class="hero-image-overlay"></div>
-                                <div class="hero-slide-logo">
-                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
-                                </div>
-                                <div class="orange-shape-left"></div>
-                            </div>
-                        </div>
-                        <div class="hero-text-section">
-                            <div class="hero-text-content">
-                                <h1 class="hero-main-title">
-                                    ROYALTIES RAPIDES<br>
-                                    SOUS 48 HEURES.
-                                </h1>
-                                <p class="hero-subtitle">
-                                    RECEVEZ VOS REVENUS MUSICAUX RAPIDEMENT SANS FRAIS CACHÉS NI ABONNEMENT.
-                                </p>
-                                <a href="#" class="btn-hero-modern" id="distributeBtn3">
-                                    En savoir plus
-                                </a>
-                            </div>
-                            <div class="orange-shape-right"></div>
-                        </div>
-                    </div>
-                </div>
-
- 
-
-
-
-                <!-- Slide 6 -->
-                <div class="hero-slide">
-                    <div class="hero-split-container">
-                        <div class="hero-image-section">
-                            <div class="hero-image-wrapper">
-                                <img src="asset/barr.jpg" alt="Barr - Artiste WMA Hub" class="hero-portrait" loading="lazy">
-                                <div class="hero-image-overlay"></div>
-                                <div class="hero-slide-logo">
-                                    <img src="asset/trans.png" alt="WMA Hub Logo" class="slide-logo-img" loading="lazy">
-                                </div>
-                                <div class="orange-shape-left"></div>
-                            </div>
-                        </div>
-                        <div class="hero-text-section">
-                            <div class="hero-text-content">
-                                <h1 class="hero-main-title">
-                                    VOTRE MUSIQUE<br>
-                                    VOTRE SUCCÈS.
-                                </h1>
-                                <p class="hero-subtitle">
-                                    DISTRIBUEZ VOTRE MUSIQUE ET GÉNÉREZ DES REVENUS AVEC WMA HUB, VOTRE PARTENAIRE DE CONFIANCE.
-                                </p>
-                                <a href="#" class="btn-hero-modern" id="distributeBtn6">
-                                    Commencer maintenant
-                                </a>
-                            </div>
-                            <div class="orange-shape-right"></div>
-                        </div>
-                    </div>
-                </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
 
             <!-- Navigation Controls -->
@@ -332,12 +206,9 @@ try {
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <div class="slider-dots">
-                    <span class="dot active" data-slide="0"></span>
-                    <span class="dot" data-slide="1"></span>
-                    <span class="dot" data-slide="2"></span>
-                    <span class="dot" data-slide="3"></span>
-                    <span class="dot" data-slide="4"></span>
-                    <span class="dot" data-slide="5"></span>
+                    <?php foreach ($hero_slides as $index => $slide): ?>
+                        <span class="dot <?= $index === 0 ? 'active' : '' ?>" data-slide="<?= $index ?>"></span>
+                    <?php endforeach; ?>
                 </div>
                 <button class="slider-btn slider-next" aria-label="Slide suivant">
                     <i class="fas fa-chevron-right"></i>
@@ -1408,6 +1279,178 @@ try {
                 </div>
             </div>
         </section>
+
+        <section id="services-artiste" class="services-artiste py-24 bg-white transition-colors duration-300">
+            <div class="container">
+                <div class="text-center mb-20 px-4">
+                    <h2 class="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tighter uppercase scroll-animate opacity-0 translate-y-8">
+                        SERVICES <span class="text-primary">ARTISTE</span>
+                    </h2>
+                    <div class="w-20 h-1.5 bg-primary mx-auto mb-8 rounded-full scroll-animate opacity-0 translate-y-4" style="animation-delay: 0.1s;"></div>
+                    <p class="text-gray-500 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mx-auto scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.2s;">
+                        Des solutions sur mesure pour propulser votre carrière musicale et maximiser votre impact sur la scène internationale.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Service 1: Distribution Mondiale -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.1s;">
+                        <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-3xl mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Distribution Mondiale</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Diffusez votre musique sur Spotify, Apple Music, TikTok et +200 autres plateformes en 48h.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Commencer <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    
+                    <!-- Service 2: Marketing & Promo -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.2s;">
+                        <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-3xl mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Marketing & Promo</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Boostez votre visibilité avec nos outils de promotion ciblée, pitch playlists et campagnes ads.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Découvrir <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                    
+                    <!-- Service 3: Gestion des Droits -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.3s;">
+                        <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-3xl mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-shield-halved"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Gestion des Droits</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Sécurisez vos œuvres (Copyright) et récupérez 100% de vos royalties sans intermédiaire.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            En savoir plus <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 4: TikTok For Artiste -->
+                    <a href="https://wa.me/243994717485?text=Bonjour%20WMA%20Hub,%20je%20souhaite%20demander%20un%20compte%20TikTok%20For%20Artiste." target="_blank" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.4s;">
+                        <div class="w-16 h-16 bg-pink-500/10 rounded-2xl flex items-center justify-center text-pink-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-pink-500 group-hover:text-white transition-all duration-500">
+                            <i class="fab fa-tiktok"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">TikTok For Artiste</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Optimisez votre présence sur TikTok avec un compte certifié Artiste pour booster votre visibilité.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-pink-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Demander <i class="fab fa-whatsapp text-lg"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 5: Certification Plateformes -->
+                    <a href="https://wa.me/243994717485?text=Bonjour%20WMA%20Hub,%20je%20souhaite%20la%20certification%20sur%20toutes%20les%20plateformes%20audio." target="_blank" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.5s;">
+                        <div class="w-16 h-16 bg-blue-400/10 rounded-2xl flex items-center justify-center text-blue-400 text-3xl mb-6 group-hover:scale-110 group-hover:bg-blue-400 group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-check-decagram"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Certification Plateformes</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Obtenez le badge de vérification sur toutes les plateformes de streaming audio mondiales.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-blue-400 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Demander <i class="fab fa-whatsapp text-lg"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 6: YouTube Certification -->
+                    <a href="https://wa.me/243994717485?text=Bonjour%20WMA%20Hub,%20je%20souhaite%20la%20certification%20et%20monétisation%20YouTube." target="_blank" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.6s;">
+                        <div class="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all duration-500">
+                            <i class="fab fa-youtube"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">YouTube Certification</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Passez au niveau supérieur avec une chaîne officielle d'artiste et la monétisation complète.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-red-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Demander <i class="fab fa-whatsapp text-lg"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 7: Portfolio Pro -->
+                    <a href="https://wa.me/243977734735?text=Bonjour%20WMA%20Hub,%20je%20souhaite%20demander%20un%20portfolio%20artistique%20professionnel." target="_blank" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.7s;">
+                        <div class="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Portfolio Pro</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Demandez un portfolio professionnel et personnalisé, présenté sous forme de mini site web, afin de renforcer votre image et capter l’attention des labels.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-orange-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            COMMANDER <i class="fab fa-whatsapp text-lg"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 8: Assistant Écriture -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.8s;">
+                        <div class="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-pen-nib"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Assistant Écriture</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Utilisez la puissance de l'IA pour générer des paroles de chansons basées sur vos thèmes et styles.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-orange-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Lancer l'IA <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 9: Générateur de Refrain -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 0.9s;">
+                        <div class="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-microphone-lines"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Générateur de Refrain</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Créez un refrain mémorable intégré à vos couplets. L'IA sublime votre morceau avec des lignes accrocheuses.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-purple-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Générer <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 10: Correction Texte -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 1.0s;">
+                        <div class="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-green-500 group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Correction Texte</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Optimisez vos écrits. Notre IA corrige les fautes et améliore le style tout en respectant votre intention.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-green-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Corriger <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <!-- Service 11: Bloc-Note Cloud -->
+                    <a href="auth/login.php" class="group p-8 bg-gray-50 rounded-3xl border border-transparent hover:border-primary/20 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8 no-underline block" style="animation-delay: 1.1s;">
+                        <div class="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 text-3xl mb-6 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-500">
+                            <i class="fas fa-sticky-note"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-900 uppercase tracking-tighter">Bloc-Note Cloud</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            Gardez une trace de toutes vos idées, mélodies et textes en cours de création. Accessible partout.
+                        </p>
+                        <div class="mt-6 flex items-center gap-2 text-blue-500 font-bold text-[10px] uppercase tracking-widest group-hover:translate-x-2 transition-transform">
+                            Mes notes <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+           
+                </div>
+            </div>
+        </section>
         <!--<section class="news-section">-->
         <!--    <div class="container">-->
         <!--        <h2 class="section-title orange-text">Actualités</h2>-->
@@ -2073,6 +2116,7 @@ try {
         </div>
     </div>
 </div>
+    <?php include_once 'includes/language_selector.php'; ?>
 </body>
 
 </html>

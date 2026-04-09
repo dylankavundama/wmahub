@@ -4,9 +4,9 @@
             <p class="text-white transition-colors duration-300">&copy; Copyright <?= date('Y') ?> WMAHUB. <br> Tous droits réservés.</p>
             <p class="text-white mt-4 text-sm transition-colors duration-300">
                 Développé par 
-                <a href="https://portfolio-dylan.vercel.app/" target="_blank" rel="noopener noreferrer" 
+                <a href="https://nextbytechno.com/" target="_blank" rel="noopener noreferrer" 
                    class="text-primary hover:text-orange-400 transition-colors duration-300 font-semibold">
-                    Dylan Kavundama
+                 Next Byte Technology
                 </a>
             </p>
             <div class="footer-logos flex flex-wrap justify-center items-center gap-8 my-8">

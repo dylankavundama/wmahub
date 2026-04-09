@@ -23,8 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // Ajout d'une dépense
     if (isset($_POST['add_expense'])) {
+        $project_id = !empty($_POST['project_id']) ? $_POST['project_id'] : NULL;
         $stmt = $db->prepare("INSERT INTO expenses (project_id, motif, montant, date_depense) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$_POST['project_id'], $_POST['motif'], $_POST['montant'], $_POST['date_depense']]);
+        $stmt->execute([$project_id, $_POST['motif'], $_POST['montant'], $_POST['date_depense']]);
     }
     // Suppression d'une dépense
     if (isset($_POST['delete_expense'])) {
@@ -53,8 +54,8 @@ foreach($projects as $p) {
     }
 }
 
-// Récupérer toutes les dépenses
-$expensesRaw = $db->query("SELECT e.*, p.title as project_title FROM expenses e JOIN projects p ON e.project_id = p.id ORDER BY e.date_depense DESC")->fetchAll();
+// Récupérer toutes les dépenses (avec LEFT JOIN pour inclure celles sans projet)
+$expensesRaw = $db->query("SELECT e.*, COALESCE(p.title, 'Administratif') as project_title FROM expenses e LEFT JOIN projects p ON e.project_id = p.id ORDER BY e.date_depense DESC")->fetchAll();
 $total_expenses = array_sum(array_column($expensesRaw, 'montant'));
 
 // Récupérer toutes les entrées d'argent externes
@@ -255,7 +256,8 @@ $available_cash = ($total_project_revenue + $total_external_income) - $total_exp
                     Dépenses Projets
                 </h3>
                 <form method="POST" class="mb-8 space-y-4">
-                    <select name="project_id" required class="custom-select w-full">
+                    <select name="project_id" class="custom-select w-full">
+                        <option value="">-- Aucun Projet (Administratif) --</option>
                         <?php foreach ($projects as $p): ?>
                             <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['title']) ?></option>
                         <?php endforeach; ?>

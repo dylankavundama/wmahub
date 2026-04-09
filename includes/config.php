@@ -2,9 +2,9 @@
 ob_start();
  
 // define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-// define('DB_NAME', getenv('DB_NAME') ?: 'wmahub');
-// define('DB_USER', getenv('DB_USER') ?: 'root');
-// define('DB_PASS', getenv('DB_PASSWORD') ?: '');
+// define('DB_NAME', getenv('DB_NAME') ?: 'wmahubco_hub');
+// define('DB_USER', getenv('DB_USER') ?: 'wmahubco_hub');
+// define('DB_PASS', getenv('DB_PASSWORD') ?: 'Y3OS;W-)bsQR6*D6');
 
 
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
@@ -133,13 +133,89 @@ if (php_sapi_name() !== 'cli') {
         } catch (Exception $e) {}
     }
 
+    // Email d'alerte développeur
+    define('DEV_ALERT_EMAIL', 'dylankavundama@gmail.com');
+
+    /**
+     * Envoie un email d'alerte d'erreur au développeur.
+     * Anti-spam : max 1 email par erreur identique toutes les 5 minutes.
+     */
+    function sendErrorAlert($errno, $errstr, $errfile, $errline, $isFatal = false) {
+        // Ne pas alerter pour les notices bénignes (undefined variable, etc.) sauf si fatal
+        if (!$isFatal && in_array($errno, [E_NOTICE, E_DEPRECATED, E_USER_NOTICE, E_USER_DEPRECATED])) {
+            return;
+        }
+
+        // Throttling : éviter le flood d'emails pour la même erreur
+        $throttleKey = 'err_alert_' . md5($errfile . $errline . $errstr);
+        if (isset($_SESSION[$throttleKey]) && (time() - $_SESSION[$throttleKey]) < 300) {
+            return; // Déjà alerté il y a moins de 5 min pour cette erreur
+        }
+        $_SESSION[$throttleKey] = time();
+
+        // Types d'erreurs lisibles
+        $errorTypes = [
+            E_ERROR => '🔴 ERREUR FATALE', E_WARNING => '🟠 AVERTISSEMENT',
+            E_PARSE => '🔴 ERREUR PARSE', E_NOTICE => '🔵 NOTICE',
+            E_CORE_ERROR => '🔴 ERREUR CORE', E_COMPILE_ERROR => '🔴 ERREUR COMPILE',
+            E_USER_ERROR => '🔴 ERREUR USER', E_USER_WARNING => '🟠 AVERTISSEMENT USER',
+            E_USER_NOTICE => '🔵 NOTICE USER',
+        ];
+        $errorLabel = $isFatal ? '🔴 ERREUR FATALE' : ($errorTypes[$errno] ?? "Erreur #$errno");
+
+        $url     = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/');
+        $userId  = $_SESSION['user_id'] ?? 'non connecté';
+        $time    = date('d/m/Y H:i:s');
+
+        // Raccourcir le chemin du fichier pour lisibilité
+        $shortFile = str_replace(['/home/wmahubco/public_html/', __DIR__ . '/../'], '', $errfile);
+
+        $subject = "[WMA Hub] $errorLabel — $shortFile:$errline";
+        $body = "
+        <div style='font-family:Arial,sans-serif;max-width:680px;margin:auto;background:#0f0f0f;color:#e2e8f0;border-radius:12px;overflow:hidden;'>
+            <div style='background:linear-gradient(135deg,#dc2626,#b91c1c);padding:24px 32px;'>
+                <h1 style='margin:0;font-size:20px;color:#fff;'>🚨 Alerte Erreur — WMA Hub</h1>
+                <p style='margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.7);'>Détectée automatiquement le $time</p>
+            </div>
+            <div style='padding:32px;'>
+                <table style='width:100%;border-collapse:collapse;font-size:14px;'>
+                    <tr><td style='padding:10px;background:#1a1a1a;border-radius:6px;font-weight:bold;color:#f97316;width:140px;'>Type</td>
+                        <td style='padding:10px;'>$errorLabel</td></tr>
+                    <tr><td style='padding:10px;color:#f97316;font-weight:bold;'>Message</td>
+                        <td style='padding:10px;font-family:monospace;background:#1a1a1a;border-radius:6px;word-break:break-all;'>" . htmlspecialchars($errstr) . "</td></tr>
+                    <tr><td style='padding:10px;color:#f97316;font-weight:bold;'>Fichier</td>
+                        <td style='padding:10px;font-family:monospace;'>" . htmlspecialchars($shortFile) . "</td></tr>
+                    <tr><td style='padding:10px;color:#f97316;font-weight:bold;'>Ligne</td>
+                        <td style='padding:10px;font-family:monospace;'>$errline</td></tr>
+                    <tr><td style='padding:10px;color:#f97316;font-weight:bold;'>URL</td>
+                        <td style='padding:10px;font-family:monospace;word-break:break-all;'>" . htmlspecialchars($url) . "</td></tr>
+                    <tr><td style='padding:10px;color:#f97316;font-weight:bold;'>Utilisateur</td>
+                        <td style='padding:10px;'>ID : $userId</td></tr>
+                </table>
+            </div>
+            <div style='background:#1a1a1a;padding:16px 32px;text-align:center;font-size:11px;color:#64748b;'>
+                WMA Hub — Système d'alertes automatiques
+            </div>
+        </div>";
+
+        try {
+            require_once __DIR__ . '/mailer.php';
+            sendEmail(DEV_ALERT_EMAIL, $subject, $body);
+        } catch (Exception $e) {
+            error_log("sendErrorAlert failed: " . $e->getMessage());
+        }
+    }
+
     // Gestionnaire d'erreurs personnalisé
     set_error_handler(function($errno, $errstr, $errfile, $errline) use ($db_stats) {
         if (!(error_reporting() & $errno)) return false;
+        // Enregistrement en DB
         try {
             $stmt_err = $db_stats->prepare("INSERT INTO system_errors (message, file, line) VALUES (?, ?, ?)");
             $stmt_err->execute([$errstr, $errfile, $errline]);
         } catch (Exception $e) {}
+        // Alerte email développeur
+        sendErrorAlert($errno, $errstr, $errfile, $errline);
         return false; // Continuer la gestion d'erreur normale de PHP
     });
 
@@ -147,10 +223,13 @@ if (php_sapi_name() !== 'cli') {
     register_shutdown_function(function() use ($db_stats) {
         $error = error_get_last();
         if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+            // Enregistrement en DB
             try {
                 $stmt_err = $db_stats->prepare("INSERT INTO system_errors (message, file, line) VALUES (?, ?, ?)");
                 $stmt_err->execute(["FATAL: " . $error['message'], $error['file'], $error['line']]);
             } catch (Exception $e) {}
+            // Alerte email pour les erreurs fatales (toujours envoyée)
+            sendErrorAlert($error['type'], $error['message'], $error['file'], $error['line'], true);
         }
     });
 }
