@@ -90,15 +90,26 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
 
+    <!-- 3D Globe Library -->
+    <script src="https://unpkg.com/three"></script>
+    <script src="https://unpkg.com/globe.gl"></script>
 </head>
 
 <body class="bg-gray-50 transition-colors duration-300">
-    <!-- <div id="preloader" aria-live="polite" aria-label="Page en cours de chargement">
-        <div class="preloader-content">
-            <img src="asset/trans.png" alt="WMA Hub Logo" class="loader-logo">
-            <div class="loader-text">Chargement...</div>
+    <!-- Premium Progressive Preloader -->
+    <div id="preloader" class="fixed inset-0 z-[10000] bg-[#0a0a0c] flex flex-col items-center justify-center transition-all duration-1000 ease-in-out">
+        <div class="relative mb-8">
+            <img src="asset/trans.png" alt="WMA Hub Logo" class="w-24 h-24 relative z-10 animate-pulse">
+            <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-ping"></div>
         </div>
-    </div> -->
+        <div class="w-64 h-1 bg-white/10 rounded-full overflow-hidden relative">
+            <div id="preloader-bar" class="absolute inset-y-0 left-0 bg-primary w-0 transition-all duration-300 shadow-[0_0_15px_rgba(255,102,0,0.5)]"></div>
+        </div>
+        <div class="mt-4 flex flex-col items-center">
+            <span id="preloader-percent" class="text-white font-black text-2xl tracking-tighter">0%</span>
+            <span class="text-white/40 text-[10px] uppercase font-bold tracking-[0.3em] mt-2">Chargement...</span>
+        </div>
+    </div>
 
     <header class="hero-modern" role="banner" id="accueil">
         <!-- Navbar -->
@@ -1108,8 +1119,91 @@ try {
             </div>
         </section>
 
+ <!-- presence -->
+   <section id="distribution-impact" class="relative py-24 bg-[#0a0a0c] overflow-hidden">
+            <!-- Background Orbs -->
+            <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 animate-pulse"></div>
+            <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] -z-10 animate-pulse" style="animation-delay: 2s;"></div>
 
- 
+            <div class="container mx-auto px-4 relative z-10">
+                <div class="text-center mb-16 px-4">
+                    <span class="inline-block py-1 px-3 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 scroll-animate opacity-0 translate-y-4">
+                        IMPACT GLOBAL
+                    </span>
+                    <h2 class="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter leading-none scroll-animate opacity-0 translate-y-8">
+                        NOTRE <span class="text-primary underline decoration-white/10 decoration-8 underline-offset-8">PRÉSENCE</span> MONDIALE
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    <!-- Globe Card (Large) -->
+                    <div class="md:col-span-4 lg:col-span-4 lg:row-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group scroll-animate opacity-0 scale-95" style="min-height: 450px;">
+                        <h3 class="text-2xl font-black text-white mb-2 uppercase tracking-tight">Hub de Distribution</h3>
+                        <p class="text-gray-400 text-sm font-medium mb-8">Interaction temps réel avec nos serveurs mondiaux.</p>
+                        <div id="bentoGlobe" class="absolute inset-0 top-20 w-full h-[80%]" style="filter: drop-shadow(0 0 30px rgba(255,102,0,0.1));"></div>
+                        <div class="absolute bottom-8 left-8 flex items-center gap-3">
+                            <div class="flex -space-x-3">
+                                <img src="asset/cc.jpg" class="w-8 h-8 rounded-full border-2 border-[#0a0a0c]" alt="Artiste">
+                                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-white border-2 border-[#0a0a0c]">+720</div>
+                            </div>
+                            <span class="text-white/60 text-xs font-bold uppercase tracking-widest">Artistes actifs</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Card 1 -->
+                    <div class="md:col-span-2 lg:col-span-2 bg-primary group hover:bg-orange-600 rounded-[2.5rem] p-8 transition-all duration-500 scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.1s;">
+                        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-map-location-dot"></i>
+                        </div>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="50">0</span>+</h3>
+                        <p class="text-white/80 font-bold uppercase text-[10px] tracking-widest">Pays Desservis</p>
+                    </div>
+
+                    <!-- Stats Card 2 -->
+                    <div class="md:col-span-2 lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.2s;">
+                        <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 text-2xl mb-6">
+                            <i class="fas fa-tower-broadcast"></i>
+                        </div>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="200">0</span>+</h3>
+                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Plateformes</p>
+                    </div>
+
+                    <!-- Stats Card 3 -->
+                    <div class="md:col-span-2 lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.3s;">
+                        <div class="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 text-2xl mb-6">
+                            <i class="fas fa-headphones"></i>
+                        </div>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="80">0</span>M+</h3>
+                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Écoutes / Mois</p>
+                    </div>
+
+                    <!-- Stats Card 4 -->
+                    <div class="md:col-span-2 lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.4s;">
+                        <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500 text-2xl mb-6">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="100">0</span>K+</h3>
+                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Titres Distribués</p>
+                    </div>
+                    
+                    <!-- Stats Card 5: Visitors -->
+                    <div class="md:col-span-2 lg:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-all duration-500 scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.5s;">
+                        <div class="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 text-2xl mb-6">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="<?= $visitor_count ?>">0</span></h3>
+                        <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Visiteurs Totaux</p>
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+                #bentoGlobe canvas { outline: none !important; }
+                .bento-impact-glow {
+                    box-shadow: 0 0 50px -10px rgba(255,102,0,0.2);
+                }
+            </style>
+        </section>
         <section class="sell-music-platforms bg-gray-50 transition-colors duration-300">
             <div class="container">
                 <div class="platform-logos scroll-animate opacity-0 translate-y-8">
@@ -1536,101 +1630,7 @@ try {
             </div>
         </section>
 
-        <section class="global-presence bg-white transition-colors duration-300">
-            <div class="stars-background"></div>
-            <div class="container">
-                <h2 class="section-title scroll-animate opacity-0 translate-y-8 text-gray-900 transition-colors duration-300">
-                    <i class="fas fa-globe-americas text-primary mr-3"></i>Notre Présence Mondiale
-                </h2>
-                <div class="globe-3d-container scroll-animate opacity-0 translate-y-8" style="animation-delay: 0.2s;">
-                    <div class="globe-wrapper">
-                        <div class="globe-3d" id="globe3d">
-                            <!-- Points de présence sur le globe -->
-                            <div class="globe-point" data-location="North America" style="--lat: 40; --lng: -100;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">États-Unis</div>
-                            </div>
-                            <div class="globe-point" data-location="South America" style="--lat: -15; --lng: -50;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Brésil</div>
-                            </div>
-                            <div class="globe-point" data-location="Europe West" style="--lat: 50; --lng: 5;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Europe</div>
-                            </div>
-                            <div class="globe-point" data-location="Europe East" style="--lat: 45; --lng: 25;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Europe</div>
-                            </div>
-                            <div class="globe-point" data-location="Africa West" style="--lat: 8; --lng: -5;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Afrique de l'Ouest</div>
-                            </div>
-                            <div class="globe-point" data-location="Africa Central" style="--lat: 0; --lng: 20;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Afrique Centrale</div>
-                            </div>
-                            <div class="globe-point" data-location="Africa East" style="--lat: 5; --lng: 38;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Afrique de l'Est</div>
-                            </div>
-                            <div class="globe-point" data-location="Africa South" style="--lat: -25; --lng: 28;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Afrique du Sud</div>
-                            </div>
-                            <div class="globe-point" data-location="Africa North" style="--lat: 30; --lng: 10;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Afrique du Nord</div>
-                            </div>
-                            <div class="globe-point" data-location="Middle East" style="--lat: 30; --lng: 50;">
-                                <div class="point-marker"></div>
-                                <div class="point-pulse"></div>
-                                <div class="point-tooltip">Moyen-Orient</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="presence-stats">
-                        <div class="presence-stat-card">
-                            <div class="stat-icon-3d"><i class="fas fa-globe"></i></div>
-                            <div class="stat-content">
-                                <h3 class="stat-number-3d" data-target="11">0</h3>
-                                <p class="stat-label-3d">Régions couvertes</p>
-                            </div>
-                        </div>
-                        <div class="presence-stat-card">
-                            <div class="stat-icon-3d"><i class="fas fa-map-marker-alt"></i></div>
-                            <div class="stat-content">
-                                <h3 class="stat-number-3d" data-target="50">0</h3>
-                                <p class="stat-label-3d">Pays desservis</p>
-                            </div>
-                        </div>
-                        <div class="presence-stat-card">
-                            <div class="stat-icon-3d"><i class="fas fa-users"></i></div>
-                            <div class="stat-content">
-                                <h3 class="stat-number-3d" data-target="720">0</h3>
-                                <p class="stat-label-3d">Artistes actifs</p>
-                            </div>
-                        </div>
-                        <div class="presence-stat-card">
-                            <div class="stat-icon-3d"><i class="fas fa-chart-line"></i></div>
-                            <div class="stat-content">
-                                <h3 class="stat-number-3d" data-target="<?= $visitor_count ?>">0</h3>
-                                <p class="stat-label-3d">Visiteurs totaux</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      
 
         <section class="artist-reviews bg-gray-900 py-20 overflow-hidden" id="avis">
             <div class="container">
@@ -2116,6 +2116,126 @@ try {
         </div>
     </div>
 </div>
+    <script>
+        // ============================================
+        // PROGRESSIVE PRELOADER LOGIC
+        // ============================================
+        (function() {
+            const preloader = document.getElementById('preloader');
+            const bar = document.getElementById('preloader-bar');
+            const percentText = document.getElementById('preloader-percent');
+            
+            let progress = 0;
+            const updateProgress = (val) => {
+                progress = Math.min(val, 100);
+                if (bar) bar.style.width = `${progress}%`;
+                if (percentText) percentText.innerText = `${Math.floor(progress)}%`;
+            };
+
+            // Fake progress to start with (simulate early assets)
+            let interval = setInterval(() => {
+                if (progress < 85) {
+                    updateProgress(progress + Math.random() * 5);
+                }
+            }, 100);
+
+            // Finalizing when whole window is loaded
+            window.addEventListener('load', () => {
+                clearInterval(interval);
+                updateProgress(100);
+                
+                setTimeout(() => {
+                    preloader.style.opacity = '0';
+                    preloader.style.visibility = 'hidden';
+                    preloader.classList.add('scale-110');
+                    
+                    // Allow scroll after preloader
+                    document.body.style.overflow = 'auto';
+                }, 500);
+            });
+            
+            // Initial lock scroll
+            document.body.style.overflow = 'hidden';
+        })();
+
+        // ============================================
+        // BENTO IMPACT: GLOBE INITIALIZATION (Moved Logic)
+        // ============================================
+        (function() {
+            const container = document.getElementById('bentoGlobe');
+            if (!container) return;
+
+            // Distribution Points (Lat/Lng)
+            const hubs = [
+                { lat: -4.4, lng: 15.3, size: 0.1 },  // Kinshasa
+                { lat: 6.5, lng: 3.4, size: 0.08 },   // Lagos
+                { lat: 48.8, lng: 2.3, size: 0.06 },   // Paris
+                { lat: 40.7, lng: -74.0, size: 0.07 }, // NY
+                { lat: -33.8, lng: 151.2, size: 0.05 },// Sydney
+                { lat: 35.6, lng: 139.7, size: 0.06 }, // Tokyo
+                { lat: -23.5, lng: -46.6, size: 0.06 },// Sao Paulo
+                { lat: 1.3, lng: 103.8, size: 0.05 }   // Singapore
+            ];
+
+            const globe = Globe()
+                (container)
+                .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+                .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+                .backgroundColor('rgba(0,0,0,0)')
+                .showAtmosphere(true)
+                .atmosphereColor('#ff6600')
+                .atmosphereDaylightAlpha(0.1)
+                .htmlElementsData(hubs)
+                .htmlElement(d => {
+                    const el = document.createElement('div');
+                    el.innerHTML = `<div class="w-2 h-2 bg-primary rounded-full animate-ping"></div>`;
+                    return el;
+                })
+                .enablePointerInteraction(false);
+
+            // Controls
+            globe.controls().autoRotate = true;
+            globe.controls().autoRotateSpeed = 1.2;
+            globe.controls().enableZoom = false;
+
+            // Resize handle
+            const resizeGlobe = () => {
+                globe.width(container.clientWidth);
+                globe.height(container.clientHeight);
+            };
+            window.addEventListener('resize', resizeGlobe);
+            resizeGlobe();
+
+            // Counters Animation
+            const counters = document.querySelectorAll('.counter');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = +entry.target.getAttribute('data-target');
+                        let count = 0;
+                        const duration = 1000; // Total duration in ms
+                        const stepTime = Math.max(10, Math.floor(duration / target));
+                        const stepSize = Math.max(1, Math.ceil(target / (duration / 10)));
+                        
+                        const updateCount = () => {
+                            count += stepSize;
+                            if (count >= target) {
+                                entry.target.innerText = target;
+                            } else {
+                                entry.target.innerText = count;
+                                setTimeout(updateCount, 10);
+                            }
+                        };
+                        updateCount();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            counters.forEach(c => observer.observe(c));
+        })();
+    </script>
+
     <?php include_once 'includes/language_selector.php'; ?>
 </body>
 
