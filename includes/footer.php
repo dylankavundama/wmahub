@@ -19,13 +19,13 @@
                 <!-- <img src="asset/logo/dream.png" alt="Dream Logo" style="height: 40px;"> -->
             </div>
             <div class="social-icons flex justify-center gap-6 mt-8">
-                <a href="https://www.instagram.com/wmahub?igsh=YW5tcjQxbWZ5NW1y" target="_blank" aria-label="Instagram" rel="noopener noreferrer" class="text-gray-400 hover:text-primary transition-all text-xl">
+                <a href="https://www.instagram.com/wmaunitedafrica?igsh=aDBoM3c3anIzcXEx" target="_blank" aria-label="Instagram" rel="noopener noreferrer" class="text-gray-400 hover:text-primary transition-all text-xl">
                     <i class="fab fa-instagram"></i>
                 </a>
-                <a href="https://wa.me/243975278131" target="_blank" aria-label="WhatsApp" rel="noopener noreferrer" class="text-gray-400 hover:text-primary transition-all text-xl">
+                <a href="https://wa.me/256743297668" target="_blank" aria-label="WhatsApp" rel="noopener noreferrer" class="text-gray-400 hover:text-primary transition-all text-xl">
                     <i class="fab fa-whatsapp"></i>
                 </a>
-                <a href="https://www.facebook.com/share/173a8UbLZf/" target="_blank" aria-label="Facebook" rel="noopener noreferrer" class="text-gray-400 hover:text-primary transition-all text-xl">
+                <a href="https://www.facebook.com/share/1FQHLego9Z/" target="_blank" aria-label="Facebook" rel="noopener noreferrer" class="text-gray-400 hover:text-primary transition-all text-xl">
                     <i class="fab fa-facebook-f"></i>
                 </a>
             </div>
