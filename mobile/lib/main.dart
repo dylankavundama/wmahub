@@ -12,8 +12,9 @@ class WMAHubApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'WMA Hub',
+      title: 'WMA UA',
       debugShowCheckedModeBanner: false,
+      
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),
     );

@@ -387,9 +387,29 @@ $total_projects_revenue -= $total_paid_out;
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="flex items-center gap-3">
-                                        <?php if ($project['cover_file']): ?><a href="../artiste/uploads/<?= $project['cover_file'] ?>" target="_blank" class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><i class="fas fa-image text-[10px]"></i></a><?php endif; ?>
-                                        <div class="text-[10px] font-black text-orange-500 uppercase bg-orange-500/10 px-2 py-1 rounded">Pack <?= htmlspecialchars($project['promo_pack']) ?></div>
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <?php if ($project['cover_file']): ?>
+                                                <a href="../artiste/uploads/<?= $project['cover_file'] ?>" target="_blank" 
+                                                   class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20 hover:bg-purple-500 hover:text-white transition-all" 
+                                                   title="Voir l'image">
+                                                    <i class="fas fa-image text-[10px]"></i>
+                                                </a>
+                                                <a href="../artiste/uploads/<?= $project['cover_file'] ?>" download="<?= htmlspecialchars(pathinfo($project['cover_file'], PATHINFO_BASENAME)) ?>"
+                                                   class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500 hover:text-white transition-all border border-purple-500/30 text-[10px] font-bold"
+                                                   title="Télécharger la pochette">
+                                                    <i class="fas fa-download"></i> IMG
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-600 border border-white/5" title="Aucune image">
+                                                    <i class="fas fa-image text-[10px]"></i>
+                                                </span>
+                                                <button disabled class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 text-gray-600 border border-white/5 opacity-50 cursor-not-allowed text-[10px] font-bold">
+                                                    <i class="fas fa-download"></i> IMG
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="text-[10px] font-black text-orange-500 uppercase bg-orange-500/10 px-2 py-1 rounded self-start">Pack <?= htmlspecialchars($project['promo_pack']) ?></div>
                                     </div>
                                 </td>
                                 <td><form method="POST"><input type="hidden" name="project_id" value="<?= $project['id'] ?>"><select name="status" onchange="this.form.submit()" class="custom-select"><option value="en_attente" <?= $project['status'] === 'en_attente' ? 'selected' : '' ?>>En attente</option><option value="en_preparation" <?= $project['status'] === 'en_preparation' ? 'selected' : '' ?>>Préparation</option><option value="distribue" <?= $project['status'] === 'distribue' ? 'selected' : '' ?>>Distribué</option></select><input type="hidden" name="update_project_status" value="1"></form></td>
