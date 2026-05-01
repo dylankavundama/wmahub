@@ -25,6 +25,7 @@ try {
     $promo_pack = $_POST['promo_pack'] ?? 'Aucun';
     $authorization = isset($_POST['authorization']) ? (int)$_POST['authorization'] : 0;
     $project_type = $_POST['project_type'] ?? 'Single';
+    $genre = $_POST['genre'] ?? 'Afrobeats';
     $user_id = $_POST['user_id'] ?? 0;
 
     if (empty($title) || empty($artist_name) || empty($email) || empty($full_name)) {
@@ -76,6 +77,20 @@ try {
         $details,
         $promo_pack
     ]);
+
+    // Notification par Email à l'administrateur (Caleb & Team)
+    try {
+        require_once __DIR__ . '/../includes/mailer.php';
+        notifyNewProject(
+            $db->lastInsertId(),
+            $title,
+            $artist_name,
+            'Single', // Par défaut pour mobile
+            date('Y-m-d')
+        );
+    } catch (Exception $e) {
+        error_log("Notification Caleb Error: " . $e->getMessage());
+    }
 
     echo json_encode([
         "success" => true,

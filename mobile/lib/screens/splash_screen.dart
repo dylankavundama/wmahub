@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_screen.dart';
 import 'main_navigation.dart';
 import '../utils/app_theme.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,7 +20,25 @@ class _SplashScreenState extends State<SplashScreen> {
     _checkFirstLaunch();
   }
 
+  Future<void> _requestNotificationPermissions() async {
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+    
+    // Pour Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+        
+    // Pour iOS
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+
   Future<void> _checkFirstLaunch() async {
+    // Demander la permission pendant le splash screen
+    await _requestNotificationPermissions();
+    
     await Future.delayed(const Duration(seconds: 3));
     final prefs = await SharedPreferences.getInstance();
     final isFirstLaunch = prefs.getBool('first_launch') ?? true;

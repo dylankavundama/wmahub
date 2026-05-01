@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Wmahub Mobile</string>
+	<string>WMA UA</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -50,6 +50,21 @@
 		<string>https</string>
 		<string>http</string>
 		<string>whatsapp</string>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>WMA HUB nécessite l'accès à votre galerie pour vous permettre de téléverser la pochette de votre album ou projet.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>WMA HUB nécessite l'accès à vos fichiers média pour vous permettre de sélectionner les morceaux audio à distribuer.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>WMA HUB peut utiliser votre caméra pour prendre une photo de profil ou scanner des documents.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.ua.wmahub.reminderTask</string>
 	</array>
 </dict>
 </plist>

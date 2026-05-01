@@ -138,7 +138,7 @@ if ($current_day === 28) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Espace Employé</title>
-    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png"><link rel="apple-touch-icon" href="/asset/icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8882238368661853"
      crossorigin="anonymous"></script>

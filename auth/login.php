@@ -30,6 +30,15 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
     'scope'         => 'openid email profile',
     'state'         => $state
 ]);
+
+$apple_login_url = "https://appleid.apple.com/auth/authorize?" . http_build_query([
+    'response_type' => 'code',
+    'response_mode' => 'form_post',
+    'client_id'     => APPLE_CLIENT_ID,
+    'redirect_uri'  => APPLE_REDIRECT_URL,
+    'state'         => $state,
+    'scope'         => 'name email',
+]);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -37,7 +46,8 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - WMA Hub</title>
-    <link rel="icon" type="image/jpeg" href="../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png">
+    <link rel="apple-touch-icon" href="/asset/icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -153,6 +163,33 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
             height: 24px;
         }
 
+        .apple-btn {
+            background: #000;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            justify-content: center;
+            margin-top: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .apple-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1);
+            background: #111;
+        }
+
+        .apple-btn i {
+            font-size: 20px;
+        }
+
         .footer-text {
             margin-top: 2rem;
             font-size: 0.85rem;
@@ -214,6 +251,11 @@ $google_login_url = "https://accounts.google.com/o/oauth2/v2/auth?" . http_build
         <a href="<?= htmlspecialchars($google_login_url) ?>" class="google-btn">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
             Se connecter avec Google
+        </a>
+
+        <a href="<?= htmlspecialchars($apple_login_url) ?>" class="apple-btn">
+            <i class="fab fa-apple"></i>
+            Se connecter avec Apple
         </a>
 
         <div class="footer-text">

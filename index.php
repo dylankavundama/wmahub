@@ -9,6 +9,12 @@ try {
     if ($row = $stmt_index->fetch()) {
         $visitor_count = $row['count'];
     }
+    
+    // Récupérer les visites d'aujourd'hui
+    $today = date('Y-m-d');
+    $stmt_today = $db_index->prepare("SELECT COUNT(*) FROM site_visits WHERE visit_date = ?");
+    $stmt_today->execute([$today]);
+    $visitor_count_today = $stmt_today->fetchColumn() ?: 0;
 } catch (Exception $e) {}
 
 // Récupérer les avis des artistes
@@ -33,7 +39,8 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="WMA Hub - Plateforme de distribution musicale pour artistes et labels">
     <title>WMAHUB - La Plateforme de Distribution musicale</title>
-    <link rel="icon" type="image/jpeg" href="asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png">
+    <link rel="apple-touch-icon" href="/asset/icon.png">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -96,20 +103,7 @@ try {
 </head>
 
 <body class="bg-gray-50 transition-colors duration-300">
-    <!-- Premium Progressive Preloader -->
-    <div id="preloader" class="fixed inset-0 z-[10000] bg-[#0a0a0c] flex flex-col items-center justify-center transition-all duration-1000 ease-in-out">
-        <div class="relative mb-8">
-            <img src="asset/trans.png" alt="WMA Hub Logo" class="w-24 h-24 relative z-10 animate-pulse">
-            <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-ping"></div>
-        </div>
-        <div class="w-64 h-1 bg-white/10 rounded-full overflow-hidden relative">
-            <div id="preloader-bar" class="absolute inset-y-0 left-0 bg-primary w-0 transition-all duration-300 shadow-[0_0_15px_rgba(255,102,0,0.5)]"></div>
-        </div>
-        <div class="mt-4 flex flex-col items-center">
-            <span id="preloader-percent" class="text-white font-black text-2xl tracking-tighter">0%</span>
-            <span class="text-white/40 text-[10px] uppercase font-bold tracking-[0.3em] mt-2">Chargement...</span>
-        </div>
-    </div>
+
 
     <header class="hero-modern" role="banner" id="accueil">
         <!-- Navbar -->
@@ -1155,7 +1149,7 @@ try {
                         <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white text-2xl mb-6 group-hover:scale-110 transition-transform">
                             <i class="fas fa-map-location-dot"></i>
                         </div>
-                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="50">0</span>+</h3>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="50"><small class="text-xs font-normal opacity-50">en cours de chargement...</small></span>+</h3>
                         <p class="text-white/80 font-bold uppercase text-[10px] tracking-widest">Pays Desservis</p>
                     </div>
 
@@ -1164,7 +1158,7 @@ try {
                         <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 text-2xl mb-6">
                             <i class="fas fa-tower-broadcast"></i>
                         </div>
-                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="200">0</span>+</h3>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="200"><small class="text-xs font-normal opacity-50">en cours de chargement...</small></span>+</h3>
                         <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Plateformes</p>
                     </div>
 
@@ -1173,7 +1167,7 @@ try {
                         <div class="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 text-2xl mb-6">
                             <i class="fas fa-headphones"></i>
                         </div>
-                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="80">0</span>M+</h3>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="80"><small class="text-xs font-normal opacity-50">en cours de chargement...</small></span>M+</h3>
                         <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Écoutes / Mois</p>
                     </div>
 
@@ -1182,7 +1176,7 @@ try {
                         <div class="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500 text-2xl mb-6">
                             <i class="fas fa-music"></i>
                         </div>
-                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="100">0</span>K+</h3>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="100"><small class="text-xs font-normal opacity-50">en cours de chargement...</small></span>K+</h3>
                         <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Titres Distribués</p>
                     </div>
                     
@@ -1191,8 +1185,9 @@ try {
                         <div class="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 text-2xl mb-6">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="<?= $visitor_count ?>">0</span></h3>
+                        <h3 class="text-4xl font-black text-white mb-1"><span class="counter" data-target="<?= $visitor_count ?>"><small class="text-xs font-normal opacity-50">en cours de chargement...</small></span></h3>
                         <p class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Visiteurs Totaux</p>
+                        <p class="text-orange-500/80 font-medium text-[9px] mt-1 italic tracking-tight">Aujourd'hui: <?= number_format($visitor_count_today, 0, '.', ' ') ?></p>
                     </div>
                 </div>
             </div>
@@ -2117,46 +2112,7 @@ try {
     </div>
 </div>
     <script>
-        // ============================================
-        // PROGRESSIVE PRELOADER LOGIC
-        // ============================================
-        (function() {
-            const preloader = document.getElementById('preloader');
-            const bar = document.getElementById('preloader-bar');
-            const percentText = document.getElementById('preloader-percent');
-            
-            let progress = 0;
-            const updateProgress = (val) => {
-                progress = Math.min(val, 100);
-                if (bar) bar.style.width = `${progress}%`;
-                if (percentText) percentText.innerText = `${Math.floor(progress)}%`;
-            };
 
-            // Fake progress to start with (simulate early assets)
-            let interval = setInterval(() => {
-                if (progress < 85) {
-                    updateProgress(progress + Math.random() * 5);
-                }
-            }, 100);
-
-            // Finalizing when whole window is loaded
-            window.addEventListener('load', () => {
-                clearInterval(interval);
-                updateProgress(100);
-                
-                setTimeout(() => {
-                    preloader.style.opacity = '0';
-                    preloader.style.visibility = 'hidden';
-                    preloader.classList.add('scale-110');
-                    
-                    // Allow scroll after preloader
-                    document.body.style.overflow = 'auto';
-                }, 500);
-            });
-            
-            // Initial lock scroll
-            document.body.style.overflow = 'hidden';
-        })();
 
         // ============================================
         // BENTO IMPACT: GLOBE INITIALIZATION (Moved Logic)
@@ -2222,11 +2178,18 @@ try {
                             if (count >= target) {
                                 entry.target.innerText = target;
                             } else {
-                                entry.target.innerText = count;
+                                // First update: remove loading text
+                                if (count === stepSize) {
+                                    entry.target.innerHTML = count;
+                                } else {
+                                    entry.target.innerText = count;
+                                }
                                 setTimeout(updateCount, 10);
                             }
                         };
-                        updateCount();
+                        setTimeout(() => {
+                            updateCount();
+                        }, 800);
                         observer.unobserve(entry.target);
                     }
                 });

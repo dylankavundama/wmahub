@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'distribution_screen.dart';
+import 'project_detail_screen.dart';
+import 'revenue_screen.dart';
+import 'notification_screen.dart';
+import 'admin_accounting_screen.dart';
+import 'contract_screen.dart';
 import '../services/wordpress_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -36,7 +42,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
       if (user != null) {
-        _fetchDashboardData();
+        if (user['role'] == 'administrator') {
+          // Redirection immédiate pour l'admin
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminAccountingScreen()),
+            );
+          });
+        } else {
+          _fetchDashboardData();
+        }
       }
     }
   }
@@ -69,6 +85,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Vérification de sécurité/redirection à chaque build si on est admin
+    if (_currentUser != null && _currentUser!['role'] == 'administrator') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminAccountingScreen()),
+        );
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)));
+    }
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(
@@ -78,21 +105,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _currentUser == null ? 'Login ' : 'Dashboard Artiste',
-          style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: _currentUser != null
-            ? [
+      appBar: _currentUser == null
+          ? null
+          : AppBar(
+              title: const Text(
+                'Dashboard Artiste',
+                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
                 IconButton(
                   icon: const Icon(
                     Icons.refresh_rounded,
                     color: AppTheme.primaryColor,
                   ),
                   onPressed: _fetchDashboardData,
+                ),
+                Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                      onPressed: () {
+                        if (_currentUser != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                final rawId = _currentUser!['id'];
+                                final intId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+                                return NotificationScreen(userId: intId);
+                              },
+                            ),
+                          ).then((_) => _fetchDashboardData()); // Refresh count on return
+                        }
+                      },
+                    ),
+                    if (_dashboardData != null && _dashboardData!['notification_count'] != null)
+                      Builder(
+                        builder: (context) {
+                          final rawCount = _dashboardData!['notification_count'];
+                          final count = rawCount is int ? rawCount : int.tryParse(rawCount.toString()) ?? 0;
+                          
+                          if (count <= 0) return const SizedBox.shrink();
+                          
+                          return Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                              child: Text(
+                                count > 9 ? '9+' : count.toString(),
+                                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ).animate().scale();
+                        },
+                      ),
+                  ],
                 ),
                 IconButton(
                   icon: const Icon(
@@ -104,9 +177,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _checkAuth();
                   },
                 ),
-              ]
-            : null,
-      ),
+              ],
+            ),
       body: _currentUser == null
           ? LoginScreen(onLoginSuccess: _checkAuth)
           : RefreshIndicator(
@@ -214,7 +286,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               TextButton(
-                onPressed: () {}, // Link to Catalogue
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DistributionScreen(),
+                    ),
+                  );
+                },
                 child: const Text(
                   'VOIR TOUT',
                   style: TextStyle(fontSize: 11, color: AppTheme.textGrey),
@@ -253,31 +332,175 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icons.music_note_outlined,
             'Catalogue Musical',
             'Gérez votre discographie complète',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DistributionScreen(),
+                ),
+              );
+            },
           ),
           _buildDashboardCard(
             Icons.account_balance_wallet_outlined,
             'Mes Revenus',
             'Consultez vos rapports financiers',
+            onTap: () {
+              if (_currentUser != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      final rawId = _currentUser!['id'];
+                      final intId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+                      return RevenueScreen(userId: intId);
+                    },
+                  ),
+                );
+              }
+            },
+          ),
+          _buildDashboardCard(
+            Icons.notifications_outlined,
+            'Notifications',
+            'Suivez vos alertes et mises à jour',
+            onTap: () {
+              if (_currentUser != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      final rawId = _currentUser!['id'];
+                      final intId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+                      return NotificationScreen(userId: intId);
+                    },
+                  ),
+                );
+              }
+            },
           ),
           _buildDashboardCard(
             Icons.description_outlined,
             'Contrats',
             'Gérez vos accords de distribution',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    final rawId = _currentUser!['id'];
+                    final intId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+                    return ContractScreen(
+                      userId: intId,
+                      onSigned: () {
+                        // Rafraîchir les données si le contrat vient d'être signé
+                        _fetchDashboardData();
+                      },
+                    );
+                  },
+                ),
+              );
+            },
           ),
           _buildDashboardCard(
             Icons.auto_awesome_outlined,
             'Assistant d\'écriture',
             'Aide à la création (IA)',
             isPro: true,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('L\'Assistant d\'écriture IA sera disponible dans une prochaine mise à jour.'),
+                  backgroundColor: AppTheme.primaryColor,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
           ),
           _buildDashboardCard(
-            Icons.settings_outlined,
-            'Paramètres',
-            'Configuration du compte',
+            Icons.privacy_tip_outlined,
+            'Politique de Confidentialité',
+            'Consultez nos engagements légaux',
+            onTap: () => _launchURL('https://wmahub.com/privacy.php'),
+          ),
+          const SizedBox(height: 24),
+          TextButton.icon(
+            onPressed: _showDeleteAccountDialog,
+            icon: const Icon(Icons.delete_forever, color: Colors.redAccent, size: 18),
+            label: const Text(
+              'SUPPRIMER MON COMPTE',
+              style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        title: const Text('Supprimer le compte ?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Cette action est irréversible. Vos données de distribution et votre accès seront désactivés conformément aux règles de l\'App Store.',
+          style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ANNULER', style: TextStyle(color: AppTheme.textGrey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteAccount();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('CONFIRMER LA SUPPRESSION', style: TextStyle(fontSize: 11)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    if (_currentUser == null) return;
+    try {
+      final response = await http.post(
+        Uri.parse("${WordPressService.apiBaseUrl}/delete_account.php"),
+        body: {'user_id': _currentUser!['id'].toString()},
+      );
+      
+      if (mounted) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          await _authService.logout();
+          _checkAuth();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message']), backgroundColor: Colors.green),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur lors de la suppression'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+        );
+      }
+    }
   }
 
   Widget _buildRecentProjectItem(Map<String, dynamic> project) {
@@ -286,19 +509,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (status == 'distribue') statusColor = Colors.green;
     if (status == 'en_preparation') statusColor = Colors.blue;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProjectDetailScreen(project: project),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
             decoration: BoxDecoration(
               color: Colors.white10,
               borderRadius: BorderRadius.circular(12),
@@ -360,8 +593,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Icon(Icons.chevron_right, color: AppTheme.textGrey, size: 20),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatsGrid(Map<String, dynamic>? stats) {
     return GridView.count(

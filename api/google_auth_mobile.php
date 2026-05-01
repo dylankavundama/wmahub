@@ -49,12 +49,14 @@ try {
     // Normalisation du rôle pour éviter les erreurs de casse ou d'espaces
     $userRole = trim(strtolower($user['role'] ?? ''));
 
-    if ($userRole !== 'artiste') {
-        error_log("Google Login Denied: User $email has role '" . ($user['role'] ?? 'NULL') . "' instead of 'artiste'");
+    // Autoriser les Artistes ET les Admins sur mobile
+    $allowedRoles = ['artiste', 'admin'];
+    if (!in_array($userRole, $allowedRoles)) {
+        error_log("Google Login Denied: User $email has role '" . ($user['role'] ?? 'NULL') . "'");
         echo json_encode([
             "success" => false, 
             "error_code" => "INVALID_ROLE",
-            "message" => "Désolé, cet e-mail est associé à un compte '" . ($user['role'] ?? 'Autre') . "'. L'accès mobile est réservé uniquement aux Artistes."
+            "message" => "Désolé, l'accès mobile est réservé uniquement aux Artistes et Administrateurs."
         ]);
         exit;
     }

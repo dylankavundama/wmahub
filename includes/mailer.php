@@ -161,7 +161,8 @@ function notifyNewProject($projectId, $projectTitle, $artistName, $projectType, 
         "https://wmahub.com/dashboards/admin/index.php?search=" . urlencode($projectTitle)
     );
     
-    return sendEmail('info@wmahub.com', "Nouveau Projet: " . $projectTitle, $html);
+    $recipients = ['info@wmahub.com', 'calebzubabeatz@gmail.com'];
+    return sendEmail($recipients, "Nouveau Projet: " . $projectTitle, $html);
 }
 
 /**

@@ -84,7 +84,7 @@ $total_in_cdf = $rev_cdf + ($rev_usd * $exchange_rate);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Gestion Abonnements</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png"><link rel="apple-touch-icon" href="/asset/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../css/admin-shared.css">

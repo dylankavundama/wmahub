@@ -25,6 +25,9 @@ class _ContractScreenState extends State<ContractScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('contract_signed_${widget.userId}', true);
     widget.onSigned();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -160,7 +163,7 @@ Plateforme de distribution et de management musical''',
                             setState(() => _isSigned = val ?? false);
                           },
                           title: const Text(
-                            "J'ai lu et j'accepte les termes du contrat",
+                            "Je valide les termes du contrat",
                             style: TextStyle(color: Colors.white, fontSize: 13),
                           ),
                           activeColor: AppTheme.primaryColor,
@@ -183,7 +186,7 @@ Plateforme de distribution et de management musical''',
                             ),
                           ),
                           child: Text(
-                            'SIGNER ET CONTINUER',
+                            'VALIDER ET CONTINUER',
                             style: TextStyle(
                               color: _isSigned ? Colors.white : Colors.white38,
                               fontWeight: FontWeight.bold,

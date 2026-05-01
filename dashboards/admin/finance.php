@@ -74,7 +74,7 @@ $available_cash = ($total_project_revenue + $total_external_income) - $total_exp
     
     <!-- Scripts et CSS Prioritaires -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png"><link rel="apple-touch-icon" href="/asset/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../css/admin-shared.css">
@@ -164,6 +164,8 @@ $available_cash = ($total_project_revenue + $total_external_income) - $total_exp
             <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
             <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
             <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
+            <a href="comptabilite.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'comptabilite.php' ? 'active' : '' ?>"><i class="fas fa-calculator"></i> Comptabilité</a>
+            <a href="hero_slider.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'hero_slider.php' ? 'active' : '' ?>"><i class="fas fa-images"></i> Gestion Slider</a>
             <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
         </nav>
 

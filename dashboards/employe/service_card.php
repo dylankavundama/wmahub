@@ -20,7 +20,7 @@ $card = $stmt->fetch() ?: [];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMA HUB - Carte de Service</title>
-    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png"><link rel="apple-touch-icon" href="/asset/icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -276,7 +276,7 @@ $card = $stmt->fetch() ?: [];
                                 </div>
                                 <div class="card-body-layout">
                                     <div class="photo-placeholder">
-                                        <img id="previewPhoto" src="<?= $card['photo_path'] ? '../../' . $card['photo_path'] : '../../asset/aspi.jpg' ?>" class="w-full h-full object-cover">
+                                        <img id="previewPhoto" src="<?= ($card['photo_path'] ?? '') ? '../../' . $card['photo_path'] : '../../asset/aspi.jpg' ?>" class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex-1">
                                         <h4 id="previewName" class="text-xl font-black mb-1 uppercase tracking-tighter leading-tight"><?= htmlspecialchars($card['full_name'] ?? $_SESSION['user_name']) ?></h4>

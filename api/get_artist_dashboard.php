@@ -26,7 +26,7 @@ try {
     // 2. Recent Projects
     $stmt = $db->prepare("SELECT id, title, artist_name, status, streams, date_sortie, created_at 
                           FROM projects WHERE user_id = ? 
-                          ORDER BY created_at DESC 
+                          ORDER BY id DESC 
                           LIMIT 5");
     $stmt->execute([$user_id]);
     $recent_projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -51,7 +51,7 @@ try {
                 "total_revenue" => (float)$stats['total_revenue']
             ],
             "recent_projects" => $recent_projects,
-            "notification_count" => $notif_count
+            "notification_count" => (int)$notif_count
         ]
     ]);
 

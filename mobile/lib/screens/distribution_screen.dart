@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:async';
 import '../utils/app_theme.dart';
 import 'create_project_screen.dart';
+import 'project_detail_screen.dart';
 import '../services/wordpress_service.dart';
 import '../services/auth_service.dart';
 
@@ -192,7 +193,14 @@ class _DistributionScreenState extends State<DistributionScreen> {
         border: Border.all(color: Colors.white10),
       ),
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProjectDetailScreen(project: project),
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(24),
         child: Padding(
           padding: const EdgeInsets.all(20),

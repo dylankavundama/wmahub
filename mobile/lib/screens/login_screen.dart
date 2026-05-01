@@ -4,7 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'contract_screen.dart';
+import 'admin_accounting_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -26,14 +28,26 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (result != null && result['success'] == true) {
-          final userId = result['user']?['id'] ?? 0;
+          final userId = int.tryParse(result['user']?['id']?.toString() ?? '0') ?? 0;
           final prefs = await SharedPreferences.getInstance();
           final hasSigned = prefs.getBool('contract_signed_$userId') ?? false;
+
+          final role = result['user']?['role'] ?? 'artiste';
+
+          if (role == 'admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminAccountingScreen(),
+              ),
+            );
+            return;
+          }
 
           if (hasSigned) {
             widget.onLoginSuccess();
           } else {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ContractScreen(
@@ -52,6 +66,36 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         _showErrorDialog('Une erreur est survenue: $e');
+      }
+    }
+  }
+
+  Future<void> _handleAppleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      // Pour l'instant, on simule la validation backend
+      // Dans une version réelle, vous enverriez credential.identityToken à votre API PHP
+      debugPrint('Apple Login Success: ${credential.userIdentifier}');
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        // Simulation de succès
+        widget.onLoginSuccess();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (e is SignInWithAppleAuthorizationException && e.code == AuthorizationErrorCode.canceled) {
+          return;
+        }
+        _showErrorDialog('Erreur Apple Login: $e');
       }
     }
   }
@@ -226,54 +270,96 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? const CircularProgressIndicator(
                                 color: AppTheme.primaryColor,
                               )
-                            : ElevatedButton(
-                                onPressed: _termsAccepted
-                                    ? _handleGoogleLogin
-                                    : () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "Vous devez accepter les conditions pour continuer.",
-                                            ),
-                                            backgroundColor: Colors.redAccent,
+                            : Column(
+                                children: [
+                                  // Google Button
+                                  ElevatedButton(
+                                    onPressed: _termsAccepted
+                                        ? _handleGoogleLogin
+                                        : () {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Vous devez accepter les conditions."),
+                                                backgroundColor: Colors.redAccent,
+                                              ),
+                                            );
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Image.network(
+                                          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_\"G\"_Logo.svg/1200px-Google_\"G\"_Logo.svg.png',
+                                          height: 24,
+                                          errorBuilder: (c, e, s) => const Icon(
+                                            Icons.g_mobiledata,
+                                            color: Colors.blue,
                                           ),
-                                        );
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.network(
-                                      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_\"G\"_Logo.svg/1200px-Google_\"G\"_Logo.svg.png',
-                                      height: 24,
-                                      errorBuilder: (c, e, s) => const Icon(
-                                        Icons.g_mobiledata,
-                                        color: Colors.blue,
-                                      ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Continuer avec Google',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Continuer avec Google',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Apple Button
+                                  ElevatedButton(
+                                    onPressed: _termsAccepted
+                                        ? _handleAppleLogin
+                                        : () {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Vous devez accepter les conditions."),
+                                                backgroundColor: Colors.redAccent,
+                                              ),
+                                            );
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 16,
                                       ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: const BorderSide(color: Colors.white24),
+                                      ),
+                                      elevation: 0,
                                     ),
-                                  ],
-                                ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.apple, size: 24),
+                                        SizedBox(width: 12),
+                                        Text(
+                                          'Continuer avec Apple',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                       ],
                     ),

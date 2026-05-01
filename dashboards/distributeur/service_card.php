@@ -127,7 +127,7 @@ if (isset($_POST['pay_card'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma Carte de Service - WMA HUB</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png"><link rel="apple-touch-icon" href="/asset/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -322,7 +322,7 @@ if (isset($_POST['pay_card'])) {
                     <h4 class="text-sm font-black uppercase tracking-widest text-orange-500 mb-6">Aperçu des informations</h4>
                     <div class="flex items-center gap-6 mb-8">
                         <div class="w-24 h-24 rounded-2xl overflow-hidden border border-white/10 bg-white/5">
-                            <img src="../../<?= $card['photo_path'] ?: 'asset/aspi.jpg' ?>" class="w-full h-full object-cover">
+                            <img src="../../<?= ($card['photo_path'] ?? '') ?: 'asset/aspi.jpg' ?>" class="w-full h-full object-cover">
                         </div>
                         <div>
                             <p class="text-2xl font-black"><?= htmlspecialchars($card['full_name']) ?></p>
@@ -389,7 +389,7 @@ if (isset($_POST['pay_card'])) {
                     
                     <div class="flex items-center gap-6">
                         <div class="w-24 h-24 rounded-2xl border-2 border-orange-500/50 p-1">
-                            <img src="../../<?= $card['photo_path'] ?: 'asset/aspi.jpg' ?>" class="w-full h-full object-cover rounded-xl">
+                            <img src="../../<?= ($card['photo_path'] ?? '') ?: 'asset/aspi.jpg' ?>" class="w-full h-full object-cover rounded-xl">
                         </div>
                         <div>
                             <p class="text-2xl font-black tracking-tighter leading-none"><?= htmlspecialchars($card['full_name']) ?></p>

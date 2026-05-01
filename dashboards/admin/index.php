@@ -101,7 +101,7 @@ if ($f_search !== '') {
     $params[] = "%$f_search%";
 }
 
-$query .= " ORDER BY p.created_at DESC";
+$query .= " ORDER BY CASE WHEN p.status = 'en_attente' THEN 0 WHEN p.status = 'en_preparation' THEN 1 ELSE 2 END ASC, p.id DESC";
 
 $stmt = $db->prepare($query);
 $stmt->execute($params);
@@ -149,7 +149,8 @@ $total_projects_revenue -= $total_paid_out;
      crossorigin="anonymous"></script>
     <!-- Scripts et CSS Prioritaires -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/jpeg" href="../../asset/placeholder.jpg">
+    <link rel="icon" type="image/png" href="/asset/icon.png">
+    <link rel="apple-touch-icon" href="/asset/icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../css/admin-shared.css">
@@ -249,6 +250,7 @@ $total_projects_revenue -= $total_paid_out;
             <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
             <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
             <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
+            <a href="comptabilite.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'comptabilite.php' ? 'active' : '' ?>"><i class="fas fa-calculator"></i> Comptabilité</a>
             <a href="hero_slider.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'hero_slider.php' ? 'active' : '' ?>"><i class="fas fa-images"></i> Gestion Slider</a>
             <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
             <?php if ($_SESSION['role'] === 'superadmin'): ?>
@@ -277,10 +279,6 @@ $total_projects_revenue -= $total_paid_out;
                 <p class="text-gray-400 mt-2">Gérez les demandes de distribution et le catalogue.</p>
             </div>
             <div class="flex items-center gap-4">
-                <div class="relative hidden md:block">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"></i>
-                    <input type="text" id="tableSearch" name="search" class="search-bar pl-12" placeholder="Rechercher..." value="<?= htmlspecialchars($f_search) ?>">
-                </div>
                 <button onclick="window.location.reload()" class="bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl transition-all border border-white/10"><i class="fas fa-sync-alt"></i></button>
                 <?php include '../../includes/header_notifications.php'; ?>
             </div>
@@ -315,7 +313,12 @@ $total_projects_revenue -= $total_paid_out;
             <div class="px-8 py-6 border-b border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <h3 class="text-lg font-bold flex items-center gap-3"><i class="fas fa-compact-disc text-orange-500"></i> Dernières demandes</h3>
                 
-                <form method="GET" class="flex flex-wrap items-center gap-4">
+                <form method="GET" class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                        <input type="text" name="search" class="custom-select pl-10 w-full" placeholder="Titre, artiste..." value="<?= htmlspecialchars($f_search) ?>">
+                    </div>
+                    
                     <div class="flex items-center gap-2">
                         <label class="text-[10px] font-black uppercase text-gray-500">Statut:</label>
                         <select name="f_status" class="custom-select" onchange="this.form.submit()">

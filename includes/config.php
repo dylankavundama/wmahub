@@ -16,6 +16,9 @@ define('DB_PASS', getenv('DB_PASSWORD') ?: '');
 define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '547408646820-eedhgi415138ulb823mhh9uhln8i9f60.apps.googleusercontent.com');
 define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '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');
 
+// Configuration Apple OAuth (Service ID)
+define('APPLE_CLIENT_ID', getenv('APPLE_CLIENT_ID') ?: 'com.ua.wmahub');
+
 // Configuration Gemini API
 define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA');
 
@@ -41,6 +44,7 @@ $baseUrl = rtrim($baseUrl, '/');
 
 // On permet de forcer l'URL de redirection via variable d'environnement si la détection automatique échoue
 define('GOOGLE_REDIRECT_URL', getenv('GOOGLE_REDIRECT_URL') ?: $baseUrl . '/auth/callback.php');
+define('APPLE_REDIRECT_URL', getenv('APPLE_REDIRECT_URL') ?: $baseUrl . '/auth/apple_callback.php');
 
 /**
  * Retourne une instance de connexion PDO

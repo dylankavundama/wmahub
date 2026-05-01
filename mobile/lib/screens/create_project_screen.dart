@@ -431,17 +431,22 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       children: [
         _buildSectionTitle('5. PACK PROMO & LÉGAL'),
         const SizedBox(height: 20),
-        _buildPackOption('Aucun', 'Distribution basique gratuite', '\$0'),
+        _buildPackOption('Aucun', 'Distribution basique gratuite', 'Inclus'),
         const SizedBox(height: 12),
         _buildPackOption(
           'Starter',
           'Distribution sur toutes les plateformes',
-          '\$15',
+          '',
         ),
         const SizedBox(height: 12),
-        _buildPackOption('Pro', 'Distribution + Promo réseaux sociaux', '\$35'),
+        _buildPackOption('Pro', 'Distribution + Promo réseaux sociaux', ''),
         const SizedBox(height: 12),
-        _buildPackOption('Premium', 'Promo complète + Clip YouTube', '\$75'),
+        _buildPackOption('Premium', 'Promo complète + Clip YouTube', ''),
+        const SizedBox(height: 16),
+        const Text(
+          '* Le règlement et la validation finale des packs se font via votre tableau de bord sur wmahub.com',
+          style: TextStyle(color: Colors.orangeAccent, fontSize: 9, fontStyle: FontStyle.italic),
+        ),
         const SizedBox(height: 32),
         _buildAuthorizationCheckbox(),
       ],
@@ -673,14 +678,15 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 ],
               ),
             ),
-            Text(
-              price,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
+            if (price.isNotEmpty)
+              Text(
+                price,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
-            ),
           ],
         ),
       ),

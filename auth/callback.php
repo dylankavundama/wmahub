@@ -41,13 +41,26 @@ if (isset($_GET['code'])) {
 
     $access_token = $token_data['access_token'];
 
-    // Récupération des informations de l'utilisateur
+    // Récupération des informations de l'utilisateur via cURL
     $user_info_url = 'https://www.googleapis.com/oauth2/v3/userinfo?access_token=' . $access_token;
-    $user_info_response = file_get_contents($user_info_url);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $user_info_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'); // Ajout d'un User-Agent
+    $user_info_response = curl_exec($ch);
+    $curl_error = curl_error($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
     $user_data = json_decode($user_info_response, true);
 
     if (!$user_data || !isset($user_data['sub'])) {
-        die("Impossible de récupérer les informations de l'utilisateur.");
+        error_log("Google Auth Error: HTTP $http_code | cURL Error: $curl_error | Response: $user_info_response");
+        die("Impossible de récupérer les informations de l'utilisateur. <br> <b>Détails techniques :</b> HTTP $http_code - $curl_error");
     }
 
     $google_id = $user_data['sub'];

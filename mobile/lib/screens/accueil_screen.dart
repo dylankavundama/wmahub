@@ -9,6 +9,7 @@ import '../services/wordpress_service.dart';
 import '../utils/app_theme.dart';
 import 'post_detail_screen.dart';
 import 'no_internet_screen.dart';
+import 'slide_detail_screen.dart';
 
 class AccueilScreen extends StatefulWidget {
   const AccueilScreen({super.key});
@@ -192,7 +193,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_none),
-                onPressed: () {},
+                onPressed: () => _showNotificationsPanel(context),
               ),
             ],
             backgroundColor: AppTheme.backgroundColor.withValues(alpha: 0.8),
@@ -276,67 +277,80 @@ class _AccueilScreenState extends State<AccueilScreen> {
         autoPlayInterval: const Duration(seconds: 5),
       ),
       items: _slides.map((slide) {
-        return Container(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: CachedNetworkImage(
-                  imageUrl: slide['image_path'] ?? '',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 300,
-                  placeholder: (context, url) => _buildSliderShimmer(),
-                  errorWidget: (context, url, error) => Container(
-                    color: AppTheme.cardColor,
-                    child: const Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        color: Colors.white24,
-                        size: 40,
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SlideDetailScreen(slide: slide),
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Hero(
+                    tag: 'slide_${slide['image_path']}',
+                    child: CachedNetworkImage(
+                      imageUrl: slide['image_path'] ?? '',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 300,
+                      placeholder: (context, url) => _buildSliderShimmer(),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppTheme.cardColor,
+                        child: const Center(
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: Colors.white24,
+                            size: 40,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.8),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        slide['title'] ?? '',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ).animate().fadeIn().slideX(),
+                      if (slide['subtitle'] != null)
+                        Text(
+                          slide['subtitle'],
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ).animate().fadeIn(delay: 200.ms),
                     ],
                   ),
                 ),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      slide['title'] ?? '',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ).animate().fadeIn().slideX(),
-                    if (slide['subtitle'] != null)
-                      Text(
-                        slide['subtitle'],
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
-                      ).animate().fadeIn(delay: 200.ms),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -583,6 +597,189 @@ class _AccueilScreenState extends State<AccueilScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showNotificationsPanel(BuildContext context) {
+    // Récupérer les 3 derniers articles
+    final recentPosts = _posts.take(3).toList();
+    
+    // Notifications automatiques du système (Rappels)
+    final List<Map<String, String>> autoNotifications = [
+      {
+        "title": "🎵 Projet en attente",
+        "body": "N'oubliez pas de finaliser vos projets pour distribution."
+      },
+      {
+        "title": "💰 Suivez vos revenus",
+        "body": "De nouveaux rapports de streaming sont générés ce mois-ci."
+      },
+      {
+        "title": "🔥 Restez actif !",
+        "body": "Partagez votre nouvelle sortie sur vos réseaux sociaux."
+      }
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.backgroundColor,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header du Drawer
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'NOTIFICATIONS',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // SECTION 1 : Articles Récents
+                      const Text(
+                        'DERNIERS ARTICLES',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (recentPosts.isEmpty)
+                        const Text('Aucun article récent', style: TextStyle(color: Colors.white38))
+                      else
+                        ...recentPosts.map((dynamicRawPost) {
+                          final post = dynamicRawPost as Map<String, dynamic>;
+                          final rawTitle = post['title']?['rendered']?.toString() ?? '';
+                          final title = rawTitle.replaceAll(RegExp(r'<[^>]*>'), '');
+                          
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.article_outlined, color: Colors.white54),
+                            ),
+                            title: Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                            trailing: const Icon(Icons.chevron_right, color: Colors.white24),
+                            onTap: () {
+                              Navigator.pop(context); // Fermer le panneau
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PostDetailScreen(post: post),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
+                      
+                      const SizedBox(height: 32),
+                      const Divider(color: Colors.white10),
+                      const SizedBox(height: 24),
+
+                      // SECTION 2 : Notifications Automatiques
+                      const Text(
+                        'RAPPELS AUTOMATIQUES',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...autoNotifications.map((notif) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.notifications_active, color: AppTheme.primaryColor, size: 16),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      notif['title']!,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      notif['body']!,
+                                      style: const TextStyle(color: AppTheme.textGrey, fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
