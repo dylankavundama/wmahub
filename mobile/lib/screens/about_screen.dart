@@ -107,17 +107,17 @@ class _AboutScreenState extends State<AboutScreen> {
                             "Distribuez votre musique facilement sur plus de 200 plateformes de streaming mondiales.",
                       ),
 
-                      const SizedBox(height: 40),
-                      _buildHeader("PROJET"),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text('WMAPLUS'),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text('WMAUNITEDAFRICA'),
-                      ),
+                      // const SizedBox(height: 40),
+                      // _buildHeader("PROJET"),
+                      // const SizedBox(height: 16),
+                      // // Padding(
+                      // //   padding: const EdgeInsets.all(8.0),
+                      // //   child: Text('WMAPLUS'),
+                      // // ),
+                      // Padding(
+                      //   padding: const EdgeInsets.all(8.0),
+                      //   child: Text('WMAUNITEDAFRICA'),
+                      // ),
 
                       const SizedBox(height: 40),
                       _buildStats(

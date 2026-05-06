@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +6,7 @@ import 'onboarding_screen.dart';
 import 'main_navigation.dart';
 import '../utils/app_theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../services/logging_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,40 +23,60 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _requestNotificationPermissions() async {
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-    
-    // Pour Android 13+
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-        
-    // Pour iOS
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
+    if (kIsWeb) return;
+    if (defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS) return;
+
+    try {
+      final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+          FlutterLocalNotificationsPlugin();
+      
+      // Pour Android 13+
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+          
+      // Pour iOS
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (e) {
+      LoggingService.warning("Erreur permissions notifications: $e");
+    }
   }
 
   Future<void> _checkFirstLaunch() async {
-    // Demander la permission pendant le splash screen
-    await _requestNotificationPermissions();
-    
-    await Future.delayed(const Duration(seconds: 3));
-    final prefs = await SharedPreferences.getInstance();
-    final isFirstLaunch = prefs.getBool('first_launch') ?? true;
+    try {
+      // Demander la permission pendant le splash screen
+      await _requestNotificationPermissions();
+      
+      // Petit délai pour l'animation
+      await Future.delayed(const Duration(seconds: 3));
+      
+      final prefs = await SharedPreferences.getInstance();
+      final isFirstLaunch = prefs.getBool('first_launch') ?? true;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (isFirstLaunch) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainNavigation()),
-      );
+      if (isFirstLaunch) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigation()),
+        );
+      }
+    } catch (e) {
+      LoggingService.critical("Erreur critique au démarrage: $e");
+      // En cas d'erreur massive, on tente quand même d'aller à la navigation principale
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigation()),
+        );
+      }
     }
   }
 

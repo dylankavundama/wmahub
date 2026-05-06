@@ -35,6 +35,7 @@
             <section>
                 <h2>1. Collecte des Informations</h2>
                 <p>Nous collectons les informations que vous nous fournissez directement : email, nom d'artiste, numéro de téléphone, et métadonnées musicales. Lors de la connexion via Google OAuth, nous récupérons uniquement votre nom, email et photo de profil publique.</p>
+                <p class="mt-2"><strong>Fichiers multimédias :</strong> Dans le cadre de nos services de distribution musicale, notre application peut demander l'accès à votre stockage pour collecter et uploader des fichiers audio (vos morceaux de musique) ainsi que des images de votre galerie ou appareil photo (pour les pochettes d'album/singles).</p>
             </section>
 
             <section>
@@ -65,8 +66,9 @@
             </section>
 
             <section>
-                <h2>6. Vos Droits</h2>
-                <p>Vous avez le droit d'accéder, de corriger ou de demander la suppression de vos données personnelles à tout moment en nous contactant à l'adresse suivante : <strong>info@wmahub.com</strong>.</p>
+                <h2>6. Vos Droits et Suppression des Données</h2>
+                <p>Vous avez le droit d'accéder, de corriger ou de demander la suppression de votre compte et de vos données personnelles à tout moment.</p>
+                <p class="mt-2"><strong>Suppression de compte et de données :</strong> Pour demander la suppression définitive de votre compte et des données associées, veuillez nous envoyer un email à <strong>info@wmahub.com</strong> avec pour objet "Demande de suppression de compte". Nous traiterons votre demande dans les plus brefs délais et supprimerons vos données, sous réserve de nos obligations légales et fiscales de conservation.</p>
             </section>
 
             <footer class="mt-20 pt-8 border-t border-white/5 text-center">

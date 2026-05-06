@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
@@ -103,7 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardColor,
         title: const Text(
           'Accès Refusé',
@@ -115,7 +117,15 @@ class _LoginScreenState extends State<LoginScreen> {
         content: Text(message, style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              // Déconnexion du compte Google pour permettre
+              // à l'utilisateur de choisir un autre compte
+              await _authService.logout();
+              if (mounted) {
+                setState(() => _isLoading = false);
+              }
+            },
             child: const Text(
               'FERMER',
               style: TextStyle(color: AppTheme.textGrey),
@@ -123,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               _launchURL('https://wmahub.com/auth/login.php');
             },
             style: ElevatedButton.styleFrom(
@@ -318,47 +328,49 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
-                                  // Apple Button
-                                  ElevatedButton(
-                                    onPressed: _termsAccepted
-                                        ? _handleAppleLogin
-                                        : () {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text("Vous devez accepter les conditions."),
-                                                backgroundColor: Colors.redAccent,
-                                              ),
-                                            );
-                                          },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        side: const BorderSide(color: Colors.white24),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.apple, size: 24),
-                                        SizedBox(width: 12),
-                                        Text(
-                                          'Continuer avec Apple',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
+                                  if (Platform.isIOS) ...[
+                                    const SizedBox(height: 16),
+                                    // Apple Button
+                                    ElevatedButton(
+                                      onPressed: _termsAccepted
+                                          ? _handleAppleLogin
+                                          : () {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text("Vous devez accepter les conditions."),
+                                                  backgroundColor: Colors.redAccent,
+                                                ),
+                                              );
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 16,
                                         ),
-                                      ],
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          side: const BorderSide(color: Colors.white24),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.apple, size: 24),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            'Continuer avec Apple',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                       ],

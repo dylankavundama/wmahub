@@ -1,7 +1,16 @@
 <?php
+// Supprimer TOUTES les erreurs PHP pour éviter qu'elles contaminent la réponse JSON
+error_reporting(0);
+ini_set('display_errors', '0');
+
 require_once __DIR__ . '/../includes/config.php';
 
-header('Content-Type: application/json');
+// Vider le buffer de sortie (notices/warnings de config.php)
+if (ob_get_level() > 0) {
+    ob_clean();
+}
+
+header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -11,25 +20,51 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     $db = getDBConnection();
-    
+
     $idToken = $_POST['idToken'] ?? '';
 
     if (empty($idToken)) {
         throw new Exception("Google ID Token is required");
     }
 
-    // Verify token with Google
-    $verifyUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" . $idToken;
-    $response = file_get_contents($verifyUrl);
-    $google_data = json_decode($response, true);
+    // Verify token with Google via cURL (plus fiable que file_get_contents)
+    $verifyUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" . urlencode($idToken);
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $verifyUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_HTTPGET        => true,
+    ]);
+    $responseRaw = curl_exec($ch);
+    $curlError   = curl_error($ch);
+    $httpCode    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($responseRaw === false || !empty($curlError)) {
+        throw new Exception("Impossible de joindre Google : $curlError");
+    }
+
+    $google_data = json_decode($responseRaw, true);
+
+    if (!is_array($google_data)) {
+        throw new Exception("Réponse invalide de Google (code HTTP $httpCode).");
+    }
 
     if (isset($google_data['error_description'])) {
-        throw new Exception("Invalid Google Token: " . $google_data['error_description']);
+        throw new Exception("Token Google invalide : " . $google_data['error_description']);
+    }
+
+    if (empty($google_data['sub']) || empty($google_data['email'])) {
+        throw new Exception("Données Google incomplètes (sub/email manquants).");
     }
 
     $google_id = $google_data['sub'];
-    $email = $google_data['email'];
-    $name = $google_data['name'] ?? 'Artiste Google';
+    $email     = $google_data['email'];
+    $name      = $google_data['name'] ?? 'Artiste Google';
 
     // Check if user exists
     $stmt = $db->prepare("SELECT id, name, email, role FROM users WHERE google_id = ? OR email = ? LIMIT 1");
@@ -39,14 +74,14 @@ try {
     if (!$user) {
         error_log("Google Login Failed: No account found for email $email");
         echo json_encode([
-            "success" => false, 
+            "success"    => false,
             "error_code" => "NO_ACCOUNT",
-            "message" => "Aucun compte trouvé pour $email. Veuillez vous inscrire sur notre site web d'abord."
+            "message"    => "Aucun compte trouvé pour $email. Veuillez vous inscrire sur notre site web d'abord."
         ]);
         exit;
     }
 
-    // Normalisation du rôle pour éviter les erreurs de casse ou d'espaces
+    // Normalisation du rôle
     $userRole = trim(strtolower($user['role'] ?? ''));
 
     // Autoriser les Artistes ET les Admins sur mobile
@@ -54,14 +89,13 @@ try {
     if (!in_array($userRole, $allowedRoles)) {
         error_log("Google Login Denied: User $email has role '" . ($user['role'] ?? 'NULL') . "'");
         echo json_encode([
-            "success" => false, 
+            "success"    => false,
             "error_code" => "INVALID_ROLE",
-            "message" => "Désolé, l'accès mobile est réservé uniquement aux Artistes et Administrateurs."
+            "message"    => "Désolé, l'accès mobile est réservé uniquement aux Artistes et Administrateurs."
         ]);
         exit;
     }
 
-    // If we are here, user exists and is an artist
     // Update google_id if not set
     if (empty($user['google_id'])) {
         $db->prepare("UPDATE users SET google_id = ? WHERE id = ?")->execute([$google_id, $user['id']]);
@@ -69,15 +103,19 @@ try {
 
     echo json_encode([
         "success" => true,
-        "user" => [
-            "id" => $user['id'],
-            "name" => $user['name'],
+        "user"    => [
+            "id"    => $user['id'],
+            "name"  => $user['name'],
             "email" => $user['email'],
-            "role" => $user['role']
+            "role"  => $user['role']
         ]
     ]);
 
 } catch (Exception $e) {
+    // Vider à nouveau au cas où une erreur aurait produit du HTML
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
     http_response_code(500);
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }

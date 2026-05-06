@@ -1,8 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'accueil_screen.dart';
 import 'services_screen.dart';
+import 'writing_assistant_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
 import 'no_internet_screen.dart';
@@ -16,22 +19,33 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
-  bool _isOffline = false;
+  bool _isOffline    = false;
+  String _userRole   = 'artiste'; // défaut sécurisé
   StreamSubscription? _connectivitySubscription;
+
   @override
   void initState() {
     super.initState();
+    _loadRole();
     _checkInitialConnectivity();
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      results,
-    ) {
-      setState(() => _isOffline = results.contains(ConnectivityResult.none));
-    });
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      (results) => setState(() => _isOffline = results.contains(ConnectivityResult.none)),
+    );
+  }
+
+  Future<void> _loadRole() async {
+    final prefs   = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('auth_user');
+    if (userJson != null) {
+      final user = json.decode(userJson) as Map<String, dynamic>;
+      final role = (user['role'] ?? 'artiste').toString().toLowerCase().trim();
+      if (mounted) setState(() => _userRole = role);
+    }
   }
 
   Future<void> _checkInitialConnectivity() async {
     final result = await Connectivity().checkConnectivity();
-    setState(() => _isOffline = result.contains(ConnectivityResult.none));
+    if (mounted) setState(() => _isOffline = result.contains(ConnectivityResult.none));
   }
 
   @override
@@ -40,12 +54,89 @@ class _MainNavigationState extends State<MainNavigation> {
     super.dispose();
   }
 
-  final List<Widget> _screens = [
-    const AccueilScreen(),
-    const ServicesScreen(),
-    const AboutScreen(),
-    const ProfileScreen(),
-  ];
+  /// L'onglet Assistant IA n'est visible que pour le rôle 'artiste'
+  bool get _isArtiste => _userRole == 'artiste';
+
+  List<Widget> get _screens {
+    if (_isArtiste) {
+      return [
+        const AccueilScreen(),
+        const ServicesScreen(),
+        // const WritingAssistantScreen(),
+        const AboutScreen(),
+        const ProfileScreen(),
+      ];
+    }
+    // Admin ou autre rôle : pas d'onglet Assistant IA
+    return [
+      const AccueilScreen(),
+      const ServicesScreen(),
+      const AboutScreen(),
+      const ProfileScreen(),
+    ];
+  }
+
+  List<BottomNavigationBarItem> get _navItems {
+    if (_isArtiste) {
+      return const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
+          label: 'Accueil',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.business_center_outlined),
+          activeIcon: Icon(Icons.business_center),
+          label: 'Services',
+        ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.auto_awesome_outlined),
+        //   activeIcon: Icon(Icons.auto_awesome),
+        //   label: 'Assistant IA',
+        // ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.info_outline),
+          activeIcon: Icon(Icons.info),
+          label: 'À propos',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
+          label: 'Profil',
+        ),
+      ];
+    }
+    // Rôle non-artiste : 4 onglets sans Assistant IA
+    return const [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined),
+        activeIcon: Icon(Icons.home),
+        label: 'Accueil',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.business_center_outlined),
+        activeIcon: Icon(Icons.business_center),
+        label: 'Services',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.info_outline),
+        activeIcon: Icon(Icons.info),
+        label: 'À propos',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.person_outline),
+        activeIcon: Icon(Icons.person),
+        label: 'Profil',
+      ),
+    ];
+  }
+
+  void _onTabTap(int index) {
+    final screens = _screens;
+    if (index >= 0 && index < screens.length) {
+      setState(() => _selectedIndex = index);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,36 +149,16 @@ class _MainNavigationState extends State<MainNavigation> {
       );
     }
 
+    final screens  = _screens;
+    final safeIndex = _selectedIndex.clamp(0, screens.length - 1);
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _screens),
+      body: IndexedStack(index: safeIndex, children: screens),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
+        currentIndex: safeIndex,
         type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.business_center_outlined),
-            activeIcon: Icon(Icons.business_center),
-            label: 'Services',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline),
-            activeIcon: Icon(Icons.info),
-            label: 'À propos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profil',
-          ),
-        ],
+        onTap: _onTabTap,
+        items: _navItems,
       ),
     );
   }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "421177402687",
+    "project_id": "uawma-70e70",
+    "storage_bucket": "uawma-70e70.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421177402687:android:6e7850f4775d7ae7125f8a",
+        "android_client_info": {
+          "package_name": "com.ua.wmahub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbSttnS1qfZ-C41OVlIGKABBnlAobfGzk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
