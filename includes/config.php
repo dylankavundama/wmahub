@@ -210,6 +210,76 @@ if (php_sapi_name() !== 'cli') {
         }
     }
 
+    /**
+     * Envoie une alerte détaillée spécifique aux erreurs de l'application mobile.
+     */
+    function sendMobileErrorAlert($level, $message, $file, $line, $context = '', $userId = 'inconnu') {
+        $time = date('d/m/Y H:i:s');
+        $level = strtoupper($level);
+        
+        $colors = [
+            'CRITICAL' => '#dc2626',
+            'FATAL'    => '#dc2626',
+            'ERROR'    => '#ef4444',
+            'WARNING'  => '#f59e0b',
+            'INFO'     => '#3b82f6'
+        ];
+        $color = $colors[$level] ?? '#64748b';
+        
+        $subject = "📱 [WMA Mobile] $level — $message";
+        if (strlen($subject) > 100) $subject = substr($subject, 0, 97) . '...';
+
+        $body = "
+        <div style='font-family:Arial,sans-serif;max-width:750px;margin:auto;background:#0a0a0c;color:#e2e8f0;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.05);'>
+            <div style='background:linear-gradient(135deg,$color, " . ($colors[$level] ?? '#1e293b') . ");padding:30px;text-align:center;'>
+                <div style='font-size:40px;margin-bottom:10px;'>📱</div>
+                <h1 style='margin:0;font-size:22px;color:#fff;'>Alerte Mobile — WMA HUB</h1>
+                <p style='margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.8);'>Rapport généré le $time</p>
+            </div>
+            <div style='padding:35px;'>
+                <table style='width:100%;border-collapse:collapse;'>
+                    <tr>
+                        <td style='padding:12px;color:#888;font-size:13px;width:120px;border-bottom:1px solid rgba(255,255,255,0.05);'>Niveau</td>
+                        <td style='padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);'><span style='padding:4px 10px;background:{$color}20;color:{$color};border-radius:4px;font-weight:bold;font-size:12px;'>$level</span></td>
+                    </tr>
+                    <tr>
+                        <td style='padding:12px;color:#888;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.05);'>Message</td>
+                        <td style='padding:12px;color:#fff;font-weight:bold;border-bottom:1px solid rgba(255,255,255,0.05);'>" . htmlspecialchars($message) . "</td>
+                    </tr>
+                    <tr>
+                        <td style='padding:12px;color:#888;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.05);'>Fichier</td>
+                        <td style='padding:12px;font-family:monospace;border-bottom:1px solid rgba(255,255,255,0.05);'>$file</td>
+                    </tr>
+                    <tr>
+                        <td style='padding:12px;color:#888;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.05);'>Ligne</td>
+                        <td style='padding:12px;font-family:monospace;border-bottom:1px solid rgba(255,255,255,0.05);'>$line</td>
+                    </tr>
+                    <tr>
+                        <td style='padding:12px;color:#888;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.05);'>Utilisateur</td>
+                        <td style='padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);'>ID : $userId</td>
+                    </tr>
+                </table>
+                
+                <div style='margin-top:30px;'>
+                    <p style='color:#f97316;font-weight:bold;font-size:13px;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;'>Détails Techniques / Stack Trace</p>
+                    <div style='background:#16161a;padding:20px;border-radius:10px;font-family:monospace;font-size:12px;line-height:1.6;color:#94a3b8;border:1px solid rgba(255,255,255,0.03);white-space:pre-wrap;word-break:break-all;'>
+                        " . (!empty($context) ? htmlspecialchars($context) : 'Aucun détail supplémentaire fourni.') . "
+                    </div>
+                </div>
+            </div>
+            <div style='background:rgba(255,255,255,0.02);padding:20px;text-align:center;font-size:11px;color:#475569;'>
+                WMA HUB — Système de monitoring mobile automatisé
+            </div>
+        </div>";
+
+        try {
+            require_once __DIR__ . '/mailer.php';
+            return sendEmail(DEV_ALERT_EMAIL, $subject, $body);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
     // Gestionnaire d'erreurs personnalisé
     set_error_handler(function($errno, $errstr, $errfile, $errline) use ($db_stats) {
         if (!(error_reporting() & $errno)) return false;

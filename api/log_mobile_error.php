@@ -46,11 +46,13 @@ try {
     $stmt = $db->prepare("INSERT INTO system_errors (message, file, line) VALUES (?, ?, ?)");
     $stmt->execute([$fullMessage, $file, $line]);
 
-    // Envoyer un email pour les erreurs critiques (pas pour INFO)
-    if (in_array(strtoupper($level), ['ERROR', 'CRITICAL', 'FATAL'])) {
-        // Réutiliser sendErrorAlert si disponible
-        if (function_exists('sendErrorAlert')) {
-            sendErrorAlert(E_ERROR, $fullMessage, $file, $line);
+    // Envoyer un email pour les erreurs et les warnings (comme demandé : "erreurs ou logs")
+    $levelUpper = strtoupper($level);
+    if (in_array($levelUpper, ['ERROR', 'CRITICAL', 'FATAL', 'WARNING'])) {
+        if (function_exists('sendMobileErrorAlert')) {
+            // On essaie de récupérer l'ID utilisateur si fourni dans l'input
+            $userId = $input['user_id'] ?? ($_POST['user_id'] ?? 'inconnu');
+            sendMobileErrorAlert($level, $message, $file, $line, $context, $userId);
         }
     }
 
@@ -59,6 +61,6 @@ try {
 } catch (Exception $e) {
     if (ob_get_level() > 0) ob_clean();
     http_response_code(500);
-    echo json_encode(["success" => false]);
+    echo json_encode(["success" => false, "error" => $e->getMessage()]);
 }
 ?>

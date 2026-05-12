@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'wordpress_service.dart';
 
 class AuthService {
@@ -56,6 +57,44 @@ class AuthService {
     } catch (e) {
       debugPrint("Google Login error: $e");
       return {"success": false, "message": "Détails: $e"};
+    }
+  }
+
+  Future<Map<String, dynamic>?> loginWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final response = await http
+          .post(
+            Uri.parse("${WordPressService.apiBaseUrl}/apple_auth_mobile.php"),
+            body: {
+              'identityToken': credential.identityToken ?? '',
+              'userIdentifier': credential.userIdentifier ?? '',
+              'email': credential.email ?? '',
+              'name': '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim(),
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        final userData = data['user'];
+        await _saveUser(userData);
+        return {"success": true, "user": userData};
+      } else {
+        return {
+          "success": false,
+          "message": data['message'] ?? "Erreur d'authentification Apple",
+        };
+      }
+    } catch (e) {
+      debugPrint("Apple Login error: $e");
+      return {"success": false, "message": "Erreur: $e"};
     }
   }
 

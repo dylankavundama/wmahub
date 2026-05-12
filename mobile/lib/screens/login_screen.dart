@@ -74,29 +74,52 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleAppleLogin() async {
     setState(() => _isLoading = true);
     try {
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
-
-      // Pour l'instant, on simule la validation backend
-      // Dans une version réelle, vous enverriez credential.identityToken à votre API PHP
-      debugPrint('Apple Login Success: ${credential.userIdentifier}');
-      
+      final result = await _authService.loginWithApple();
       if (mounted) {
         setState(() => _isLoading = false);
-        // Simulation de succès
-        widget.onLoginSuccess();
+        if (result != null && result['success'] == true) {
+          final userId = int.tryParse(result['user']?['id']?.toString() ?? '0') ?? 0;
+          final prefs = await SharedPreferences.getInstance();
+          final hasSigned = prefs.getBool('contract_signed_$userId') ?? false;
+
+          final role = result['user']?['role'] ?? 'artiste';
+
+          if (role == 'admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminAccountingScreen(),
+              ),
+            );
+            return;
+          }
+
+          if (hasSigned) {
+            widget.onLoginSuccess();
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ContractScreen(
+                  userId: userId,
+                  onSigned: widget.onLoginSuccess,
+                ),
+              ),
+            );
+          }
+        } else {
+          final message = result?['message'] ?? 'Échec de la connexion Apple';
+          _showErrorDialog(message);
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        if (e is SignInWithAppleAuthorizationException && e.code == AuthorizationErrorCode.canceled) {
+        if (e is SignInWithAppleAuthorizationException &&
+            e.code == AuthorizationErrorCode.canceled) {
           return;
         }
-        _showErrorDialog('Erreur Apple Login: $e');
+        _showErrorDialog('Une erreur est survenue lors de la connexion Apple: $e');
       }
     }
   }
