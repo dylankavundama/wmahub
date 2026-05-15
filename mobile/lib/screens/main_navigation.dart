@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'accueil_screen.dart';
 import 'services_screen.dart';
+import 'distributions_screen.dart';
 import 'writing_assistant_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
@@ -14,13 +15,19 @@ class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
-  bool _isOffline    = false;
-  String _userRole   = 'artiste'; // défaut sécurisé
+
+  void jumpToTab(int index) {
+    if (mounted) {
+      setState(() => _selectedIndex = index);
+    }
+  }
+  bool _isOffline = false;
+  String _userRole = 'artiste'; // défaut sécurisé
   StreamSubscription? _connectivitySubscription;
 
   @override
@@ -29,12 +36,14 @@ class _MainNavigationState extends State<MainNavigation> {
     _loadRole();
     _checkInitialConnectivity();
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
-      (results) => setState(() => _isOffline = results.contains(ConnectivityResult.none)),
+      (results) => setState(
+        () => _isOffline = results.contains(ConnectivityResult.none),
+      ),
     );
   }
 
   Future<void> _loadRole() async {
-    final prefs   = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('auth_user');
     if (userJson != null) {
       final user = json.decode(userJson) as Map<String, dynamic>;
@@ -45,7 +54,8 @@ class _MainNavigationState extends State<MainNavigation> {
 
   Future<void> _checkInitialConnectivity() async {
     final result = await Connectivity().checkConnectivity();
-    if (mounted) setState(() => _isOffline = result.contains(ConnectivityResult.none));
+    if (mounted)
+      setState(() => _isOffline = result.contains(ConnectivityResult.none));
   }
 
   @override
@@ -62,6 +72,7 @@ class _MainNavigationState extends State<MainNavigation> {
       return [
         const AccueilScreen(),
         const ServicesScreen(),
+        const DistributionsScreen(),
         // const WritingAssistantScreen(),
         const AboutScreen(),
         const ProfileScreen(),
@@ -71,6 +82,7 @@ class _MainNavigationState extends State<MainNavigation> {
     return [
       const AccueilScreen(),
       const ServicesScreen(),
+      const DistributionsScreen(),
       const AboutScreen(),
       const ProfileScreen(),
     ];
@@ -95,6 +107,11 @@ class _MainNavigationState extends State<MainNavigation> {
         //   label: 'Assistant IA',
         // ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.music_note_outlined),
+          activeIcon: Icon(Icons.music_note),
+          label: 'Distributions',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.info_outline),
           activeIcon: Icon(Icons.info),
           label: 'À propos',
@@ -106,7 +123,7 @@ class _MainNavigationState extends State<MainNavigation> {
         ),
       ];
     }
-    // Rôle non-artiste : 4 onglets sans Assistant IA
+    // Rôle non-artiste : 5 onglets
     return const [
       BottomNavigationBarItem(
         icon: Icon(Icons.home_outlined),
@@ -117,6 +134,11 @@ class _MainNavigationState extends State<MainNavigation> {
         icon: Icon(Icons.business_center_outlined),
         activeIcon: Icon(Icons.business_center),
         label: 'Services',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.music_note_outlined),
+        activeIcon: Icon(Icons.music_note),
+        label: 'Distributions',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.info_outline),
@@ -149,7 +171,7 @@ class _MainNavigationState extends State<MainNavigation> {
       );
     }
 
-    final screens  = _screens;
+    final screens = _screens;
     final safeIndex = _selectedIndex.clamp(0, screens.length - 1);
 
     return Scaffold(

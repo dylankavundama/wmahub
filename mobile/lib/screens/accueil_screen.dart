@@ -10,6 +10,7 @@ import '../utils/app_theme.dart';
 import 'post_detail_screen.dart';
 import 'no_internet_screen.dart';
 import 'slide_detail_screen.dart';
+import 'main_navigation.dart';
 
 class AccueilScreen extends StatefulWidget {
   const AccueilScreen({super.key});
@@ -33,9 +34,13 @@ class _AccueilScreenState extends State<AccueilScreen> {
 
   // Pagination
   int _currentPage = 1;
+  int _currentSlideIndex = 0;
   bool _isFetchingMore = false;
   bool _hasMore = true;
   bool _paginationError = false;
+
+  // Search
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -161,144 +166,231 @@ class _AccueilScreenState extends State<AccueilScreen> {
     }
     if (_isError && _posts.isEmpty) return _buildErrorView();
 
-    return RefreshIndicator(
-      onRefresh: _loadInitialData,
-      color: AppTheme.primaryColor,
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // Sticky Search/Logo Bar
-          SliverAppBar(
-            floating: true,
-            title: Row(
-              children: [
-                Image.asset(
-                  'assets/logo.png',
-                  height: 32,
-                  errorBuilder: (c, e, s) => const Icon(
-                    Icons.music_note,
-                    color: AppTheme.primaryColor,
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadInitialData,
+          color: AppTheme.primaryColor,
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Hero Slider as the first element
+              if (_isSlidesLoading)
+                SliverToBoxAdapter(child: _buildSliderShimmer())
+              else if (_slides.isNotEmpty)
+                SliverToBoxAdapter(child: _buildHeroSlider()),
+
+              // Sections Title
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (_searchQuery.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            'Résultats pour "$_searchQuery"',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                              color: AppTheme.primaryColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      else
+                        const Text(
+                          'DERNIÈRES ACTUALITÉS',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      if (_isFetchingMore)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Text(
-                  'WMA UA',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none),
-                onPressed: () => _showNotificationsPanel(context),
               ),
+
+              // Posts List
+              if (_isPostsLoading && _posts.isEmpty)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildPostShimmer(),
+                    childCount: 5,
+                  ),
+                )
+              else
+                Builder(
+                  builder: (context) {
+                    final filtered = _searchQuery.isEmpty
+                        ? _posts
+                        : _posts.where((post) {
+                            final title = (post['title']?['rendered'] ?? '')
+                                .toString()
+                                .toLowerCase();
+                            return title.contains(_searchQuery.toLowerCase());
+                          }).toList();
+
+                    if (filtered.isEmpty && _searchQuery.isNotEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 60,
+                            horizontal: 20,
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: AppTheme.textGrey,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Aucun résultat pour "$_searchQuery"',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppTheme.textGrey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          if (index == filtered.length) {
+                            if (_searchQuery.isNotEmpty)
+                              return const SizedBox(height: 40);
+                            if (_paginationError)
+                              return _buildPaginationError();
+                            return _hasMore
+                                ? _buildLoadingIndicator()
+                                : _buildNoMoreContent();
+                          }
+                          return _buildPostCard(filtered[index]);
+                        }, childCount: filtered.length + 1),
+                      ),
+                    );
+                  },
+                ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
-            backgroundColor: AppTheme.backgroundColor.withValues(alpha: 0.8),
           ),
+        ),
 
-          // Hero Slider
-          if (_isSlidesLoading)
-            SliverToBoxAdapter(child: _buildSliderShimmer())
-          else if (_slides.isNotEmpty)
-            SliverToBoxAdapter(child: _buildHeroSlider()),
-
-          // Sections Title
-          SliverToBoxAdapter(
+        // Transparent Top Bar
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: MediaQuery.of(context).padding.top + 60,
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.5),
+                  Colors.transparent,
+                ],
+              ),
+            ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'DERNIÈRES ACTUALITÉS',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 36,
+                    errorBuilder: (c, e, s) => const Icon(
+                      Icons.music_note,
                       color: AppTheme.primaryColor,
                     ),
                   ),
-                  if (_isFetchingMore)
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppTheme.primaryColor,
-                      ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.search,
+                      color: Colors.white,
+                      size: 26,
                     ),
+                    onPressed: () => _showSearchPanel(context),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                    onPressed: () => _showNotificationsPanel(context),
+                  ),
                 ],
               ),
             ),
           ),
-
-          // Posts List
-          if (_isPostsLoading && _posts.isEmpty)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildPostShimmer(),
-                childCount: 5,
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  if (index == _posts.length) {
-                    if (_paginationError) {
-                      return _buildPaginationError();
-                    }
-                    return _hasMore
-                        ? _buildLoadingIndicator()
-                        : _buildNoMoreContent();
-                  }
-                  return _buildPostCard(_posts[index]);
-                }, childCount: _posts.length + 1),
-              ),
-            ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildHeroSlider() {
-    return CarouselSlider(
-      options: CarouselOptions(
-        height: 300.0,
-        autoPlay: true,
-        enlargeCenterPage: true,
-        viewportFraction: 0.92,
-        autoPlayInterval: const Duration(seconds: 5),
-      ),
-      items: _slides.map((slide) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SlideDetailScreen(slide: slide),
-              ),
-            );
-          },
-          child: Container(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Hero(
+    return Stack(
+      children: [
+        CarouselSlider(
+          options: CarouselOptions(
+            height: 550.0,
+            autoPlay: true,
+            viewportFraction: 1.0,
+            autoPlayInterval: const Duration(seconds: 8),
+            onPageChanged: (index, reason) {
+              setState(() => _currentSlideIndex = index);
+            },
+          ),
+          items: _slides.asMap().entries.map((entry) {
+            final index = entry.key;
+            final slide = entry.value;
+            final isEven = index % 2 == 0;
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SlideDetailScreen(slide: slide),
+                  ),
+                );
+              },
+              child: Stack(
+                children: [
+                  // Background Image
+                  Hero(
                     tag: 'slide_${slide['image_path']}',
                     child: CachedNetworkImage(
                       imageUrl: slide['image_path'] ?? '',
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      height: 300,
+                      height: 550,
                       placeholder: (context, url) => _buildSliderShimmer(),
                       errorWidget: (context, url, error) => Container(
                         color: AppTheme.cardColor,
@@ -312,48 +404,146 @@ class _AccueilScreenState extends State<AccueilScreen> {
                       ),
                     ),
                   ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.8),
+
+                  // Gradient Overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 0.4, 0.7, 1.0],
+                        colors: [
+                          Colors.black.withValues(alpha: 0.6),
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.5),
+                          AppTheme.backgroundColor,
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 100),
+                        const Spacer(),
+
+                        // Title
+                        Text(
+                          (slide['title'] ?? '').toUpperCase(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            height: 1.1,
+                          ),
+                        ).animate().fadeIn().scale(
+                          begin: const Offset(0.9, 0.9),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Tags
+                        if (slide['subtitle'] != null)
+                          Text(
+                            slide['subtitle'].toString().toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 1.2,
+                            ),
+                          ).animate().fadeIn(delay: 300.ms),
+
+                        const SizedBox(height: 30),
+
+                        // Action Buttons - Alternating
+                        if (isEven)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final state = context.findAncestorStateOfType<MainNavigationState>();
+                                state?.jumpToTab(2); // Distributions
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                'DISTRIBUTIONS',
+                                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+                              ),
+                            ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
+                          )
+                        else
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                final state = context.findAncestorStateOfType<MainNavigationState>();
+                                state?.jumpToTab(4); // Profil / Rejoindre
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white24, width: 2),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'REJOINDRE WMA',
+                                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+                              ),
+                            ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
+                          ),
+
+                        const SizedBox(height: 60),
                       ],
                     ),
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        slide['title'] ?? '',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ).animate().fadeIn().slideX(),
-                      if (slide['subtitle'] != null)
-                        Text(
-                          slide['subtitle'],
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
-                        ).animate().fadeIn(delay: 200.ms),
-                    ],
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+
+        // Dots Indicator
+        Positioned(
+          bottom: 20,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: _slides.asMap().entries.map((entry) {
+              return Container(
+                width: _currentSlideIndex == entry.key ? 8 : 4,
+                height: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  color: Colors.white.withValues(
+                    alpha: _currentSlideIndex == entry.key ? 0.9 : 0.3,
                   ),
                 ),
-              ],
-            ),
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+      ],
     );
   }
 
@@ -568,21 +758,6 @@ class _AccueilScreenState extends State<AccueilScreen> {
     );
   }
 
-  Widget _buildSliderShimmer() {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withValues(alpha: 0.1),
-      highlightColor: Colors.white.withValues(alpha: 0.2),
-      child: Container(
-        height: 300,
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPostShimmer() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -600,24 +775,173 @@ class _AccueilScreenState extends State<AccueilScreen> {
     );
   }
 
+  Widget _buildSliderShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withValues(alpha: 0.1),
+      highlightColor: Colors.white.withValues(alpha: 0.2),
+      child: Container(
+        height: 550,
+        decoration: BoxDecoration(color: Colors.white),
+      ),
+    );
+  }
+
+  void _applySearch(String query, BuildContext ctx) {
+    final q = query.trim();
+    if (q.isEmpty) {
+      setState(() => _searchQuery = '');
+      return;
+    }
+
+    // Check if there are any results
+    final hasResults = _posts.any((post) {
+      final title = (post['title']?['rendered'] ?? '')
+          .toString()
+          .toLowerCase();
+      return title.contains(q.toLowerCase());
+    });
+
+    if (hasResults) {
+      setState(() => _searchQuery = q);
+    } else {
+      // Reset search so the list stays visible
+      setState(() => _searchQuery = '');
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: Text('Aucun résultat pour "$q"'),
+          backgroundColor: AppTheme.cardColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: AppTheme.primaryColor,
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showSearchPanel(BuildContext context) {
+    final controller = TextEditingController(text: _searchQuery);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.backgroundColor,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Search field
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Rechercher un article...',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppTheme.primaryColor,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white38),
+                      onPressed: () {
+                        controller.clear();
+                        setState(() => _searchQuery = '');
+                        Navigator.pop(context);
+                      },
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() => _searchQuery = value);
+                  },
+                  onSubmitted: (value) {
+                    _applySearch(value, context);
+                    Navigator.pop(context);
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Confirm button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      _applySearch(controller.text, context);
+                      Navigator.pop(context);
+                    },
+                    icon: const Icon(Icons.search),
+                    label: const Text('Rechercher'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showNotificationsPanel(BuildContext context) {
     // Récupérer les 3 derniers articles
     final recentPosts = _posts.take(3).toList();
-    
+
     // Notifications automatiques du système (Rappels)
     final List<Map<String, String>> autoNotifications = [
       {
         "title": "🎵 Projet en attente",
-        "body": "N'oubliez pas de finaliser vos projets pour distribution."
+        "body": "N'oubliez pas de finaliser vos projets pour distribution.",
       },
       {
         "title": "💰 Suivez vos revenus",
-        "body": "De nouveaux rapports de streaming sont générés ce mois-ci."
+        "body": "De nouveaux rapports de streaming sont générés ce mois-ci.",
       },
       {
         "title": "🔥 Restez actif !",
-        "body": "Partagez votre nouvelle sortie sur vos réseaux sociaux."
-      }
+        "body": "Partagez votre nouvelle sortie sur vos réseaux sociaux.",
+      },
     ];
 
     showModalBottomSheet(
@@ -659,7 +983,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               Expanded(
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -679,13 +1003,20 @@ class _AccueilScreenState extends State<AccueilScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (recentPosts.isEmpty)
-                        const Text('Aucun article récent', style: TextStyle(color: Colors.white38))
+                        const Text(
+                          'Aucun article récent',
+                          style: TextStyle(color: Colors.white38),
+                        )
                       else
                         ...recentPosts.map((dynamicRawPost) {
                           final post = dynamicRawPost as Map<String, dynamic>;
-                          final rawTitle = post['title']?['rendered']?.toString() ?? '';
-                          final title = rawTitle.replaceAll(RegExp(r'<[^>]*>'), '');
-                          
+                          final rawTitle =
+                              post['title']?['rendered']?.toString() ?? '';
+                          final title = rawTitle.replaceAll(
+                            RegExp(r'<[^>]*>'),
+                            '',
+                          );
+
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: Container(
@@ -695,27 +1026,38 @@ class _AccueilScreenState extends State<AccueilScreen> {
                                 color: Colors.white10,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.article_outlined, color: Colors.white54),
+                              child: const Icon(
+                                Icons.article_outlined,
+                                color: Colors.white54,
+                              ),
                             ),
                             title: Text(
                               title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            trailing: const Icon(Icons.chevron_right, color: Colors.white24),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: Colors.white24,
+                            ),
                             onTap: () {
                               Navigator.pop(context); // Fermer le panneau
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => PostDetailScreen(post: post),
+                                  builder: (context) =>
+                                      PostDetailScreen(post: post),
                                 ),
                               );
                             },
                           );
                         }).toList(),
-                      
+
                       const SizedBox(height: 32),
                       const Divider(color: Colors.white10),
                       const SizedBox(height: 24),
@@ -738,7 +1080,11 @@ class _AccueilScreenState extends State<AccueilScreen> {
                           decoration: BoxDecoration(
                             color: AppTheme.cardColor,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,10 +1092,16 @@ class _AccueilScreenState extends State<AccueilScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.notifications_active, color: AppTheme.primaryColor, size: 16),
+                                child: const Icon(
+                                  Icons.notifications_active,
+                                  color: AppTheme.primaryColor,
+                                  size: 16,
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -758,12 +1110,19 @@ class _AccueilScreenState extends State<AccueilScreen> {
                                   children: [
                                     Text(
                                       notif['title']!,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       notif['body']!,
-                                      style: const TextStyle(color: AppTheme.textGrey, fontSize: 11),
+                                      style: const TextStyle(
+                                        color: AppTheme.textGrey,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ),

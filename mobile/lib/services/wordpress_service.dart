@@ -65,4 +65,20 @@ class WordPressService {
     }
     return {};
   }
+
+  Future<List<dynamic>> fetchDistributions() async {
+    try {
+      final url = "${apiBaseUrl}/get_distributions.php";
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      debugPrint("Distributions API Error: $e");
+    }
+    return [];
+  }
 }

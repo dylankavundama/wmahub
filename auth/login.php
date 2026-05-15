@@ -261,6 +261,9 @@ $apple_login_url = "https://appleid.apple.com/auth/authorize?" . http_build_quer
         <div class="footer-text">
             En vous connectant, vous acceptez nos <br>
             <a href="../terms.php">Conditions d'Utilisation</a> & <a href="../privacy.php">Politique de Confidentialité</a>.
+            <div class="mt-4 pt-4 border-t border-white/5 opacity-50 text-[10px]">
+                Powered By <a href="https://nextbytechno.com/" target="_blank" class="hover:text-white transition-colors">Next Byte Technology</a>
+            </div>
         </div>
     </div>
     <?php include_once __DIR__ . '/../includes/language_selector.php'; ?>

@@ -119,6 +119,7 @@ try {
                     <li><a href="#qui-sommes-nous" class="nav-link">Qui sommes-nous</a></li>
                     <li><a href="equipe.php" class="nav-link">Notre équipe</a></li>
                     <li><a href="#services-artiste" class="nav-link">Services</a></li>
+                    <li><a href="distributions.php" class="nav-link">Distributions</a></li>
                     <li><a href="#actualites" class="nav-link">Actualités</a></li>
                     <?php if (isset($_SESSION['user_id'])): 
                         $dashboardUrl = 'dashboards/artiste/index.php';

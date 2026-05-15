@@ -17,7 +17,7 @@ define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '547408646820-eedhgi415
 define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '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');
 
 // Configuration Apple OAuth (Service ID)
-define('APPLE_CLIENT_ID', getenv('APPLE_CLIENT_ID') ?: 'com.ua.wmahub');
+define('APPLE_CLIENT_ID', getenv('APPLE_CLIENT_ID') ?: 'com.ua.wmahub.service');
 
 // Configuration Gemini API
 define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA');
