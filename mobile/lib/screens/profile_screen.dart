@@ -10,9 +10,11 @@ import 'distribution_screen.dart';
 import 'project_detail_screen.dart';
 import 'revenue_screen.dart';
 import 'notification_screen.dart';
-import 'admin_accounting_screen.dart';
 import 'contract_screen.dart';
 import '../services/wordpress_service.dart';
+import 'pending_validation_screen.dart';
+import 'simple_profile_screen.dart';
+import 'agent_tasks_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -42,15 +44,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
       if (user != null) {
-        if (user['role'] == 'administrator') {
-          // Redirection immédiate pour l'admin
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const AdminAccountingScreen()),
-            );
-          });
-        } else {
+        final role = user['role']?.toString().toLowerCase().trim();
+        if (role == 'artiste') {
           _fetchDashboardData();
         }
       }
@@ -85,17 +80,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Vérification de sécurité/redirection à chaque build si on est admin
-    if (_currentUser != null && _currentUser!['role'] == 'administrator') {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const AdminAccountingScreen()),
-        );
-      });
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)));
-    }
-
     if (_isLoading) {
       return const Scaffold(
         body: Center(
@@ -104,88 +88,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
+    if (_currentUser == null) {
+      return LoginScreen(onLoginSuccess: _checkAuth);
+    }
+
+    final role = _currentUser!['role']?.toString().toLowerCase().trim();
+    final isActive = int.tryParse(_currentUser!['is_active']?.toString() ?? '0') ?? 0;
+
+    if (role == 'admin' || role == 'administrator' || role == 'superadmin') {
+      return SimpleProfileScreen(user: _currentUser!, onLogout: _checkAuth);
+    }
+
+    if (role == 'employe') {
+      if (isActive == 0) {
+        return PendingValidationScreen(onLogout: _checkAuth);
+      } else {
+        return AgentTasksScreen(user: _currentUser!, onLogout: _checkAuth);
+      }
+    }
+
+    if (role == 'simple_user') {
+      return SimpleProfileScreen(user: _currentUser!, onLogout: _checkAuth);
+    }
+
+    // Par défaut, l'affichage Artiste
     return Scaffold(
-      appBar: _currentUser == null
-          ? null
-          : AppBar(
-              title: const Text(
-                'Dashboard Artiste',
-                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
-              ),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    color: AppTheme.primaryColor,
-                  ),
-                  onPressed: _fetchDashboardData,
-                ),
-                Stack(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                      onPressed: () {
-                        if (_currentUser != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) {
-                                final rawId = _currentUser!['id'];
-                                final intId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
-                                return NotificationScreen(userId: intId);
-                              },
-                            ),
-                          ).then((_) => _fetchDashboardData()); // Refresh count on return
-                        }
+      appBar: AppBar(
+        title: const Text(
+          'Dashboard Artiste',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppTheme.primaryColor,
+            ),
+            onPressed: _fetchDashboardData,
+          ),
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        final rawId = _currentUser!['id'];
+                        final intId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+                        return NotificationScreen(userId: intId);
                       },
                     ),
-                    if (_dashboardData != null && _dashboardData!['notification_count'] != null)
-                      Builder(
-                        builder: (context) {
-                          final rawCount = _dashboardData!['notification_count'];
-                          final count = rawCount is int ? rawCount : int.tryParse(rawCount.toString()) ?? 0;
-                          
-                          if (count <= 0) return const SizedBox.shrink();
-                          
-                          return Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                              child: Text(
-                                count > 9 ? '9+' : count.toString(),
-                                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ).animate().scale();
-                        },
+                  ).then((_) => _fetchDashboardData());
+                },
+              ),
+              if (_dashboardData != null && _dashboardData!['notification_count'] != null)
+                Builder(
+                  builder: (context) {
+                    final rawCount = _dashboardData!['notification_count'];
+                    final count = rawCount is int ? rawCount : int.tryParse(rawCount.toString()) ?? 0;
+                    
+                    if (count <= 0) return const SizedBox.shrink();
+                    
+                    return Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          count > 9 ? '9+' : count.toString(),
+                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    color: Colors.redAccent,
-                  ),
-                  onPressed: () async {
-                    await _authService.logout();
-                    _checkAuth();
+                    ).animate().scale();
                   },
                 ),
-              ],
+            ],
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.logout_rounded,
+              color: Colors.redAccent,
             ),
-      body: _currentUser == null
-          ? LoginScreen(onLoginSuccess: _checkAuth)
-          : RefreshIndicator(
-              onRefresh: _fetchDashboardData,
-              color: AppTheme.primaryColor,
-              child: _buildArtistDashboard(),
-            ),
+            onPressed: () async {
+              await _authService.logout();
+              _checkAuth();
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _fetchDashboardData,
+        color: AppTheme.primaryColor,
+        child: _buildArtistDashboard(),
+      ),
     );
   }
 
@@ -476,10 +478,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
+          final messenger = ScaffoldMessenger.of(context);
+          final message = data['message']?.toString() ?? 'Compte supprimé';
           await _authService.logout();
           _checkAuth();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message']), backgroundColor: Colors.green),
+          messenger.showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.green),
           );
         }
       }

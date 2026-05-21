@@ -691,23 +691,47 @@ class _AccueilScreenState extends State<AccueilScreen> {
 
   Widget _buildNoMoreContent() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.check_circle_outline,
-              size: 16,
-              color: AppTheme.textGrey,
+              Icons.check_circle_outline_rounded,
+              size: 28,
+              color: Colors.white38,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(height: 12),
             const Text(
               'Vous avez tout lu !',
               style: TextStyle(
-                color: AppTheme.textGrey,
-                fontSize: 13,
+                color: Colors.white38,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _loadInitialData,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text(
+                'ACTUALISER',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                foregroundColor: AppTheme.primaryColor,
+                elevation: 0,
+                side: BorderSide(color: AppTheme.primaryColor.withValues(alpha: 0.3), width: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],

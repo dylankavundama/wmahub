@@ -67,47 +67,51 @@ try {
     $name      = $google_data['name'] ?? 'Artiste Google';
 
     // Check if user exists
-    $stmt = $db->prepare("SELECT id, name, email, role FROM users WHERE google_id = ? OR email = ? LIMIT 1");
+    $stmt = $db->prepare("SELECT id, name, email, role, is_active FROM users WHERE google_id = ? OR email = ? LIMIT 1");
     $stmt->execute([$google_id, $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        error_log("Google Login Failed: No account found for email $email");
-        echo json_encode([
-            "success"    => false,
-            "error_code" => "NO_ACCOUNT",
-            "message"    => "Aucun compte trouvé pour $email. Veuillez vous inscrire sur notre site web d'abord."
-        ]);
-        exit;
-    }
-
-    // Normalisation du rôle
-    $userRole = trim(strtolower($user['role'] ?? ''));
-
-    // Autoriser les Artistes ET les Admins sur mobile
-    $allowedRoles = ['artiste', 'admin'];
-    if (!in_array($userRole, $allowedRoles)) {
-        error_log("Google Login Denied: User $email has role '" . ($user['role'] ?? 'NULL') . "'");
-        echo json_encode([
-            "success"    => false,
-            "error_code" => "INVALID_ROLE",
-            "message"    => "Désolé, l'accès mobile est réservé uniquement aux Artistes et Administrateurs."
-        ]);
-        exit;
-    }
-
-    // Update google_id if not set
-    if (empty($user['google_id'])) {
-        $db->prepare("UPDATE users SET google_id = ? WHERE id = ?")->execute([$google_id, $user['id']]);
+        // Créer un nouvel utilisateur avec rôle NULL (en attente de choix de rôle sur mobile)
+        $stmt = $db->prepare("INSERT INTO users (google_id, name, email, is_active, role) VALUES (?, ?, ?, 0, NULL)");
+        $stmt->execute([$google_id, $name, $email]);
+        $userId = $db->lastInsertId();
+        
+        $user = [
+            "id"        => $userId,
+            "name"      => $name,
+            "email"     => $email,
+            "role"      => null,
+            "is_active" => 0
+        ];
+        
+        // Notifier l'équipe admin
+        try {
+            require_once __DIR__ . '/../includes/mailer.php';
+            notifyAdmin('registration', 'Nouvel Utilisateur Inscrit (Google Mobile)', [
+                'Nom' => $name,
+                'Email' => $email,
+                'Méthode' => 'Google Mobile OAuth',
+                'Date' => date('d/m/Y H:i')
+            ], 'https://wmahub.com/dashboards/admin/users.php');
+        } catch (Exception $e) {
+            error_log("Failed to notify admin of new user: " . $e->getMessage());
+        }
+    } else {
+        // Update google_id if not set
+        if (empty($user['google_id'])) {
+            $db->prepare("UPDATE users SET google_id = ? WHERE id = ?")->execute([$google_id, $user['id']]);
+        }
     }
 
     echo json_encode([
         "success" => true,
         "user"    => [
-            "id"    => $user['id'],
-            "name"  => $user['name'],
-            "email" => $user['email'],
-            "role"  => $user['role']
+            "id"        => $user['id'],
+            "name"      => $user['name'],
+            "email"     => $user['email'],
+            "role"      => $user['role'],
+            "is_active" => (int)$user['is_active']
         ]
     ]);
 

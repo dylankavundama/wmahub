@@ -10,16 +10,16 @@ use PHPMailer\PHPMailer\Exception;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Configuration SMTP (cPanel)
-define('SMTP_HOST', 'mail.wmahub.com');
-define('SMTP_PORT', 465);
-define('SMTP_USERNAME', 'noreply@wmahub.com');
-define('SMTP_PASSWORD', 'F)K4q_]E2#M^f0qt');
-define('SMTP_FROM_NAME', 'WMA HUB');
-define('SMTP_FROM_EMAIL', 'noreply@wmahub.com');
+// Configuration SMTP (cPanel / Custom)
+define('SMTP_HOST', getenv('SMTP_HOST') ?: 'mail.wmahub.com');
+define('SMTP_PORT', getenv('SMTP_PORT') ? intval(getenv('SMTP_PORT')) : 465);
+define('SMTP_USERNAME', getenv('SMTP_USERNAME') ?: 'noreply@wmahub.com');
+define('SMTP_PASSWORD', getenv('SMTP_PASSWORD') ?: 'F)K4q_]E2#M^f0qt');
+define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'WMA HUB');
+define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'noreply@wmahub.com');
 
 /**
- * Envoie un email HTML via SMTP
+ * Envoie un email HTML via SMTP avec fallback sur php mail() en cas d'échec
  * 
  * @param string|array $to Destinataire(s)
  * @param string $subject Sujet du mail
@@ -31,13 +31,13 @@ function sendEmail($to, $subject, $htmlBody, $replyTo = null) {
     $mail = new PHPMailer(true);
     
     try {
-        // Configuration du serveur SMTP
+        // Tentative d'envoi via SMTP
         $mail->isSMTP();
         $mail->Host       = SMTP_HOST;
         $mail->SMTPAuth   = true;
         $mail->Username   = SMTP_USERNAME;
         $mail->Password   = SMTP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->SMTPSecure = (SMTP_PORT === 465) ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = SMTP_PORT;
         $mail->CharSet    = 'UTF-8';
         
@@ -67,8 +67,41 @@ function sendEmail($to, $subject, $htmlBody, $replyTo = null) {
         $mail->send();
         return true;
     } catch (Exception $e) {
-        error_log("WMA Mailer Error: " . $mail->ErrorInfo);
-        return false;
+        // Enregistrement de l'erreur SMTP
+        error_log("WMA Mailer SMTP Error: " . $mail->ErrorInfo . ". Retrying with PHP mail()...");
+        
+        // Fallback: Tentative via la fonction native mail() de PHP
+        try {
+            $fallbackMail = new PHPMailer(true);
+            $fallbackMail->isMail(); // Utilise la fonction mail() native de PHP
+            $fallbackMail->CharSet = 'UTF-8';
+            
+            $fallbackMail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+            
+            if (is_array($to)) {
+                foreach ($to as $email) {
+                    $fallbackMail->addAddress($email);
+                }
+            } else {
+                $fallbackMail->addAddress($to);
+            }
+            
+            if ($replyTo) {
+                $fallbackMail->addReplyTo($replyTo);
+            }
+            
+            $fallbackMail->isHTML(true);
+            $fallbackMail->Subject = $subject;
+            $fallbackMail->Body    = $htmlBody;
+            $fallbackMail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody));
+            
+            $fallbackMail->send();
+            error_log("WMA Mailer: Fallback PHP mail() sent successfully.");
+            return true;
+        } catch (Exception $ex) {
+            error_log("WMA Mailer Fallback Error: " . $fallbackMail->ErrorInfo);
+            return false;
+        }
     }
 }
 

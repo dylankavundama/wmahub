@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'contract_screen.dart';
-import 'admin_accounting_screen.dart';
+import 'pending_validation_screen.dart';
+import 'agent_tasks_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -22,6 +22,226 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _termsAccepted = false;
 
+  void _handlePostLoginRouting(Map<String, dynamic> user) async {
+    final userId = int.tryParse(user['id']?.toString() ?? '0') ?? 0;
+    final role = user['role']?.toString().toLowerCase().trim();
+    final isActive = int.tryParse(user['is_active']?.toString() ?? '0') ?? 0;
+
+    // Si pas de rôle (nouvel utilisateur), on affiche le pop-up de sélection de rôle
+    if (role == null || role.isEmpty || role == 'null') {
+      _showRoleSelectionBottomSheet(userId);
+      return;
+    }
+
+    if (role == 'admin' || role == 'administrator' || role == 'superadmin') {
+      widget.onLoginSuccess();
+      return;
+    }
+
+    if (role == 'employe') {
+      if (isActive == 0) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PendingValidationScreen(
+              onLogout: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen(onLoginSuccess: widget.onLoginSuccess)),
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AgentTasksScreen(
+              user: user,
+              onLogout: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen(onLoginSuccess: widget.onLoginSuccess)),
+                );
+              },
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (role == 'artiste') {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSigned = prefs.getBool('contract_signed_$userId') ?? false;
+
+      if (hasSigned) {
+        widget.onLoginSuccess();
+      } else {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ContractScreen(
+              userId: userId,
+              onSigned: widget.onLoginSuccess,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Par défaut (simple_user, distributeur, etc.)
+    widget.onLoginSuccess();
+  }
+
+  void _showRoleSelectionBottomSheet(int userId) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF141418),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "Choisissez votre profil",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Comment souhaitez-vous utiliser WMA HUB ?",
+                style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
+              ),
+              const SizedBox(height: 28),
+              _buildRoleOptionItem(
+                title: "Artiste",
+                description: "Distribuez votre musique, suivez vos stats et vos revenus.",
+                icon: Icons.music_note_rounded,
+                color: AppTheme.primaryColor,
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  setState(() => _isLoading = true);
+                  final updatedUser = await _authService.updateUserRole(userId, 'artiste');
+                  setState(() => _isLoading = false);
+                  if (updatedUser != null) {
+                    _handlePostLoginRouting(updatedUser);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildRoleOptionItem(
+                title: "Agent / Employé",
+                description: "Accédez à vos missions quotidiennes et collaborez avec l'équipe.",
+                icon: Icons.support_agent_rounded,
+                color: Colors.amberAccent,
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  setState(() => _isLoading = true);
+                  final updatedUser = await _authService.updateUserRole(userId, 'employe');
+                  setState(() => _isLoading = false);
+                  if (updatedUser != null) {
+                    _handlePostLoginRouting(updatedUser);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildRoleOptionItem(
+                title: "Utilisateur Simple",
+                description: "Découvrez notre catalogue d'artistes et suivez nos actualités.",
+                icon: Icons.person_rounded,
+                color: Colors.tealAccent,
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  setState(() => _isLoading = true);
+                  final updatedUser = await _authService.updateUserRole(userId, 'simple_user');
+                  setState(() => _isLoading = false);
+                  if (updatedUser != null) {
+                    _handlePostLoginRouting(updatedUser);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRoleOptionItem({
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(color: AppTheme.textGrey, fontSize: 11, height: 1.3),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.textGrey),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
     try {
@@ -29,35 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (result != null && result['success'] == true) {
-          final userId = int.tryParse(result['user']?['id']?.toString() ?? '0') ?? 0;
-          final prefs = await SharedPreferences.getInstance();
-          final hasSigned = prefs.getBool('contract_signed_$userId') ?? false;
-
-          final role = result['user']?['role'] ?? 'artiste';
-
-          if (role == 'admin') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminAccountingScreen(),
-              ),
-            );
-            return;
-          }
-
-          if (hasSigned) {
-            widget.onLoginSuccess();
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ContractScreen(
-                  userId: userId,
-                  onSigned: widget.onLoginSuccess,
-                ),
-              ),
-            );
-          }
+          _handlePostLoginRouting(result['user']);
         } else {
           final message = result?['message'] ?? 'Échec de la connexion';
           _showErrorDialog(message);
@@ -78,35 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (result != null && result['success'] == true) {
-          final userId = int.tryParse(result['user']?['id']?.toString() ?? '0') ?? 0;
-          final prefs = await SharedPreferences.getInstance();
-          final hasSigned = prefs.getBool('contract_signed_$userId') ?? false;
-
-          final role = result['user']?['role'] ?? 'artiste';
-
-          if (role == 'admin') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminAccountingScreen(),
-              ),
-            );
-            return;
-          }
-
-          if (hasSigned) {
-            widget.onLoginSuccess();
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ContractScreen(
-                  userId: userId,
-                  onSigned: widget.onLoginSuccess,
-                ),
-              ),
-            );
-          }
+          _handlePostLoginRouting(result['user']);
         } else {
           final message = result?['message'] ?? 'Échec de la connexion Apple';
           _showErrorDialog(message);
@@ -131,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.cardColor,
         title: const Text(
-          'Accès Refusé',
+          'Erreur',
           style: TextStyle(
             color: AppTheme.primaryColor,
             fontWeight: FontWeight.bold,
@@ -154,32 +318,9 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(color: AppTheme.textGrey),
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _launchURL('https://wmahub.com/auth/login.php');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-            ),
-            child: const Text('DEVENIR ARTISTE'),
-          ),
         ],
       ),
     );
-  }
-
-  Future<void> _launchURL(String url) async {
-    if (!await launchUrl(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    )) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
-        );
-      }
-    }
   }
 
   @override
@@ -333,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Image.network(
-                                          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_\"G\"_Logo.svg/1200px-Google_\"G\"_Logo.svg.png',
+                                          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_Logo.svg/1200px-Google_%22G%22_Logo.svg.png',
                                           height: 24,
                                           errorBuilder: (c, e, s) => const Icon(
                                             Icons.g_mobiledata,

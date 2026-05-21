@@ -12,7 +12,20 @@
           "package_name": "com.ua.wmahub"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "421177402687-pq8mac78a07b59d96rjjns1gq6cvsfck.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ua.wmahub",
+            "certificate_hash": "6af738ff8670773248a94bac2e9389b1382823bd"
+          }
+        },
+        {
+          "client_id": "421177402687-pdn6mclmp6en88ccmg4t46e7013bv5r6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDbSttnS1qfZ-C41OVlIGKABBnlAobfGzk"
@@ -20,7 +33,20 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421177402687-pdn6mclmp6en88ccmg4t46e7013bv5r6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "421177402687-rejam18hsnu3pgu6a7nbp75hgns4gghk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ua.wmahub",
+                "app_store_id": "6764384950"
+              }
+            }
+          ]
         }
       }
     }

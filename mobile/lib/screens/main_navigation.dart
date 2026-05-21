@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'accueil_screen.dart';
 import 'services_screen.dart';
 import 'distributions_screen.dart';
-import 'writing_assistant_screen.dart';
 import 'about_screen.dart';
 import 'profile_screen.dart';
 import 'no_internet_screen.dart';
@@ -78,11 +77,9 @@ class MainNavigationState extends State<MainNavigation> {
         const ProfileScreen(),
       ];
     }
-    // Admin ou autre rôle : pas d'onglet Assistant IA
+    // Rôle non-artiste (Simple User / Agent) : pas de Services ni de Distributions
     return [
       const AccueilScreen(),
-      const ServicesScreen(),
-      const DistributionsScreen(),
       const AboutScreen(),
       const ProfileScreen(),
     ];
@@ -123,22 +120,12 @@ class MainNavigationState extends State<MainNavigation> {
         ),
       ];
     }
-    // Rôle non-artiste : 5 onglets
+    // Rôle non-artiste : 3 onglets (Accueil, À propos, Profil)
     return const [
       BottomNavigationBarItem(
         icon: Icon(Icons.home_outlined),
         activeIcon: Icon(Icons.home),
         label: 'Accueil',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.business_center_outlined),
-        activeIcon: Icon(Icons.business_center),
-        label: 'Services',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.music_note_outlined),
-        activeIcon: Icon(Icons.music_note),
-        label: 'Distributions',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.info_outline),
@@ -154,6 +141,7 @@ class MainNavigationState extends State<MainNavigation> {
   }
 
   void _onTabTap(int index) {
+    _loadRole();
     final screens = _screens;
     if (index >= 0 && index < screens.length) {
       setState(() => _selectedIndex = index);

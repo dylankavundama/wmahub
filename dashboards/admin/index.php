@@ -252,6 +252,7 @@ $total_projects_revenue -= $total_paid_out;
             <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
             <a href="comptabilite.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'comptabilite.php' ? 'active' : '' ?>"><i class="fas fa-calculator"></i> Comptabilité</a>
             <a href="hero_slider.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'hero_slider.php' ? 'active' : '' ?>"><i class="fas fa-images"></i> Gestion Slider</a>
+            <a href="distributions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'distributions.php' ? 'active' : '' ?>"><i class="fas fa-music"></i> Distributions Vitrine</a>
             <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
             <?php if ($_SESSION['role'] === 'superadmin'): ?>
                 <div class="mt-4 pt-4 border-t border-white/5">

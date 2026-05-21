@@ -31,13 +31,20 @@ try {
         throw new Exception("Apple Identity Token is required");
     }
 
-    // 1. Décoder le JWT identityToken
+    // 1. Décoder le JWT identityToken (avec gestion robuste du Base64URL)
     $parts = explode('.', $identityToken);
     if (count($parts) < 2) {
         throw new Exception("Invalid Apple Identity Token format");
     }
 
-    $payload = json_decode(base64_decode($parts[1]), true);
+    $base64Url = $parts[1];
+    $base64 = str_replace(['-', '_'], ['+', '/'], $base64Url);
+    $padding = strlen($base64) % 4;
+    if ($padding) {
+        $base64 .= str_repeat('=', 4 - $padding);
+    }
+
+    $payload = json_decode(base64_decode($base64), true);
     if (!$payload) {
         throw new Exception("Unable to decode Apple Identity Token payload");
     }
@@ -53,53 +60,61 @@ try {
     // On cherche par apple_id ou par email (si l'email est présent dans le token)
     $user = null;
     if (!empty($email)) {
-        $stmt = $db->prepare("SELECT id, name, email, role, apple_id FROM users WHERE apple_id = ? OR email = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id, name, email, role, is_active, apple_id FROM users WHERE apple_id = ? OR email = ? LIMIT 1");
         $stmt->execute([$apple_id, $email]);
     } else {
-        $stmt = $db->prepare("SELECT id, name, email, role, apple_id FROM users WHERE apple_id = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id, name, email, role, is_active, apple_id FROM users WHERE apple_id = ? LIMIT 1");
         $stmt->execute([$apple_id]);
     }
     
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        // Optionnel : Créer le compte s'il n'existe pas (comportement standard pour OAuth)
-        // Mais ici, selon la logique Google mobile, on demande de s'inscrire sur le web d'abord
-        echo json_encode([
-            "success" => false,
-            "error_code" => "NO_ACCOUNT",
-            "message" => "Aucun compte WMA HUB trouvé associé à cet identifiant Apple. Veuillez vous inscrire sur notre plateforme d'abord."
-        ]);
-        exit;
-    }
-
-    // 3. Vérification du rôle (Artiste ou Admin uniquement sur mobile)
-    $userRole = trim(strtolower($user['role'] ?? ''));
-    $allowedRoles = ['artiste', 'admin'];
-    
-    if (!in_array($userRole, $allowedRoles)) {
-        echo json_encode([
-            "success" => false,
-            "error_code" => "INVALID_ROLE",
-            "message" => "L'accès mobile est réservé aux Artistes et Administrateurs."
-        ]);
-        exit;
-    }
-
-    // 4. Mise à jour de l'apple_id s'il n'était pas encore lié
-    if (empty($user['apple_id'])) {
-        $update = $db->prepare("UPDATE users SET apple_id = ? WHERE id = ?");
-        $update->execute([$apple_id, $user['id']]);
+        $finalName = $nameProvided ?: 'Utilisateur Apple';
+        $finalEmail = $email ?: '';
+        
+        // Créer un nouvel utilisateur avec rôle NULL (en attente de choix de rôle sur mobile)
+        $stmt = $db->prepare("INSERT INTO users (apple_id, name, email, is_active, role) VALUES (?, ?, ?, 0, NULL)");
+        $stmt->execute([$apple_id, $finalName, $finalEmail]);
+        $userId = $db->lastInsertId();
+        
+        $user = [
+            "id"        => $userId,
+            "name"      => $finalName,
+            "email"     => $finalEmail,
+            "role"      => null,
+            "is_active" => 0
+        ];
+        
+        // Notifier l'équipe admin
+        try {
+            require_once __DIR__ . '/../includes/mailer.php';
+            notifyAdmin('registration', 'Nouvel Utilisateur Inscrit (Apple Mobile)', [
+                'Nom' => $finalName,
+                'Email' => $finalEmail,
+                'Méthode' => 'Apple Mobile OAuth',
+                'Date' => date('d/m/Y H:i')
+            ], 'https://wmahub.com/dashboards/admin/users.php');
+        } catch (Exception $e) {
+            error_log("Failed to notify admin of new user: " . $e->getMessage());
+        }
+    } else {
+        // Mise à jour de l'apple_id s'il n'était pas encore lié
+        if (empty($user['apple_id'])) {
+            $update = $db->prepare("UPDATE users SET apple_id = ? WHERE id = ?");
+            $update->execute([$apple_id, $user['id']]);
+        }
     }
 
     // 5. Succès
     echo json_encode([
         "success" => true,
         "user" => [
-            "id" => $user['id'],
-            "name" => $user['name'],
-            "email" => $user['email'],
-            "role" => $user['role']
+            "id"        => $user['id'],
+            "name"      => $user['name'],
+            "email"     => $user['email'],
+            "role"      => $user['role'],
+            "is_active" => (int)$user['is_active']
         ]
     ]);
 

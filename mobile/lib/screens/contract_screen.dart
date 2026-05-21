@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 import '../utils/app_theme.dart';
+import 'main_navigation.dart';
 
 class ContractScreen extends StatefulWidget {
   final int userId;
@@ -26,7 +27,16 @@ class _ContractScreenState extends State<ContractScreen> {
     await prefs.setBool('contract_signed_${widget.userId}', true);
     widget.onSigned();
     if (mounted) {
-      Navigator.of(context).pop();
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MainNavigation(),
+          ),
+        );
+      }
     }
   }
 

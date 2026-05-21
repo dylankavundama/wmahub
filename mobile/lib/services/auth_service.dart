@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -117,6 +118,27 @@ class AuthService {
       }
     } catch (e) {
       debugPrint("Login error: $e");
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> updateUserRole(int userId, String role) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("${WordPressService.apiBaseUrl}/update_user_role.php"),
+            body: {'user_id': userId.toString(), 'role': role},
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        final userData = data['user'];
+        await _saveUser(userData);
+        return userData;
+      }
+    } catch (e) {
+      debugPrint("Update role error: $e");
     }
     return null;
   }

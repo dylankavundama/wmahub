@@ -69,14 +69,14 @@ foreach ($employees as $emp) {
     // Moyenne des tâches (Auto 3/5) - NON ARCHIVÉES
     $stmt = $db->prepare("SELECT AVG(rating), COUNT(*) FROM tasks WHERE user_id = ? AND status = 'termine' AND is_archived = 0");
     $stmt->execute([$emp['id']]);
-    $task_res = $stmt->fetch();
+    $task_res = $stmt->fetch(PDO::FETCH_NUM);
     $avg_tasks = $task_res[0] ?: 0;
     $count_auto = (int)$task_res[1];
 
     // Moyenne des évaluations admin - NON ARCHIVÉES
     $stmt = $db->prepare("SELECT AVG(rating), COUNT(*) FROM evaluations WHERE employee_id = ? AND is_archived = 0");
     $stmt->execute([$emp['id']]);
-    $eval_res = $stmt->fetch();
+    $eval_res = $stmt->fetch(PDO::FETCH_NUM);
     $avg_evals = $eval_res[0] ?: 0;
     $count_admin = (int)$eval_res[1];
 
