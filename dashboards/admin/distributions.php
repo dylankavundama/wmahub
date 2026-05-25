@@ -11,6 +11,15 @@ $db = getDBConnection();
 $message = '';
 $error = '';
 
+if (isset($_SESSION['flash_message'])) {
+    $message = $_SESSION['flash_message'];
+    unset($_SESSION['flash_message']);
+}
+if (isset($_SESSION['flash_error'])) {
+    $error = $_SESSION['flash_error'];
+    unset($_SESSION['flash_error']);
+}
+
 // Traitement des actions (Ajout, Suppr, Toggle Status)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
@@ -36,7 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($image_url && !$error) {
             $stmt = $db->prepare("INSERT INTO distributions (title, artist, image_url, link) VALUES (?, ?, ?, ?)");
             $stmt->execute([$title, $artist, $image_url, $link]);
-            $message = "Distribution ajoutée avec succès !";
+            $_SESSION['flash_message'] = "Distribution ajoutée avec succès !";
+            header('Location: distributions.php');
+            exit;
         } else if (!$error) {
             $error = "Veuillez fournir une image (fichier ou URL).";
         }
@@ -44,12 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)$_POST['dist_id'];
         $stmt = $db->prepare("DELETE FROM distributions WHERE id = ?");
         $stmt->execute([$id]);
-        $message = "Distribution supprimée.";
+        $_SESSION['flash_message'] = "Distribution supprimée.";
+        header('Location: distributions.php');
+        exit;
     } elseif (isset($_POST['toggle_status'])) {
         $id = (int)$_POST['dist_id'];
         $status = $_POST['status'];
         $stmt = $db->prepare("UPDATE distributions SET status = ? WHERE id = ?");
         $stmt->execute([$status, $id]);
+        $_SESSION['flash_message'] = "Statut mis à jour.";
+        header('Location: distributions.php');
+        exit;
     }
 }
 
@@ -179,12 +195,30 @@ try {
                         <input type="text" name="image_url" placeholder="https://..." class="custom-input mt-1">
                     </div>
                     <div class="flex gap-2 mt-4">
-                        <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="bg-white/10 px-6 py-2 rounded-xl flex-1">Annuler</button>
+                                <button type="button" onclick="hideAddModal()" class="bg-white/10 px-6 py-2 rounded-xl flex-1">Annuler</button>
                         <button type="submit" name="add_distribution" class="btn-primary flex-1 justify-center">Enregistrer</button>
                     </div>
                 </form>
             </div>
         </div>
     </main>
+    <script>
+        function showAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+        function hideAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+        var addDistributionForm = document.getElementById('addDistributionForm');
+        if (addDistributionForm) {
+            addDistributionForm.addEventListener('submit', function(event) {
+                var btn = this.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+                }
+            });
+        }
+    </script>
 </body>
 </html>

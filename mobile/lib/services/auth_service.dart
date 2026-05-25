@@ -6,15 +6,20 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'wordpress_service.dart';
+import 'logging_service.dart';
 
 class AuthService {
   static const String _userKey = 'auth_user';
 
+  /// Client Web OAuth (client_type 3) — requis pour idToken + Firebase Auth sur Android.
+  static const String _googleWebClientId =
+      '421177402687-pdn6mclmp6en88ccmg4t46e7013bv5r6.apps.googleusercontent.com';
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId:
-        '547408646820-eedhgi415138ulb823mhh9uhln8i9f60.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
+    serverClientId: _googleWebClientId,
   );
 
   Future<Map<String, dynamic>?> loginWithGoogle() async {
@@ -27,6 +32,16 @@ class AuthService {
       final String? idToken = googleAuth.idToken;
 
       if (idToken == null) return null;
+
+      try {
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await FirebaseAuth.instance.signInWithCredential(credential);
+      } catch (e) {
+        LoggingService.error("Erreur Firebase Auth (Google): $e", context: "FirebaseAuth");
+      }
 
       final response = await http
           .post(
@@ -47,7 +62,7 @@ class AuthService {
         };
       }
     } on PlatformException catch (e) {
-      debugPrint("Google Platform Error: ${e.code} - ${e.message}");
+      LoggingService.error("Google Platform Error: ${e.code} - ${e.message}", context: "GoogleAuth");
       String msg = "Erreur de configuration Google Auth";
       if (e.code == 'channel-error') {
         msg = "Configuration Google manquante (SHA-1 / google-services.json)";
@@ -56,7 +71,7 @@ class AuthService {
       }
       return {"success": false, "message": msg};
     } catch (e) {
-      debugPrint("Google Login error: $e");
+      LoggingService.error("Google Login error: $e", context: "GoogleAuth");
       return {"success": false, "message": "Détails: $e"};
     }
   }
@@ -94,7 +109,7 @@ class AuthService {
         };
       }
     } catch (e) {
-      debugPrint("Apple Login error: $e");
+      LoggingService.error("Apple Login error: $e", context: "AppleAuth");
       return {"success": false, "message": "Erreur: $e"};
     }
   }
@@ -117,7 +132,7 @@ class AuthService {
         }
       }
     } catch (e) {
-      debugPrint("Login error: $e");
+      LoggingService.error("Login error: $e", context: "EmailAuth");
     }
     return null;
   }
@@ -148,6 +163,7 @@ class AuthService {
     await prefs.remove(_userKey);
     try {
       await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
     } catch (e) {}
   }
 

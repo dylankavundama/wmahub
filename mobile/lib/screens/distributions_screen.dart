@@ -25,6 +25,7 @@ class _DistributionsScreenState extends State<DistributionsScreen> {
   Future<void> _loadDistributions() async {
     setState(() => _isLoading = true);
     final data = await _wpService.fetchDistributions();
+    if (!mounted) return;
     setState(() {
       _distributions = data;
       _isLoading = false;

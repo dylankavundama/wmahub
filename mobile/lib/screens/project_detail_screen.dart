@@ -16,6 +16,7 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
+  bool _isLoadingAudio = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
@@ -28,6 +29,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       if (mounted) {
         setState(() {
           _isPlaying = state == PlayerState.playing;
+          if (_isPlaying || state == PlayerState.paused || state == PlayerState.stopped) {
+            _isLoadingAudio = false;
+          }
         });
       }
     });
@@ -62,7 +66,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       String? audioPath = widget.project['audio_path'] ?? widget.project['file_path'];
       if (audioPath != null && audioPath.isNotEmpty) {
         String url = "https://wmahub.com/dashboards/artiste/uploads/$audioPath";
-        await _audioPlayer.play(UrlSource(url));
+        
+        setState(() {
+          _isLoadingAudio = true;
+        });
+        
+        try {
+          await _audioPlayer.play(UrlSource(url));
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _isLoadingAudio = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Erreur lors du chargement de l\'audio')),
+            );
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Aucun fichier audio disponible pour ce projet')),
@@ -182,12 +202,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           Row(
             children: [
               IconButton(
-                onPressed: _togglePlay,
+                onPressed: _isLoadingAudio ? null : _togglePlay,
                 iconSize: 48,
-                icon: Icon(
-                  _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                  color: AppTheme.primaryColor,
-                ),
+                icon: _isLoadingAudio 
+                  ? const SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                    )
+                  : Icon(
+                      _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                      color: AppTheme.primaryColor,
+                    ),
               ),
               Expanded(
                 child: Column(
