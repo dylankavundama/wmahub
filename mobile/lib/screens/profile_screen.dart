@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
+import '../main.dart';
 import 'login_screen.dart';
 import 'distribution_screen.dart';
 import 'project_detail_screen.dart';
@@ -487,10 +488,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final messenger = ScaffoldMessenger.of(context);
           final message = data['message']?.toString() ?? 'Compte supprimé';
           await _authService.logout();
-          _checkAuth();
+          
           messenger.showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.green),
+            SnackBar(
+              content: Text(message), 
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
+          
+          // Attend 1 seconde pour voir le message avant le redémarrage complet de l'application
+          await Future.delayed(const Duration(milliseconds: 1000));
+          if (mounted) {
+            RestartWidget.restartApp(context);
+          }
         }
       }
     } catch (e) {

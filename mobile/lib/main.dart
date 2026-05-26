@@ -20,7 +20,11 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // 2. Lancement immédiat de l'UI pour quitter le splash screen natif
-  runApp(const WMAHubApp());
+  runApp(
+    const RestartWidget(
+      child: WMAHubApp(),
+    ),
+  );
 
   // 3. Configuration des logs (en arrière-plan)
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -74,6 +78,38 @@ class WMAHubApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),
+    );
+  }
+}
+
+/// Widget permettant de redémarrer l'ensemble de l'application à chaud en réinitialisant son arbre de composants.
+class RestartWidget extends StatefulWidget {
+  final Widget child;
+
+  const RestartWidget({super.key, required this.child});
+
+  static void restartApp(BuildContext context) {
+    context.findAncestorStateOfType<_RestartWidgetState>()?.restartApp();
+  }
+
+  @override
+  State<RestartWidget> createState() => _RestartWidgetState();
+}
+
+class _RestartWidgetState extends State<RestartWidget> {
+  Key _key = UniqueKey();
+
+  void restartApp() {
+    setState(() {
+      _key = UniqueKey();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyedSubtree(
+      key: _key,
+      child: widget.child,
     );
   }
 }

@@ -9,6 +9,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+function columnExists(PDO $db, string $table, string $column): bool
+{
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute([$table, $column]);
+    return (int) $stmt->fetchColumn() > 0;
+}
+
 try {
     $db = getDBConnection();
     
@@ -18,9 +28,17 @@ try {
         throw new Exception("User ID is required");
     }
 
-    // Pour la conformité Store, nous pouvons soit supprimer les données, 
-    // soit désactiver le compte. Ici nous marquons comme inactif.
-    $stmt = $db->prepare("UPDATE users SET is_active = 0, google_id = NULL, apple_id = NULL WHERE id = ?");
+    // Pour la conformité Store et RGPD, nous désactivons le compte, détachons les IDs sociaux
+    // et anonymisons l'e-mail pour permettre une éventuelle réinscription future.
+    $hasFirebase = columnExists($db, 'users', 'firebase_uid');
+    
+    $query = "UPDATE users SET is_active = 0, google_id = NULL, apple_id = NULL";
+    if ($hasFirebase) {
+        $query .= ", firebase_uid = NULL";
+    }
+    $query .= ", email = CONCAT(email, '.deleted.', UNIX_TIMESTAMP()) WHERE id = ?";
+    
+    $stmt = $db->prepare($query);
     $result = $stmt->execute([$user_id]);
 
     if ($result) {

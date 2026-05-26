@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/wordpress_service.dart';
+import '../main.dart';
 import 'admin_accounting_screen.dart';
 
 class SimpleProfileScreen extends StatefulWidget {
@@ -112,10 +113,20 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
           final messenger = ScaffoldMessenger.of(context);
           final message = data['message']?.toString() ?? 'Compte supprimé';
           await _authService.logout();
-          widget.onLogout();
+          
           messenger.showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.green),
+            SnackBar(
+              content: Text(message), 
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
+          
+          // Attend 1 seconde pour voir le message avant le redémarrage complet de l'application
+          await Future.delayed(const Duration(milliseconds: 1000));
+          if (mounted) {
+            RestartWidget.restartApp(context);
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(data['message'] ?? 'Erreur lors de la suppression'), backgroundColor: Colors.redAccent),
