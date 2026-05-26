@@ -6,10 +6,11 @@
 -keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
 
-# Google Sign In
+# Firebase Auth / Google Sign-In (Credential Manager)
 -keep class com.google.android.gms.auth.api.signin.** { *; }
 -keep class com.google.android.gms.common.api.** { *; }
 -keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.firebase.auth.** { *; }
 
 # Workmanager
 -keep class com.google.common.util.concurrent.ListenableFuture { *; }

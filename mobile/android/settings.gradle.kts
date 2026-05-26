@@ -15,12 +15,24 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "org.jetbrains.kotlin.android") {
+                useVersion("2.3.0")
+            }
+        }
+    }
 }
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.9.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services") version("4.4.2") apply false
+    // END: FlutterFire Configuration
+    // Aligné avec les libs Google/Firebase récentes (ex: firebase-auth 24.1.0 -> Kotlin metadata 2.3.x)
+    id("org.jetbrains.kotlin.android") version "2.3.0" apply false
 }
 
 include(":app")

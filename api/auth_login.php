@@ -1,4 +1,8 @@
 <?php
+/**
+ * @deprecated Pour l'app mobile : Firebase Auth (firebase_auth_mobile.php).
+ * Ce endpoint reste pour d'éventuels clients legacy.
+ */
 require_once __DIR__ . '/../includes/config.php';
 
 header('Content-Type: application/json');

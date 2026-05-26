@@ -1,7 +1,3 @@
-plugins {
-    id("com.google.gms.google-services") version "4.4.2" apply false
-}
-
 allprojects {
     repositories {
         google()
@@ -18,6 +14,16 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+subprojects {
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-stdlib")) {
+                useVersion("2.3.0")
+                because("stdlib aligné avec le compilateur Kotlin 2.3")
+            }
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(":app")

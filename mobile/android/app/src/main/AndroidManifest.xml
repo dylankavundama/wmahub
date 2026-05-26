@@ -42,6 +42,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Client Web Firebase (type 3) — requis pour Google Sign-In + Firebase Auth -->
+        <meta-data
+            android:name="com.google.android.gms.auth.api.signin.default_web_client_id"
+            android:value="421177402687-pdn6mclmp6en88ccmg4t46e7013bv5r6.apps.googleusercontent.com" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -1,7 +1,7 @@
 <?php
 /**
- * Endpoint d'authentification Apple pour l'application mobile.
- * Reçoit le identityToken (JWT) envoyé par Flutter et connecte l'utilisateur.
+ * @deprecated Utiliser api/firebase_auth_mobile.php (Firebase ID token).
+ * L'app mobile passe par Firebase Auth + Sign in with Apple.
  */
 error_reporting(0);
 ini_set('display_errors', '0');

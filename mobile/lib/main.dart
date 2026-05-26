@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:wmahub_mobile/firebase/firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
 import 'services/notification_service.dart';
@@ -11,7 +13,11 @@ import 'services/logging_service.dart';
 void main() async {
   // 1. Initialisation vitale des widgets
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  
+  // Désactiver le chargement par HTTP des polices Google Fonts (chargement hors-ligne depuis les assets)
+  GoogleFonts.config.allowRuntimeFetching = false;
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // 2. Lancement immédiat de l'UI pour quitter le splash screen natif
   runApp(const WMAHubApp());

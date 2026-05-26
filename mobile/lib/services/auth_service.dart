@@ -1,140 +1,215 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'wordpress_service.dart';
 import 'logging_service.dart';
+import 'wordpress_service.dart';
 
+/// Authentification mobile via Firebase Auth (Google, Apple) + sync WordPress.
 class AuthService {
   static const String _userKey = 'auth_user';
+  static const String _firebaseAuthApi = 'firebase_auth_mobile.php';
 
-  /// Client Web OAuth (client_type 3) — requis pour idToken + Firebase Auth sur Android.
-  static const String _googleWebClientId =
-      '421177402687-pdn6mclmp6en88ccmg4t46e7013bv5r6.apps.googleusercontent.com';
+  static void _authDebug(String step, [Map<String, Object?>? details]) {
+    if (!kDebugMode) return;
+    final buffer = StringBuffer('[Auth/Firebase] $step');
+    if (details != null) {
+      for (final entry in details.entries) {
+        buffer.write(' | ${entry.key}=${entry.value}');
+      }
+    }
+    debugPrint(buffer.toString());
+    LoggingService.info(buffer.toString(), context: 'FirebaseAuth');
+  }
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-    serverClientId: _googleWebClientId,
-  );
+  static String _tokenPreview(String? token) {
+    if (token == null || token.isEmpty) return '(vide)';
+    if (token.length <= 24) return '${token.length} car.';
+    return '${token.substring(0, 12)}…${token.substring(token.length - 8)} (${token.length} car.)';
+  }
+
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
+  }
+
+  /// Restaure la session Firebase + profil WordPress (au démarrage).
+  Future<Map<String, dynamic>?> restoreSession() async {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) return null;
+
+    try {
+      final idToken = await firebaseUser.getIdToken(true);
+      if (idToken == null) return null;
+      return _syncFirebaseToken(idToken);
+    } catch (e) {
+      _authDebug('restoreSession échec', {'erreur': e.toString()});
+      return null;
+    }
+  }
 
   Future<Map<String, dynamic>?> loginWithGoogle() async {
+    _authDebug('Connexion Google → Firebase Auth (signInWithProvider)');
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
+      final googleProvider = GoogleAuthProvider();
+      final userCredential =
+          await FirebaseAuth.instance.signInWithProvider(googleProvider);
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
-
-      if (idToken == null) return null;
-
-      try {
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      } catch (e) {
-        LoggingService.error("Erreur Firebase Auth (Google): $e", context: "FirebaseAuth");
-      }
-
-      final response = await http
-          .post(
-            Uri.parse("${WordPressService.apiBaseUrl}/google_auth_mobile.php"),
-            body: {'idToken': idToken},
-          )
-          .timeout(const Duration(seconds: 15));
-
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        final userData = data['user'];
-        await _saveUser(userData);
-        return {"success": true, "user": userData};
-      } else {
+      return _completeFirebaseSignIn(
+        userCredential,
+        displayName: userCredential.user?.displayName,
+      );
+    } on FirebaseAuthException catch (e) {
+      return _firebaseError(e);
+    } catch (e) {
+      final msg = e.toString();
+      LoggingService.error('Google/Firebase: $e', context: 'FirebaseAuth');
+      if (msg.contains('ApiException: 10') || msg.contains('sign_in_failed')) {
         return {
-          "success": false,
-          "message": data['message'] ?? "Erreur d'authentification",
+          'success': false,
+          'message':
+              'Configuration Google incorrecte (empreinte SHA ou client OAuth Firebase).',
         };
       }
-    } on PlatformException catch (e) {
-      LoggingService.error("Google Platform Error: ${e.code} - ${e.message}", context: "GoogleAuth");
-      String msg = "Erreur de configuration Google Auth";
-      if (e.code == 'channel-error') {
-        msg = "Configuration Google manquante (SHA-1 / google-services.json)";
-      } else if (e.code == 'network_error') {
-        msg = "Problème de connexion réseau.";
+      if (msg.contains('channel-error')) {
+        return {
+          'success': false,
+          'message':
+              'Relancez l\'app complètement (arrêt + flutter run), pas un simple hot reload.',
+        };
       }
-      return {"success": false, "message": msg};
-    } catch (e) {
-      LoggingService.error("Google Login error: $e", context: "GoogleAuth");
-      return {"success": false, "message": "Détails: $e"};
+      return {'success': false, 'message': 'Erreur Google: $e'};
     }
   }
 
   Future<Map<String, dynamic>?> loginWithApple() async {
+    _authDebug('Connexion Apple → Firebase Auth');
     try {
-      final credential = await SignInWithApple.getAppleIDCredential(
+      final rawNonce = _generateNonce();
+      final nonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        nonce: nonce,
       );
 
-      final response = await http
-          .post(
-            Uri.parse("${WordPressService.apiBaseUrl}/apple_auth_mobile.php"),
-            body: {
-              'identityToken': credential.identityToken ?? '',
-              'userIdentifier': credential.userIdentifier ?? '',
-              'email': credential.email ?? '',
-              'name': '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim(),
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      );
 
-      final data = json.decode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        final userData = data['user'];
-        await _saveUser(userData);
-        return {"success": true, "user": userData};
-      } else {
-        return {
-          "success": false,
-          "message": data['message'] ?? "Erreur d'authentification Apple",
-        };
-      }
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+
+      final appleName =
+          '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
+              .trim();
+
+      return _completeFirebaseSignIn(
+        userCredential,
+        displayName: appleName.isNotEmpty ? appleName : null,
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) return null;
+      return {'success': false, 'message': 'Connexion Apple annulée ou refusée'};
+    } on FirebaseAuthException catch (e) {
+      return _firebaseError(e);
     } catch (e) {
-      LoggingService.error("Apple Login error: $e", context: "AppleAuth");
-      return {"success": false, "message": "Erreur: $e"};
+      LoggingService.error('Apple/Firebase: $e', context: 'FirebaseAuth');
+      return {'success': false, 'message': 'Erreur Apple: $e'};
     }
   }
 
-  Future<Map<String, dynamic>?> login(String email, String password) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse("${WordPressService.apiBaseUrl}/auth_login.php"),
-            body: {'email': email, 'password': password},
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          final userData = data['user'];
-          await _saveUser(userData);
-          return userData;
-        }
-      }
-    } catch (e) {
-      LoggingService.error("Login error: $e", context: "EmailAuth");
+  Future<Map<String, dynamic>?> _completeFirebaseSignIn(
+    UserCredential userCredential, {
+    String? displayName,
+  }) async {
+    final firebaseUser = userCredential.user;
+    if (firebaseUser == null) {
+      return {'success': false, 'message': 'Utilisateur Firebase introuvable'};
     }
-    return null;
+
+    final idToken = await firebaseUser.getIdToken();
+    if (idToken == null) {
+      return {'success': false, 'message': 'Token Firebase introuvable'};
+    }
+
+    _authDebug('Firebase UID', {
+      'uid': firebaseUser.uid,
+      'email': firebaseUser.email ?? '(null)',
+      'idToken': _tokenPreview(idToken),
+    });
+
+    return _syncFirebaseToken(idToken, displayName: displayName);
+  }
+
+  Future<Map<String, dynamic>?> _syncFirebaseToken(
+    String firebaseIdToken, {
+    String? displayName,
+  }) async {
+    final apiUrl = '${WordPressService.apiBaseUrl}/$_firebaseAuthApi';
+    _authDebug('Sync backend WordPress', {'url': apiUrl});
+
+    final body = <String, String>{'firebaseIdToken': firebaseIdToken};
+    if (displayName != null && displayName.isNotEmpty) {
+      body['displayName'] = displayName;
+    }
+
+    final response = await http
+        .post(Uri.parse(apiUrl), body: body)
+        .timeout(const Duration(seconds: 15));
+
+    Map<String, dynamic> data;
+    try {
+      data = json.decode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      return {
+        'success': false,
+        'message': 'Réponse serveur invalide (pas du JSON)',
+      };
+    }
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      final userData = data['user'] as Map<String, dynamic>;
+      await _saveUser(userData);
+      _authDebug('Sync OK', {'userId': userData['id']});
+      return {'success': true, 'user': userData};
+    }
+
+    await FirebaseAuth.instance.signOut();
+    return {
+      'success': false,
+      'message': data['message'] ?? 'Erreur de synchronisation serveur',
+    };
+  }
+
+  Map<String, dynamic> _firebaseError(FirebaseAuthException e) {
+    _authDebug('FirebaseAuthException', {'code': e.code, 'message': e.message});
+    String msg = e.message ?? e.code;
+    switch (e.code) {
+      case 'invalid-credential':
+        msg = 'Identifiants invalides.';
+        break;
+      case 'account-exists-with-different-credential':
+        msg = 'Un compte existe déjà avec un autre mode de connexion.';
+        break;
+      case 'operation-not-allowed':
+        msg =
+            'Ce mode de connexion n\'est pas activé dans Firebase Console (Authentication → Sign-in method).';
+        break;
+    }
+    return {'success': false, 'message': msg};
   }
 
   Future<Map<String, dynamic>?> updateUserRole(int userId, String role) async {
@@ -161,25 +236,29 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
-    try {
-      await _googleSignIn.signOut();
-      await FirebaseAuth.instance.signOut();
-    } catch (e) {}
+    await FirebaseAuth.instance.signOut();
   }
 
   Future<Map<String, dynamic>?> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(_userKey);
     if (userJson != null) {
-      return json.decode(userJson);
+      return json.decode(userJson) as Map<String, dynamic>;
     }
     return null;
   }
 
   Future<bool> isLoggedIn() async {
-    final user = await getCurrentUser();
-    return user != null;
+    if (FirebaseAuth.instance.currentUser != null) {
+      final local = await getCurrentUser();
+      if (local != null) return true;
+      final restored = await restoreSession();
+      return restored?['success'] == true;
+    }
+    return (await getCurrentUser()) != null;
   }
+
+  User? get firebaseUser => FirebaseAuth.instance.currentUser;
 
   Future<void> _saveUser(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();

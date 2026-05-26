@@ -73,6 +73,11 @@ $schema_requirements = [
                 'type' => 'VARCHAR(255) NULL DEFAULT NULL',
                 'after' => 'google_id',
                 'sql' => "ALTER TABLE `users` ADD COLUMN `apple_id` VARCHAR(255) NULL DEFAULT NULL AFTER `google_id`;"
+            ],
+            'firebase_uid' => [
+                'type' => 'VARCHAR(128) NULL DEFAULT NULL',
+                'after' => 'apple_id',
+                'sql' => "ALTER TABLE `users` ADD COLUMN `firebase_uid` VARCHAR(128) NULL DEFAULT NULL AFTER `apple_id`;"
             ]
         ],
         'projects' => [

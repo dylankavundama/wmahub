@@ -1,0 +1,6 @@
+# Copier vers key.properties (non versionné) et placer upload-keystore.jks dans android/app/
+# Auth mobile : Firebase (Apple + email). Google Sign-In retiré de l'app.
+storePassword=VOTRE_MOT_DE_PASSE
+keyPassword=VOTRE_MOT_DE_PASSE
+keyAlias=upload
+storeFile=app/upload-keystore.jks

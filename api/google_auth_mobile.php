@@ -1,4 +1,8 @@
 <?php
+/**
+ * @deprecated Utiliser api/firebase_auth_mobile.php (Firebase ID token).
+ * Conservé pour compatibilité ; l'app Flutter n'appelle plus ce endpoint.
+ */
 // Supprimer TOUTES les erreurs PHP pour éviter qu'elles contaminent la réponse JSON
 error_reporting(0);
 ini_set('display_errors', '0');

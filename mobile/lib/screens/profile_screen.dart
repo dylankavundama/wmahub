@@ -37,7 +37,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _checkAuth() async {
-    final user = await _authService.getCurrentUser();
+    Map<String, dynamic>? user = await _authService.getCurrentUser();
+    if (user == null) {
+      final restored = await _authService.restoreSession();
+      if (restored?['success'] == true) {
+        user = restored!['user'] as Map<String, dynamic>?;
+      }
+    }
     if (mounted) {
       setState(() {
         _currentUser = user;

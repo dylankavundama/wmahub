@@ -246,20 +246,31 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final result = await _authService.loginWithGoogle();
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (result != null && result['success'] == true) {
-          _handlePostLoginRouting(result['user']);
-        } else {
-          final message = result?['message'] ?? 'Échec de la connexion';
-          _showErrorDialog(message);
-        }
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (result != null && result['success'] == true) {
+        _handlePostLoginRouting(result['user']);
+      } else if (result != null) {
+        _showErrorDialog(result['message'] ?? 'Échec de la connexion Google');
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         _showErrorDialog('Une erreur est survenue: $e');
       }
+    }
+  }
+
+  void _requireTerms(VoidCallback action) {
+    if (_termsAccepted) {
+      action();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vous devez accepter les conditions.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -306,8 +317,6 @@ class _LoginScreenState extends State<LoginScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              // Déconnexion du compte Google pour permettre
-              // à l'utilisateur de choisir un autre compte
               await _authService.logout();
               if (mounted) {
                 setState(() => _isLoading = false);
@@ -446,25 +455,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : Column(
                                 children: [
-                                  // Google Button
                                   ElevatedButton(
-                                    onPressed: _termsAccepted
-                                        ? _handleGoogleLogin
-                                        : () {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text("Vous devez accepter les conditions."),
-                                                backgroundColor: Colors.redAccent,
-                                              ),
-                                            );
-                                          },
+                                    onPressed: () =>
+                                        _requireTerms(_handleGoogleLogin),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,
                                       foregroundColor: Colors.black,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 16,
-                                      ),
+                                      minimumSize: const Size(double.infinity, 52),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
                                       ),
@@ -474,11 +471,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Image.network(
-                                          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_Logo.svg/1200px-Google_%22G%22_Logo.svg.png',
-                                          height: 24,
-                                          errorBuilder: (c, e, s) => const Icon(
+                                          'https://www.google.com/favicon.ico',
+                                          height: 22,
+                                          errorBuilder: (_, __, ___) => const Icon(
                                             Icons.g_mobiledata,
                                             color: Colors.blue,
+                                            size: 28,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
@@ -493,26 +491,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   if (Platform.isIOS) ...[
-                                    const SizedBox(height: 16),
-                                    // Apple Button
+                                    const SizedBox(height: 12),
                                     ElevatedButton(
-                                      onPressed: _termsAccepted
-                                          ? _handleAppleLogin
-                                          : () {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text("Vous devez accepter les conditions."),
-                                                  backgroundColor: Colors.redAccent,
-                                                ),
-                                              );
-                                            },
+                                      onPressed: () =>
+                                          _requireTerms(_handleAppleLogin),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.black,
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 16,
-                                        ),
+                                        minimumSize: const Size(double.infinity, 52),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(16),
                                           side: const BorderSide(color: Colors.white24),

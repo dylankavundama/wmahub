@@ -12,8 +12,13 @@ define('DB_NAME', getenv('DB_NAME') ?: 'wmahubco_hub');
 define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASSWORD') ?: '');
 
-// Configuration Google OAuth
+// Configuration Google OAuth — site web uniquement (auth/login.php, callback.php).
+// L'app mobile utilise Firebase Auth (projet uawma-70e70), pas ces identifiants.
 define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '547408646820-eedhgi415138ulb823mhh9uhln8i9f60.apps.googleusercontent.com');
+
+// Firebase — app mobile uniquement (voir includes/firebase_verify.php, api/firebase_auth_mobile.php)
+define('FIREBASE_PROJECT_ID', getenv('FIREBASE_PROJECT_ID') ?: 'uawma-70e70');
+define('FIREBASE_WEB_API_KEY', getenv('FIREBASE_WEB_API_KEY') ?: 'AIzaSyDbSttnS1qfZ-C41OVlIGKABBnlAobfGzk');
 define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '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');
 
 // Configuration Apple OAuth (Service ID)
