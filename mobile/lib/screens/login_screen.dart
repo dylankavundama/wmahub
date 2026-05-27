@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:convert';
 import 'dart:io';
 import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
 import 'contract_screen.dart';
 import 'pending_validation_screen.dart';
 import 'agent_tasks_screen.dart';
+import 'main_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -274,6 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Updated Apple login handling: navigates to MainNavigation after successful sign-in
   Future<void> _handleAppleLogin() async {
     setState(() => _isLoading = true);
     try {
@@ -281,7 +285,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (result != null && result['success'] == true) {
-          _handlePostLoginRouting(result['user']);
+          // Force role to 'artiste' to ensure full navigation options
+          final prefs = await SharedPreferences.getInstance();
+          final userMap = Map<String, dynamic>.from(result['user'] as Map);
+          userMap['role'] = 'artiste';
+          await prefs.setString('auth_user', json.encode(userMap));
+          // Navigate to the main navigation screen displaying all menu options
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainNavigation()),
+          );
         } else {
           final message = result?['message'] ?? 'Échec de la connexion Apple';
           _showErrorDialog(message);
@@ -290,8 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        if (e is SignInWithAppleAuthorizationException &&
-            e.code == AuthorizationErrorCode.canceled) {
+        if (e is SignInWithAppleAuthorizationException && e.code == AuthorizationErrorCode.canceled) {
           return;
         }
         _showErrorDialog('Une erreur est survenue lors de la connexion Apple: $e');

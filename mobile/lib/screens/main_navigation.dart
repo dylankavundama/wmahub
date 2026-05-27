@@ -63,82 +63,48 @@ class MainNavigationState extends State<MainNavigation> {
     super.dispose();
   }
 
-  /// L'onglet Assistant IA n'est visible que pour le rôle 'artiste'
-  bool get _isArtiste => _userRole == 'artiste';
+bool get _isArtiste => _userRole == 'artiste';
 
-  List<Widget> get _screens {
-    if (_isArtiste) {
-      return [
-        const AccueilScreen(),
-        const ServicesScreen(),
-        const DistributionsScreen(),
-        // const WritingAssistantScreen(),
-        const AboutScreen(),
-        const ProfileScreen(),
-      ];
-    }
-    // Rôle non-artiste (Simple User / Agent) : pas de Services ni de Distributions
-    return [
-      const AccueilScreen(),
-      const AboutScreen(),
-      const ProfileScreen(),
-    ];
-  }
+  List<Widget> get _screens => [
+    const AccueilScreen(),
+    const ServicesScreen(),
+    const DistributionsScreen(),
+    const AboutScreen(),
+    const ProfileScreen(),
+  ];
 
-  List<BottomNavigationBarItem> get _navItems {
-    if (_isArtiste) {
-      return const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Accueil',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.business_center_outlined),
-          activeIcon: Icon(Icons.business_center),
-          label: 'Services',
-        ),
-        // BottomNavigationBarItem(
-        //   icon: Icon(Icons.auto_awesome_outlined),
-        //   activeIcon: Icon(Icons.auto_awesome),
-        //   label: 'Assistant IA',
-        // ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.music_note_outlined),
-          activeIcon: Icon(Icons.music_note),
-          label: 'Distributions',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.info_outline),
-          activeIcon: Icon(Icons.info),
-          label: 'À propos',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ];
-    }
-    // Rôle non-artiste : 3 onglets (Accueil, À propos, Profil)
-    return const [
-      BottomNavigationBarItem(
-        icon: Icon(Icons.home_outlined),
-        activeIcon: Icon(Icons.home),
-        label: 'Accueil',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.info_outline),
-        activeIcon: Icon(Icons.info),
-        label: 'À propos',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.person_outline),
-        activeIcon: Icon(Icons.person),
-        label: 'Profil',
-      ),
-    ];
-  }
+  List<BottomNavigationBarItem> get _navItems => const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.home_outlined),
+      activeIcon: Icon(Icons.home),
+      label: 'Accueil',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.business_center_outlined),
+      activeIcon: Icon(Icons.business_center),
+      label: 'Services',
+    ),
+    // BottomNavigationBarItem(
+    //   icon: Icon(Icons.auto_awesome_outlined),
+    //   activeIcon: Icon(Icons.auto_awesome),
+    //   label: 'Assistant IA',
+    // ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.music_note_outlined),
+      activeIcon: Icon(Icons.music_note),
+      label: 'Distributions',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.info_outline),
+      activeIcon: Icon(Icons.info),
+      label: 'À propos',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person_outline),
+      activeIcon: Icon(Icons.person),
+      label: 'Profil',
+    ),
+  ];
 
   void _onTabTap(int index) {
     _loadRole();
@@ -160,12 +126,13 @@ class MainNavigationState extends State<MainNavigation> {
     }
 
     final screens = _screens;
-    final safeIndex = _selectedIndex.clamp(0, screens.length - 1);
+    final safeIndex = _selectedIndex.clamp(0, _navItems.length - 1);
 
+    final int currentIndex = _selectedIndex % _navItems.length;
     return Scaffold(
       body: IndexedStack(index: safeIndex, children: screens),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: safeIndex,
+        currentIndex: currentIndex,
         type: BottomNavigationBarType.fixed,
         onTap: _onTabTap,
         items: _navItems,

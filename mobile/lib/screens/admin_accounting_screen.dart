@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/app_theme.dart';
 import '../services/wordpress_service.dart';
 import '../services/auth_service.dart';
-import 'profile_screen.dart';
+import '../main.dart';
 import 'admin_project_management_screen.dart';
 
 class AdminAccountingScreen extends StatefulWidget {
@@ -75,12 +75,10 @@ class _AdminAccountingScreenState extends State<AdminAccountingScreen> {
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
             onPressed: () async {
+              final navigatorContext = context;
               await AuthService().logout();
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                );
+              if (navigatorContext.mounted) {
+                RestartWidget.restartApp(navigatorContext);
               }
             },
           ),

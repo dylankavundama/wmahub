@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/wordpress_service.dart';
+import '../main.dart';
 
 class AgentTasksScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -61,6 +62,7 @@ class _AgentTasksScreenState extends State<AgentTasksScreen> {
   }
 
   Future<void> _updateTaskStatus(int taskId, String nextStatus) async {
+    final navigatorContext = context;
     try {
       final userId = widget.user['id'];
       final response = await http.post(
@@ -72,9 +74,11 @@ class _AgentTasksScreenState extends State<AgentTasksScreen> {
         },
       );
 
+      if (!navigatorContext.mounted) return;
+
       final data = json.decode(response.body);
       if (data['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(navigatorContext).showSnackBar(
           SnackBar(
             content: Text(
               nextStatus == 'termine' 
@@ -86,10 +90,16 @@ class _AgentTasksScreenState extends State<AgentTasksScreen> {
         );
         _fetchAgentData();
       } else {
-        _showErrorSnackBar(data['message'] ?? "Erreur de mise à jour");
+        ScaffoldMessenger.of(navigatorContext).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? "Erreur de mise à jour"), backgroundColor: Colors.redAccent),
+        );
       }
     } catch (e) {
-      _showErrorSnackBar("Une erreur est survenue: $e");
+      if (navigatorContext.mounted) {
+        ScaffoldMessenger.of(navigatorContext).showSnackBar(
+          SnackBar(content: Text("Une erreur est survenue: $e"), backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 
@@ -135,8 +145,11 @@ class _AgentTasksScreenState extends State<AgentTasksScreen> {
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
             onPressed: () async {
+              final navigatorContext = context;
               await AuthService().logout();
-              widget.onLogout();
+              if (navigatorContext.mounted) {
+                RestartWidget.restartApp(navigatorContext);
+              }
             },
           ),
         ],

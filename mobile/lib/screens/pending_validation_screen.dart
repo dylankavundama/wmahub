@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
+import '../main.dart';
 
 class PendingValidationScreen extends StatelessWidget {
   final VoidCallback onLogout;
@@ -112,7 +113,9 @@ class PendingValidationScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       await AuthService().logout();
-                      onLogout();
+                      if (context.mounted) {
+                        RestartWidget.restartApp(context);
+                      }
                     },
                     icon: const Icon(Icons.logout_rounded, color: Colors.white),
                     label: const Text(

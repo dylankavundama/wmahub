@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/wordpress_service.dart';
@@ -100,18 +101,64 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
     );
   }
 
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        title: const Text('Se déconnecter ?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Êtes-vous sûr de vouloir vous déconnecter de votre compte ?',
+          style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('ANNULER', style: TextStyle(color: AppTheme.textGrey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final navigatorContext = context;
+              Navigator.pop(dialogContext);
+              await _authService.logout();
+              if (navigatorContext.mounted) {
+                RestartWidget.restartApp(navigatorContext);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+            child: const Text('SE DÉCONNECTER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _deleteAccount() async {
+    final navigatorContext = context;
     try {
       final response = await http.post(
         Uri.parse("${WordPressService.apiBaseUrl}/delete_account.php"),
         body: {'user_id': widget.user['id'].toString()},
       );
       
-      if (mounted) {
+      if (navigatorContext.mounted) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          final messenger = ScaffoldMessenger.of(context);
+          final messenger = ScaffoldMessenger.of(navigatorContext);
           final message = data['message']?.toString() ?? 'Compte supprimé';
+          
+          // Tentative sécurisée de suppression définitive du compte sur Firebase Auth
+          try {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              await user.delete();
+            }
+          } catch (firebaseError) {
+            // Ignoré si la session Firebase est trop ancienne (requires-recent-login).
+            // Le nettoyage SQL et la déconnexion ci-dessous restent suffisants.
+            debugPrint("Firebase Auth user delete failed/skipped: $firebaseError");
+          }
+          
           await _authService.logout();
           
           messenger.showSnackBar(
@@ -124,19 +171,19 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
           
           // Attend 1 seconde pour voir le message avant le redémarrage complet de l'application
           await Future.delayed(const Duration(milliseconds: 1000));
-          if (mounted) {
-            RestartWidget.restartApp(context);
+          if (navigatorContext.mounted) {
+            RestartWidget.restartApp(navigatorContext);
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(navigatorContext).showSnackBar(
             SnackBar(content: Text(data['message'] ?? 'Erreur lors de la suppression'), backgroundColor: Colors.redAccent),
           );
         }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.redAccent),
+      if (navigatorContext.mounted) {
+        ScaffoldMessenger.of(navigatorContext).showSnackBar(
+          const SnackBar(content: Text('Erreur lors de la suppression'), backgroundColor: Colors.red),
         );
       }
     }
@@ -466,10 +513,7 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await _authService.logout();
-                          widget.onLogout();
-                        },
+                        onPressed: _showLogoutDialog,
                         icon: const Icon(Icons.logout_rounded, size: 18),
                         label: const Text(
                           'DÉCONNEXION',
