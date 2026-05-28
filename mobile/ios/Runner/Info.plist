@@ -52,6 +52,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>WMA UA utilise le suivi pour améliorer votre expérience. Veuillez autoriser le suivi.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
@@ -63,11 +65,11 @@
 		<string>whatsapp</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>WMA HUB nécessite l'accès à votre galerie pour vous permettre de téléverser la pochette de votre album ou projet.</string>
+	<string>WMA UA nécessite l'accès à votre galerie pour vous permettre de téléverser la pochette de votre album ou projet.</string>
 	<key>NSAppleMusicUsageDescription</key>
-	<string>WMA HUB nécessite l'accès à vos fichiers média pour vous permettre de sélectionner les morceaux audio à distribuer.</string>
+	<string>WMA UA nécessite l'accès à vos fichiers média pour vous permettre de sélectionner les morceaux audio à distribuer.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>WMA HUB peut utiliser votre caméra pour prendre une photo de profil ou scanner des documents.</string>
+	<string>WMA UA peut utiliser votre caméra pour prendre une photo de profil ou scanner des documents.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

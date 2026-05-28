@@ -7,6 +7,7 @@ import 'main_navigation.dart';
 import '../utils/app_theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../services/logging_service.dart';
+import '../util/tracking_permission.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,6 +49,13 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       // Demander la permission pendant le splash screen
       await _requestNotificationPermissions();
+      
+      // Demander l'autorisation de suivi des applications (ATT) pour iOS
+      try {
+        await requestAppTrackingPermission();
+      } catch (e) {
+        LoggingService.warning("Erreur permissions App Tracking Transparency: $e");
+      }
       
       // Petit délai pour l'animation
       await Future.delayed(const Duration(seconds: 3));

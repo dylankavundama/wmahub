@@ -77,7 +77,7 @@ try {
     }
 
     if (!$user) {
-        $insertGoogleId = $googleId ?? '';
+        $insertGoogleId = !empty($googleId) ? $googleId : null;
         $hasAppleCol = columnExists($db, 'users', 'apple_id');
         $hasFirebaseCol = columnExists($db, 'users', 'firebase_uid');
 
