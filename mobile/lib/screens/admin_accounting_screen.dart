@@ -16,8 +16,7 @@ class AdminAccountingScreen extends StatefulWidget {
 }
 
 class _AdminAccountingScreenState extends State<AdminAccountingScreen> {
-  bool _isLocked = true;
-  final TextEditingController _pinController = TextEditingController();
+  bool _isLocked = false; // PIN protection removed
   Map<String, dynamic>? _accountingData;
   bool _isLoading = false;
   String _currentFilter = 'all'; // all, income, expense
@@ -44,21 +43,10 @@ class _AdminAccountingScreenState extends State<AdminAccountingScreen> {
     }
   }
 
-  void _verifyPin() {
-    if (_pinController.text == "1010") {
-      setState(() => _isLocked = false);
-      _fetchData();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Code PIN incorrect'), backgroundColor: Colors.red),
-      );
-      _pinController.clear();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLocked) return _buildPinScreen();
+
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -114,49 +102,6 @@ class _AdminAccountingScreenState extends State<AdminAccountingScreen> {
     );
   }
 
-  Widget _buildPinScreen() {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.lock_outline_rounded, size: 80, color: AppTheme.primaryColor),
-            const SizedBox(height: 24),
-            const Text(
-              'ACCÈS SÉCURISÉ',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Veuillez entrer votre code PIN pour continuer',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textGrey),
-            ),
-            const SizedBox(height: 40),
-            TextField(
-              controller: _pinController,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              maxLength: 4,
-              style: const TextStyle(fontSize: 32, letterSpacing: 20, fontWeight: FontWeight.bold, color: Colors.white),
-              decoration: InputDecoration(
-                counterText: "",
-                filled: true,
-                fillColor: AppTheme.cardColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-              ),
-              onChanged: (v) {
-                if (v.length == 4) _verifyPin();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildDashboard() {
     final stats = _accountingData?['stats'];

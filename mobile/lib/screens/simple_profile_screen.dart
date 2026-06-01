@@ -369,46 +369,46 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
                       _buildDivider(),
 
                       // Language Selector
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.03),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.language_rounded, color: Colors.white70, size: 20),
-                        ),
-                        title: const Text(
-                          'Langue de l\'application',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
-                        ),
-                        subtitle: const Text(
-                          'Sélectionnez votre langue de préférence',
-                          style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
-                        ),
-                        trailing: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            dropdownColor: AppTheme.cardColor,
-                            value: _selectedLanguage,
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'Français',
-                                child: Text('Français', style: TextStyle(color: Colors.white, fontSize: 13)),
-                              ),
-                              DropdownMenuItem(
-                                value: 'English',
-                                child: Text('English', style: TextStyle(color: Colors.white, fontSize: 13)),
-                              ),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() => _selectedLanguage = val);
-                              }
-                            },
-                          ),
-                        ),
-                      ),
+                      // ListTile(
+                      //   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      //   leading: Container(
+                      //     padding: const EdgeInsets.all(10),
+                      //     decoration: BoxDecoration(
+                      //       color: Colors.white.withValues(alpha: 0.03),
+                      //       shape: BoxShape.circle,
+                      //     ),
+                      //     child: const Icon(Icons.language_rounded, color: Colors.white70, size: 20),
+                      //   ),
+                      //   title: const Text(
+                      //     'Langue de l\'application',
+                      //     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                      //   ),
+                      //   subtitle: const Text(
+                      //     'Sélectionnez votre langue de préférence',
+                      //     style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
+                      //   ),
+                      //   trailing: DropdownButtonHideUnderline(
+                      //     child: DropdownButton<String>(
+                      //       dropdownColor: AppTheme.cardColor,
+                      //       value: _selectedLanguage,
+                      //       items: const [
+                      //         DropdownMenuItem(
+                      //           value: 'Français',
+                      //           child: Text('Français', style: TextStyle(color: Colors.white, fontSize: 13)),
+                      //         ),
+                      //         DropdownMenuItem(
+                      //           value: 'English',
+                      //           child: Text('English', style: TextStyle(color: Colors.white, fontSize: 13)),
+                      //         ),
+                      //       ],
+                      //       onChanged: (val) {
+                      //         if (val != null) {
+                      //           setState(() => _selectedLanguage = val);
+                      //         }
+                      //       },
+                      //     ),
+                      //   ),
+                      // ),
                       _buildDivider(),
 
                       // Clear Cache

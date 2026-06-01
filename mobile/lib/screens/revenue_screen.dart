@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
 import '../services/wordpress_service.dart';
 
@@ -27,7 +29,9 @@ class _RevenueScreenState extends State<RevenueScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse("${WordPressService.apiBaseUrl}/get_artist_revenues.php?user_id=${widget.userId}"),
+        Uri.parse(
+          "${WordPressService.apiBaseUrl}/get_artist_revenues.php?user_id=${widget.userId}",
+        ),
       );
       final data = json.decode(response.body);
       if (data['success'] == true) {
@@ -45,13 +49,18 @@ class _RevenueScreenState extends State<RevenueScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('MES REVENUS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        title: const Text(
+          'MES REVENUS',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            )
           : _buildBody(),
     );
   }
@@ -70,7 +79,12 @@ class _RevenueScreenState extends State<RevenueScreen> {
             const SizedBox(height: 32),
             const Text(
               'HISTORIQUE DES GAINS',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor, letterSpacing: 1.5),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
+                letterSpacing: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             _buildTransactionList(),
@@ -81,8 +95,12 @@ class _RevenueScreenState extends State<RevenueScreen> {
   }
 
   Widget _buildWalletCard() {
-    double balanceUSD = double.parse((_revenueData?['balance_usd'] ?? 0).toString());
-    double balanceCDF = double.parse((_revenueData?['balance_cdf'] ?? 0).toString());
+    double balanceUSD = double.parse(
+      (_revenueData?['balance_usd'] ?? 0).toString(),
+    );
+    double balanceCDF = double.parse(
+      (_revenueData?['balance_cdf'] ?? 0).toString(),
+    );
 
     return Container(
       width: double.infinity,
@@ -95,7 +113,11 @@ class _RevenueScreenState extends State<RevenueScreen> {
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
@@ -103,39 +125,94 @@ class _RevenueScreenState extends State<RevenueScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('SOLDE DISPONIBLE', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
+              const Text(
+                'SOLDE DISPONIBLE',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 1,
+                ),
+              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
-                child: const Text('ACTIF', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'ACTIF',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
           Text(
             '${balanceUSD.toStringAsFixed(2)} \$',
-            style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 44,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${balanceCDF.toStringAsFixed(0)} CDF',
-            style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Veuillez faire votre demande de retrait sur le site web')),
+                SnackBar(
+                  content: RichText(
+                    text: TextSpan(
+                      style: const TextStyle(color: Colors.white),
+                      children: [
+                        const TextSpan(text: 'Veuillez faire votre demande de retrait sur le '),
+                        TextSpan(
+                          text: 'site web',
+                          style: const TextStyle(color: Colors.blueAccent, decoration: TextDecoration.underline),
+                          recognizer: TapGestureRecognizer()..onTap = () async {
+                            final Uri url = Uri.parse('https://wmahub.com/auth/login.php');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  backgroundColor: Colors.black87,
+                ),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: AppTheme.primaryColor,
               minimumSize: const Size(double.infinity, 54),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
             ),
-            child: const Text('DEMANDER UN RETRAIT', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+            child: const Text(
+              'DEMANDER UN RETRAIT',
+              style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+            ),
           ),
         ],
       ),
@@ -144,17 +221,23 @@ class _RevenueScreenState extends State<RevenueScreen> {
 
   Widget _buildTransactionList() {
     List transactions = _revenueData?['transactions'] ?? [];
-    
+
     if (transactions.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(color: AppTheme.cardColor, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: const Column(
           children: [
             Icon(Icons.history_rounded, color: Colors.white10, size: 48),
             SizedBox(height: 16),
-            Text('Aucun mouvement récent', style: TextStyle(color: Colors.white38, fontSize: 12)),
+            Text(
+              'Aucun mouvement récent',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            ),
           ],
         ),
       );
@@ -178,22 +261,45 @@ class _RevenueScreenState extends State<RevenueScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.trending_up_rounded, color: Colors.green, size: 20),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.trending_up_rounded,
+                  color: Colors.green,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(t['description'] ?? 'Revenu', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text(t['date'] ?? '', style: const TextStyle(color: AppTheme.textGrey, fontSize: 11)),
+                    Text(
+                      t['description'] ?? 'Revenu',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      t['date'] ?? '',
+                      style: const TextStyle(
+                        color: AppTheme.textGrey,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Text(
                 '+${t['amount']} \$',
-                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 15),
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ],
           ),
