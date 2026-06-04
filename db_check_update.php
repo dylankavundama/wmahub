@@ -60,6 +60,12 @@ $schema_requirements = [
             `display_order` INT DEFAULT 0,
             `is_active` TINYINT(1) DEFAULT 1,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;",
+        
+        'post_views' => "CREATE TABLE `post_views` (
+            `post_id` INT PRIMARY KEY,
+            `views_count` INT DEFAULT 0,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;"
     ],
     'columns' => [
@@ -78,6 +84,16 @@ $schema_requirements = [
                 'type' => 'VARCHAR(128) NULL DEFAULT NULL',
                 'after' => 'apple_id',
                 'sql' => "ALTER TABLE `users` ADD COLUMN `firebase_uid` VARCHAR(128) NULL DEFAULT NULL AFTER `apple_id`;"
+            ],
+            'photo_url' => [
+                'type' => 'VARCHAR(512) NULL DEFAULT NULL',
+                'after' => 'firebase_uid',
+                'sql' => "ALTER TABLE `users` ADD COLUMN `photo_url` VARCHAR(512) NULL DEFAULT NULL AFTER `firebase_uid`;"
+            ],
+            'contract_signature' => [
+                'type' => 'LONGTEXT NULL DEFAULT NULL',
+                'after' => 'is_certified',
+                'sql' => "ALTER TABLE `users` ADD COLUMN `contract_signature` LONGTEXT NULL DEFAULT NULL AFTER `is_certified`;"
             ]
         ],
         'projects' => [
@@ -93,6 +109,14 @@ $schema_requirements = [
                 'after' => 'rating',
                 'sql' => "ALTER TABLE `tasks` ADD COLUMN `is_archived` TINYINT(1) DEFAULT 0 AFTER `rating`;"
             ]
+        ]
+    ],
+    'fixes' => [
+        'notifications_reference_id_nullable' => [
+            'description' => 'Rendre reference_id nullable dans notifications (fix contrat mobile)',
+            'check_sql'   => "SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'notifications' AND COLUMN_NAME = 'reference_id'",
+            'check_value' => 'YES',
+            'fix_sql'     => "ALTER TABLE `notifications` MODIFY `reference_id` INT(11) NULL DEFAULT NULL;"
         ]
     ]
 ];
