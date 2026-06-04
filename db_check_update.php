@@ -224,6 +224,36 @@ try {
                 'message' => "Erreur contrainte 'google_id' : " . $e->getMessage()
             ];
         }
+
+        // 4. Corrections de contraintes dynamiques (section 'fixes')
+        foreach ($schema_requirements['fixes'] as $fixKey => $fix) {
+            try {
+                $currentVal = $db->query($fix['check_sql'])->fetchColumn();
+                if ($currentVal !== $fix['check_value']) {
+                    $db->exec($fix['fix_sql']);
+                    $update_results[] = [
+                        'type'    => 'constraint_fix',
+                        'target'  => $fixKey,
+                        'success' => true,
+                        'message' => $fix['description'] . " — appliqué avec succès."
+                    ];
+                } else {
+                    $update_results[] = [
+                        'type'    => 'constraint_fix',
+                        'target'  => $fixKey,
+                        'success' => true,
+                        'message' => $fix['description'] . " — déjà à jour."
+                    ];
+                }
+            } catch (PDOException $e) {
+                $update_results[] = [
+                    'type'    => 'constraint_fix',
+                    'target'  => $fixKey,
+                    'success' => false,
+                    'message' => $fix['description'] . " — Erreur : " . $e->getMessage()
+                ];
+            }
+        }
     }
 } catch (PDOException $e) {
     $db_error = $e->getMessage();
