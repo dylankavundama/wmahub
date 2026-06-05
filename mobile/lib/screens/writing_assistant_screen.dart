@@ -8,7 +8,8 @@ import '../utils/app_theme.dart';
 import '../services/wordpress_service.dart';
 
 class WritingAssistantScreen extends StatefulWidget {
-  const WritingAssistantScreen({super.key});
+  final int initialTabIndex;
+  const WritingAssistantScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<WritingAssistantScreen> createState() => _WritingAssistantScreenState();
@@ -57,7 +58,7 @@ class _WritingAssistantScreenState extends State<WritingAssistantScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTabIndex);
     _loadUser();
   }
 
@@ -173,15 +174,24 @@ class _WritingAssistantScreenState extends State<WritingAssistantScreen>
   }
 
   Future<void> _deleteNote(Map<String, dynamic> note) async {
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AlertDialog.adaptive(
         backgroundColor: AppTheme.cardColor,
         title: const Text('Supprimer cette note ?', style: TextStyle(color: Colors.white)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
           TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(ctx, false);
+            },
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.pop(ctx, true);
+            },
             child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
           ),
         ],

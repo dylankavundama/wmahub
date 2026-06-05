@@ -37,6 +37,7 @@ try {
     $name = $displayNameHint !== '' ? $displayNameHint : $identity['name'];
     $googleId = $identity['google_id'];
     $appleId = $identity['apple_id'];
+    $photoUrl = $identity['photo_url'];
 
     $user = null;
 
@@ -80,25 +81,50 @@ try {
         $insertGoogleId = !empty($googleId) ? $googleId : null;
         $hasAppleCol = columnExists($db, 'users', 'apple_id');
         $hasFirebaseCol = columnExists($db, 'users', 'firebase_uid');
+        $hasPhotoCol = columnExists($db, 'users', 'photo_url');
 
         if ($hasFirebaseCol && $hasAppleCol) {
-            $stmt = $db->prepare(
-                'INSERT INTO users (google_id, apple_id, firebase_uid, name, email, is_active, role)
-                 VALUES (?, ?, ?, ?, ?, 0, NULL)'
-            );
-            $stmt->execute([$insertGoogleId, $appleId, $firebaseUid, $name, $email]);
+            if ($hasPhotoCol) {
+                $stmt = $db->prepare(
+                    'INSERT INTO users (google_id, apple_id, firebase_uid, name, email, photo_url, is_active, role)
+                     VALUES (?, ?, ?, ?, ?, ?, 0, NULL)'
+                );
+                $stmt->execute([$insertGoogleId, $appleId, $firebaseUid, $name, $email, $photoUrl]);
+            } else {
+                $stmt = $db->prepare(
+                    'INSERT INTO users (google_id, apple_id, firebase_uid, name, email, is_active, role)
+                     VALUES (?, ?, ?, ?, ?, 0, NULL)'
+                );
+                $stmt->execute([$insertGoogleId, $appleId, $firebaseUid, $name, $email]);
+            }
         } elseif ($hasAppleCol) {
-            $stmt = $db->prepare(
-                'INSERT INTO users (google_id, apple_id, name, email, is_active, role)
-                 VALUES (?, ?, ?, ?, 0, NULL)'
-            );
-            $stmt->execute([$insertGoogleId, $appleId, $name, $email]);
+            if ($hasPhotoCol) {
+                $stmt = $db->prepare(
+                    'INSERT INTO users (google_id, apple_id, name, email, photo_url, is_active, role)
+                     VALUES (?, ?, ?, ?, ?, ?, 0, NULL)'
+                );
+                $stmt->execute([$insertGoogleId, $appleId, $name, $email, $photoUrl]);
+            } else {
+                $stmt = $db->prepare(
+                    'INSERT INTO users (google_id, apple_id, name, email, is_active, role)
+                     VALUES (?, ?, ?, ?, 0, NULL)'
+                );
+                $stmt->execute([$insertGoogleId, $appleId, $name, $email]);
+            }
         } else {
-            $stmt = $db->prepare(
-                'INSERT INTO users (google_id, name, email, is_active, role)
-                 VALUES (?, ?, ?, 0, NULL)'
-            );
-            $stmt->execute([$insertGoogleId, $name, $email]);
+            if ($hasPhotoCol) {
+                $stmt = $db->prepare(
+                    'INSERT INTO users (google_id, name, email, photo_url, is_active, role)
+                     VALUES (?, ?, ?, ?, ?, 0, NULL)'
+                );
+                $stmt->execute([$insertGoogleId, $name, $email, $photoUrl]);
+            } else {
+                $stmt = $db->prepare(
+                    'INSERT INTO users (google_id, name, email, is_active, role)
+                     VALUES (?, ?, ?, 0, NULL)'
+                );
+                $stmt->execute([$insertGoogleId, $name, $email]);
+            }
         }
 
         $userId = (int) $db->lastInsertId();
@@ -122,7 +148,7 @@ try {
             error_log('Notify admin firebase registration: ' . $e->getMessage());
         }
     } else {
-        linkFirebaseIdentity($db, (int) $user['id'], $firebaseUid, $googleId, $appleId, $name, $email);
+        linkFirebaseIdentity($db, (int) $user['id'], $firebaseUid, $googleId, $appleId, $name, $email, $photoUrl);
     }
 
     echo json_encode([
@@ -166,7 +192,8 @@ function linkFirebaseIdentity(
     ?string $googleId,
     ?string $appleId,
     string $name,
-    string $email
+    string $email,
+    ?string $photoUrl = null
 ): void {
     if (columnExists($db, 'users', 'firebase_uid')) {
         $db->prepare('UPDATE users SET firebase_uid = ? WHERE id = ? AND (firebase_uid IS NULL OR firebase_uid = \'\')')
@@ -187,5 +214,9 @@ function linkFirebaseIdentity(
     if ($email !== '') {
         $db->prepare('UPDATE users SET email = ? WHERE id = ? AND (email IS NULL OR email = \'\')')
             ->execute([$email, $userId]);
+    }
+    if ($photoUrl && columnExists($db, 'users', 'photo_url')) {
+        $db->prepare('UPDATE users SET photo_url = ? WHERE id = ? AND (photo_url IS NULL OR photo_url = \'\')')
+            ->execute([$photoUrl, $userId]);
     }
 }

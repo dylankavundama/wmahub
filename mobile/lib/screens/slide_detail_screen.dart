@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/wordpress_service.dart';
+import '../services/favorites_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'revenue_screen.dart';
 import 'distribution_screen.dart';
 import 'notification_screen.dart';
@@ -10,11 +16,45 @@ import 'contract_screen.dart';
 import 'profile_screen.dart';
 import 'services_screen.dart';
 import 'about_screen.dart';
+import 'project_detail_screen.dart';
 
-class SlideDetailScreen extends StatelessWidget {
+class SlideDetailScreen extends StatefulWidget {
   final Map<String, dynamic> slide;
 
   const SlideDetailScreen({super.key, required this.slide});
+
+  @override
+  State<SlideDetailScreen> createState() => _SlideDetailScreenState();
+}
+
+class _SlideDetailScreenState extends State<SlideDetailScreen> {
+  final WordPressService _wpService = WordPressService();
+  List<dynamic> _latestReleases = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestReleases();
+  }
+
+  Future<void> _loadLatestReleases() async {
+    try {
+      final releases = await _wpService.fetchLatestDistributed();
+      if (mounted) {
+        setState(() {
+          _latestReleases = releases;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> _handleNavigation(BuildContext context, String? link) async {
     if (link == null || link.isEmpty || link == '#') {
@@ -101,7 +141,7 @@ class SlideDetailScreen extends StatelessWidget {
     // 2. Fallback to External URL if it looks like a URL
     if (lowerLink.startsWith('http') || lowerLink.startsWith('https') || lowerLink.contains('.')) {
       final Uri url = Uri.parse(link.startsWith('http') ? link : 'https://$link');
-      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (!await launchUrl(url, mode: LaunchMode.inAppBrowserView)) {
         debugPrint('Could not launch $url');
       }
       return;
@@ -112,11 +152,13 @@ class SlideDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = slide['title'] ?? '';
-    final subtitle = slide['subtitle'] ?? '';
-    final imagePath = slide['image_path'] ?? '';
-    final buttonText = slide['button_text'];
-    final buttonLink = slide['button_link'];
+    final title = (widget.slide['title'] ?? '')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    final subtitle = (widget.slide['subtitle'] ?? '')
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    final imagePath = widget.slide['image_path'] ?? '';
+    final buttonText = widget.slide['button_text'];
+    final buttonLink = widget.slide['button_link'];
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -217,9 +259,265 @@ class SlideDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+            
+            // Section "Dernières sorties" (6 derniers projets distribués)
+            _buildRelatedReleasesSection(),
+            const SizedBox(height: 50),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildRelatedReleasesSection() {
+    if (_isLoading) {
+      return _buildReleasesShimmer();
+    }
+    if (_latestReleases.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Text(
+            'DERNIÈRES SORTIES',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            itemCount: _latestReleases.length,
+            itemBuilder: (context, index) {
+              final release = _latestReleases[index];
+              return _buildReleaseCard(release);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReleaseCard(dynamic release) {
+    return _SlideReleaseCardWidget(
+      key: ValueKey('slide_release_${release['id']}'),
+      release: release,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ProjectDetailScreen(project: release as Map<String, dynamic>),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReleasesShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Text(
+            'DERNIÈRES SORTIES',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            itemCount: 6,
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.white.withValues(alpha: 0.1),
+                highlightColor: Colors.white.withValues(alpha: 0.2),
+                child: Container(
+                  width: 140,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Carte de sortie musicale avec favori pour SlideDetailScreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SlideReleaseCardWidget extends StatefulWidget {
+  final dynamic release;
+  final VoidCallback onTap;
+
+  const _SlideReleaseCardWidget({
+    super.key,
+    required this.release,
+    required this.onTap,
+  });
+
+  @override
+  State<_SlideReleaseCardWidget> createState() =>
+      _SlideReleaseCardWidgetState();
+}
+
+class _SlideReleaseCardWidgetState extends State<_SlideReleaseCardWidget> {
+  final FavoritesService _favService = FavoritesService();
+  bool _isFavorite = false;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    _checkFavorite();
+  }
+
+  Future<void> _checkFavorite() async {
+    final rawId = widget.release['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+    final isFav = await _favService.isProjectFavorite(id);
+    if (mounted) setState(() => _isFavorite = isFav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    HapticFeedback.mediumImpact();
+    await _favService.toggleProjectFavorite(widget.release);
+    await _checkFavorite();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final release = widget.release;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  release['cover_path'] != null && release['cover_path'] != ''
+                      ? CachedNetworkImage(
+                          imageUrl:
+                              'https://wmahub.com/dashboards/artiste/uploads/${release['cover_path']}',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.white10),
+                          errorWidget: (context, url, error) => const Center(
+                            child: Icon(Icons.music_note,
+                                color: AppTheme.primaryColor, size: 40),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(Icons.music_note,
+                              color: AppTheme.primaryColor, size: 40),
+                        ),
+                  // Bouton play
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.play_arrow_rounded,
+                          color: Colors.white, size: 24),
+                    ),
+                  ),
+                  // Bouton favori
+                  if (_isLoggedIn)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: GestureDetector(
+                        onTap: _toggleFavorite,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: _isFavorite
+                                ? Colors.redAccent.withValues(alpha: 0.9)
+                                : Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _isFavorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    release['title'] ?? 'Sans titre',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.white),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    release['artist_name'] ?? 'Artiste',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 10, color: AppTheme.textGrey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95));
   }
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
+import 'writing_assistant_screen.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});
 
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
       throw Exception('Could not launch $url');
     }
   }
@@ -83,6 +84,7 @@ class ServicesScreen extends StatelessWidget {
         icon: Icons.gesture,
         url: "https://wmahub.com/auth/login.php",
         color: AppTheme.primaryColor,
+        nativeTabIndex: 0,
       ),
       ServiceItem(
         title: "Générateur de Refrain",
@@ -91,6 +93,7 @@ class ServicesScreen extends StatelessWidget {
         icon: Icons.mic_external_on,
         url: "https://wmahub.com/auth/login.php",
         color: Colors.purple,
+        nativeTabIndex: 1,
       ),
       ServiceItem(
         title: "Correction Texte",
@@ -99,6 +102,7 @@ class ServicesScreen extends StatelessWidget {
         icon: Icons.auto_fix_high,
         url: "https://wmahub.com/auth/login.php",
         color: Colors.green,
+        nativeTabIndex: 1,
       ),
       ServiceItem(
         title: "Bloc-Note Cloud",
@@ -107,6 +111,7 @@ class ServicesScreen extends StatelessWidget {
         icon: Icons.cloud_done_outlined,
         url: "https://wmahub.com/auth/login.php",
         color: Colors.blueAccent,
+        nativeTabIndex: 2,
       ),
     ];
 
@@ -140,7 +145,20 @@ class ServicesScreen extends StatelessWidget {
               ],
             ),
             child: InkWell(
-              onTap: () => _launchURL(service.url),
+              onTap: () {
+                if (service.nativeTabIndex != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WritingAssistantScreen(
+                        initialTabIndex: service.nativeTabIndex!,
+                      ),
+                    ),
+                  );
+                } else {
+                  _launchURL(service.url);
+                }
+              },
               borderRadius: BorderRadius.circular(24),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -162,8 +180,8 @@ class ServicesScreen extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        const Icon(
-                          Icons.arrow_outward,
+                        Icon(
+                          service.nativeTabIndex != null ? Icons.arrow_forward : Icons.arrow_outward,
                           color: AppTheme.textGrey,
                           size: 20,
                         ),
@@ -191,9 +209,9 @@ class ServicesScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          service.url.contains('wa.me')
-                              ? "DEMANDER"
-                              : "EN SAVOIR PLUS",
+                          service.nativeTabIndex != null
+                              ? "OUVRIR L'OUTIL"
+                              : (service.url.contains('wa.me') ? "DEMANDER" : "EN SAVOIR PLUS"),
                           style: TextStyle(
                             color: service.color,
                             fontSize: 11,
@@ -227,6 +245,7 @@ class ServiceItem {
   final IconData icon;
   final String url;
   final Color color;
+  final int? nativeTabIndex;
 
   ServiceItem({
     required this.title,
@@ -234,5 +253,6 @@ class ServiceItem {
     required this.icon,
     required this.url,
     required this.color,
+    this.nativeTabIndex,
   });
 }

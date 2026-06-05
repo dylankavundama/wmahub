@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:carousel_slider_plus/carousel_slider_plus.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/wordpress_service.dart';
+import '../services/favorites_service.dart';
 import '../utils/app_theme.dart';
 import 'post_detail_screen.dart';
 import 'no_internet_screen.dart';
 import 'slide_detail_screen.dart';
 import 'main_navigation.dart';
+import 'project_detail_screen.dart';
+import 'all_distributed_projects_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AccueilScreen extends StatefulWidget {
   const AccueilScreen({super.key});
@@ -25,8 +31,12 @@ class _AccueilScreenState extends State<AccueilScreen> {
 
   List<dynamic> _posts = [];
   List<dynamic> _slides = [];
+  List<dynamic> _latestReleases = [];
+  dynamic _featuredProject;
   bool _isPostsLoading = true;
   bool _isSlidesLoading = true;
+  bool _isReleasesLoading = true;
+  bool _isFeaturedLoading = true;
   bool _isError = false;
   bool _isOffline = false;
   StreamSubscription? _connectivitySubscription;
@@ -97,6 +107,8 @@ class _AccueilScreenState extends State<AccueilScreen> {
     setState(() {
       _isPostsLoading = true;
       _isSlidesLoading = true;
+      _isReleasesLoading = true;
+      _isFeaturedLoading = true;
       _isError = false;
       _currentPage = 1;
       _hasMore = true;
@@ -107,14 +119,25 @@ class _AccueilScreenState extends State<AccueilScreen> {
       final results = await Future.wait([
         _wpService.fetchHeroSlides(),
         _wpService.fetchPosts(page: 1, perPage: 10),
+        _wpService.fetchLatestDistributed(),
+        _wpService.fetchDistributions(),
       ]);
 
       if (mounted) {
         setState(() {
           _slides = results[0];
           _posts = results[1];
+          _latestReleases = results[2];
+          final distributions = results[3];
+          if (distributions.isNotEmpty) {
+            _featuredProject = distributions.first;
+          } else {
+            _featuredProject = null;
+          }
           _isSlidesLoading = false;
           _isPostsLoading = false;
+          _isReleasesLoading = false;
+          _isFeaturedLoading = false;
           if (_posts.length < 10) _hasMore = false;
         });
       }
@@ -124,6 +147,8 @@ class _AccueilScreenState extends State<AccueilScreen> {
           _isError = true;
           _isPostsLoading = false;
           _isSlidesLoading = false;
+          _isReleasesLoading = false;
+          _isFeaturedLoading = false;
         });
       }
     }
@@ -180,6 +205,18 @@ class _AccueilScreenState extends State<AccueilScreen> {
               else if (_slides.isNotEmpty)
                 SliverToBoxAdapter(child: _buildHeroSlider()),
 
+              // Latest Releases (Dernières Sorties)
+              if (_isReleasesLoading)
+                SliverToBoxAdapter(child: _buildReleasesShimmer())
+              else if (_latestReleases.isNotEmpty)
+                SliverToBoxAdapter(child: _buildLatestReleasesSection()),
+
+              // Projet à la une (Featured Project)
+              if (_isFeaturedLoading)
+                SliverToBoxAdapter(child: _buildFeaturedProjectShimmer())
+              else if (_featuredProject != null)
+                SliverToBoxAdapter(child: _buildFeaturedProjectBanner()),
+
               // Sections Title
               SliverToBoxAdapter(
                 child: Padding(
@@ -224,12 +261,22 @@ class _AccueilScreenState extends State<AccueilScreen> {
                 ),
               ),
 
-              // Posts List
+              // Posts List — Grille 2 colonnes
               if (_isPostsLoading && _posts.isEmpty)
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildPostShimmer(),
-                    childCount: 5,
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.72,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildPostShimmer(),
+                      childCount: 6,
+                    ),
                   ),
                 )
               else
@@ -274,24 +321,39 @@ class _AccueilScreenState extends State<AccueilScreen> {
                     }
 
                     return SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          if (index == filtered.length) {
-                            if (_searchQuery.isNotEmpty)
-                              return const SizedBox(height: 40);
-                            if (_paginationError)
-                              return _buildPaginationError();
-                            return _hasMore
-                                ? _buildLoadingIndicator()
-                                : _buildNoMoreContent();
-                          }
-                          return _buildPostCard(filtered[index]);
-                        }, childCount: filtered.length + 1),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.72,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            return _buildPostCard(filtered[index]);
+                          },
+                          childCount: filtered.length,
+                        ),
                       ),
                     );
                   },
                 ),
+
+              // Footer : chargement / fin / erreur pagination
+              SliverToBoxAdapter(
+                child: Builder(
+                  builder: (context) {
+                    if (_isPostsLoading || _posts.isEmpty)
+                      return const SizedBox.shrink();
+                    if (_paginationError) return _buildPaginationError();
+                    if (_isFetchingMore) return _buildLoadingIndicator();
+                    if (!_hasMore) return _buildNoMoreContent();
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
@@ -434,7 +496,9 @@ class _AccueilScreenState extends State<AccueilScreen> {
 
                         // Title
                         Text(
-                          (slide['title'] ?? '').toUpperCase(),
+                          (slide['title'] ?? '')
+                              .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+                              .toUpperCase(),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
@@ -452,7 +516,10 @@ class _AccueilScreenState extends State<AccueilScreen> {
                         // Tags
                         if (slide['subtitle'] != null)
                           Text(
-                            slide['subtitle'].toString().toUpperCase(),
+                            slide['subtitle']
+                                .toString()
+                                .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+                                .toUpperCase(),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white70,
@@ -471,7 +538,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
                             child: ElevatedButton(
                               onPressed: () {
                                 final state = context.findAncestorStateOfType<MainNavigationState>();
-                                state?.jumpToTab(2); // Distributions
+                                state?.jumpToTab(1); // Distributions
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryColor,
@@ -494,7 +561,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
                             child: OutlinedButton(
                               onPressed: () {
                                 final state = context.findAncestorStateOfType<MainNavigationState>();
-                                state?.jumpToTab(4); // Profil / Rejoindre
+                                state?.jumpToTab(2); // Profil / Rejoindre
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.white,
@@ -548,97 +615,20 @@ class _AccueilScreenState extends State<AccueilScreen> {
   }
 
   Widget _buildPostCard(dynamic post) {
-    String title = post['title']['rendered'] ?? '';
-    String imageUrl = "";
-    try {
-      imageUrl =
-          post['_embedded']?['wp:featuredmedia']?[0]?['source_url'] ?? "";
-    } catch (e) {}
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
+    return _PostCardWidget(
+      key: ValueKey('post_${post['id']}'),
+      post: post,
+      onTap: () async {
+        await Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PostDetailScreen(post: post)),
+          MaterialPageRoute(
+            builder: (context) => PostDetailScreen(post: post, allPosts: _posts),
+          ),
         );
+        if (mounted) {
+          setState(() {});
+        }
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (imageUrl.isNotEmpty)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    height: 200,
-                    color: Colors.white.withValues(alpha: 0.05),
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 200,
-                    color: AppTheme.cardColor,
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: AppTheme.textGrey,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 12,
-                        color: AppTheme.textGrey,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        post['date'].toString().split('T')[0],
-                        style: const TextStyle(
-                          color: AppTheme.textGrey,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ).animate().fadeIn().slideY(begin: 0.1),
     );
   }
 
@@ -1165,4 +1155,906 @@ class _AccueilScreenState extends State<AccueilScreen> {
       },
     );
   }
+
+  Widget _buildLatestReleasesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AllDistributedProjectsScreen(),
+                    ),
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Text(
+                      'DERNIÈRES SORTIES',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AllDistributedProjectsScreen(),
+                    ),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  'VOIR TOUT',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textGrey,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            itemCount: _latestReleases.length > 4 ? 4 : _latestReleases.length,
+            itemBuilder: (context, index) {
+              final release = _latestReleases[index];
+              return _buildReleaseCard(release);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReleaseCard(dynamic release) {
+    return _ReleaseCardWidget(
+      key: ValueKey('release_${release['id']}'),
+      release: release,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ProjectDetailScreen(project: release as Map<String, dynamic>),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReleasesShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Text(
+                    'DERNIÈRES SORTIES',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: AppTheme.primaryColor,
+                  ),
+                ],
+              ),
+              Text(
+                'VOIR TOUT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textGrey.withValues(alpha: 0.5),
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.white.withValues(alpha: 0.1),
+                highlightColor: Colors.white.withValues(alpha: 0.2),
+                child: Container(
+                  width: 140,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showFeaturedProjectDialog(BuildContext context, dynamic project) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.backgroundColor,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: Colors.white10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header Image
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                      child: AspectRatio(
+                        aspectRatio: 1.2,
+                        child: project['image_url'] != null && project['image_url'] != ""
+                            ? CachedNetworkImage(
+                                imageUrl: project['image_url'],
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                color: AppTheme.cardColor,
+                                child: const Icon(
+                                  Icons.music_note,
+                                  size: 80,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      // Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'PROJET À LA UNE',
+                          style: TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Title
+                      Text(
+                        project['title'] ?? 'Sans titre',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Artist
+                      Text(
+                        project['artist'] ?? 'Artiste inconnu',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppTheme.textGrey,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Actions
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'FERMER',
+                                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                final url = project['link'];
+                                if (url != null && url.isNotEmpty) {
+                                  final Uri uri = Uri.parse(url);
+                                  if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
+                                    debugPrint('Could not launch $url');
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                              label: const Text(
+                                'ÉCOUTER',
+                                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeaturedProjectBanner() {
+    if (_featuredProject == null) return const SizedBox.shrink();
+
+    final project = _featuredProject;
+    return GestureDetector(
+      onTap: () => _showFeaturedProjectDialog(context, project),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.02),
+                AppTheme.primaryColor.withValues(alpha: 0.05),
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Cover image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: 90,
+                  height: 90,
+                  child: project['image_url'] != null && project['image_url'] != ""
+                      ? CachedNetworkImage(
+                          imageUrl: project['image_url'],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.white10),
+                          errorWidget: (context, url, error) => const Icon(
+                            Icons.music_note,
+                            color: AppTheme.primaryColor,
+                            size: 30,
+                          ),
+                        )
+                      : Container(
+                          color: Colors.white10,
+                          child: const Icon(
+                            Icons.music_note,
+                            color: AppTheme.primaryColor,
+                            size: 30,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Text details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'PROJET À LA UNE',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      project['title'] ?? 'Sans titre',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      project['artist'] ?? 'Artiste inconnu',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textGrey,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Play button circle
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 26,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  Widget _buildFeaturedProjectShimmer() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      child: Shimmer.fromColors(
+        baseColor: Colors.white.withValues(alpha: 0.1),
+        highlightColor: Colors.white.withValues(alpha: 0.2),
+        child: Container(
+          height: 122,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+        ),
+      ),
+    );
+  }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Widget carte Actualité — Format GRILLE 2 colonnes
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PostCardWidget extends StatefulWidget {
+  final dynamic post;
+  final VoidCallback onTap;
+
+  const _PostCardWidget({super.key, required this.post, required this.onTap});
+
+  @override
+  State<_PostCardWidget> createState() => _PostCardWidgetState();
+}
+
+class _PostCardWidgetState extends State<_PostCardWidget> {
+  final FavoritesService _favService = FavoritesService();
+  final WordPressService _wpService = WordPressService();
+  bool _isFavorite = false;
+  int _viewCount = 0;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    final id = widget.post['id'] as int? ?? 0;
+    _viewCount = FavoritesService.getViewCount(id);
+    _checkFavorite();
+    _loadViewCount();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PostCardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    _loadViewCount();
+    _checkFavorite();
+  }
+
+  Future<void> _loadViewCount() async {
+    final id = widget.post['id'] as int? ?? 0;
+    final views = await _wpService.fetchPostViewCount(id);
+    if (mounted) setState(() => _viewCount = views);
+  }
+
+  Future<void> _checkFavorite() async {
+    final id = widget.post['id'] as int? ?? 0;
+    final isFav = await _favService.isFavorite(id);
+    if (mounted) setState(() => _isFavorite = isFav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    HapticFeedback.mediumImpact();
+    await _favService.toggleFavorite(widget.post);
+    await _checkFavorite();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final String title = post['title']?['rendered'] ?? '';
+    String imageUrl = '';
+    try {
+      imageUrl =
+          post['_embedded']?['wp:featuredmedia']?[0]?['source_url'] ?? '';
+    } catch (_) {}
+    final int id = post['id'] as int? ?? 0;
+    final int viewCount = _viewCount;
+    final String date = post['date']?.toString().split('T')[0] ?? '';
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Image (60% de la hauteur) ──────────────────────────
+            Expanded(
+              flex: 6,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Image ou placeholder
+                  imageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  color: AppTheme.primaryColor),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppTheme.cardColor,
+                            child: const Center(
+                              child: Icon(
+                                Icons.article_outlined,
+                                color: AppTheme.textGrey,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.07),
+                          child: const Center(
+                            child: Icon(
+                              Icons.article_outlined,
+                              color: AppTheme.primaryColor,
+                              size: 32,
+                            ),
+                          ),
+                        ),
+
+                  // Dégradé bas pour lisibilité
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.55),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bouton ❤ overlay
+                  if (_isLoggedIn)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: _toggleFavorite,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: _isFavorite
+                                ? Colors.redAccent.withValues(alpha: 0.88)
+                                : Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _isFavorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: Colors.white,
+                            size: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Badge vues en bas à gauche
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.visibility_outlined,
+                            size: 11, color: Colors.white70),
+                        const SizedBox(width: 3),
+                        Text(
+                          '$viewCount',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Footer texte (40% de la hauteur) ──────────────────
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Titre
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Date
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined,
+                            size: 10, color: AppTheme.textGrey),
+                        const SizedBox(width: 4),
+                        Text(
+                          date,
+                          style: const TextStyle(
+                            color: AppTheme.textGrey,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ).animate().fadeIn().scale(begin: const Offset(0.96, 0.96)),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Widget carte Sortie musicale avec état favori indépendant
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReleaseCardWidget extends StatefulWidget {
+  final dynamic release;
+  final VoidCallback onTap;
+
+  const _ReleaseCardWidget(
+      {super.key, required this.release, required this.onTap});
+
+  @override
+  State<_ReleaseCardWidget> createState() => _ReleaseCardWidgetState();
+}
+
+class _ReleaseCardWidgetState extends State<_ReleaseCardWidget> {
+  final FavoritesService _favService = FavoritesService();
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavorite();
+  }
+
+  Future<void> _checkFavorite() async {
+    final rawId = widget.release['id'];
+    final id = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+    final isFav = await _favService.isProjectFavorite(id);
+    if (mounted) setState(() => _isFavorite = isFav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    HapticFeedback.mediumImpact();
+    await _favService.toggleProjectFavorite(widget.release);
+    await _checkFavorite();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              _isFavorite ? '❤️ Ajouté aux favoris' : 'Retiré des favoris'),
+          backgroundColor:
+              _isFavorite ? AppTheme.primaryColor : AppTheme.cardColor,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final release = widget.release;
+
+    // Le Stack racine permet d'avoir le bouton ❤ HORS du GestureDetector
+    // de la carte → les deux zones de tap sont indépendantes
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // ── Carte principale (tap → navigation) ────────────────
+        GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            width: 140,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.cardColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white10),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Cover image
+                      release['cover_path'] != null &&
+                              release['cover_path'] != ''
+                          ? CachedNetworkImage(
+                              imageUrl:
+                                  'https://wmahub.com/dashboards/artiste/uploads/${release['cover_path']}',
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) =>
+                                  Container(color: Colors.white10),
+                              errorWidget: (context, url, error) =>
+                                  const Center(
+                                child: Icon(Icons.music_note,
+                                    color: AppTheme.primaryColor, size: 40),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(Icons.music_note,
+                                  color: AppTheme.primaryColor, size: 40),
+                            ),
+                      // Bouton play
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded,
+                              color: Colors.white, size: 24),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        release['title'] ?? 'Sans titre',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        release['artist_name'] ?? 'Artiste',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 10, color: AppTheme.textGrey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95)),
+
+        // ── Bouton ❤ INDÉPENDANT — hors GestureDetector carte ──
+        Positioned(
+          top: 6,
+          right: 12,
+          child: GestureDetector(
+            onTap: _toggleFavorite,
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _isFavorite
+                    ? Colors.redAccent.withValues(alpha: 0.9)
+                    : Colors.black.withValues(alpha: 0.55),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Icon(
+                _isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: Colors.white,
+                size: 15,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+

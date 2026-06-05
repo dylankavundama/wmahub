@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/wordpress_service.dart';
 import '../utils/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'distribution_detail_screen.dart';
 
 class DistributionsScreen extends StatefulWidget {
   const DistributionsScreen({super.key});
@@ -124,7 +125,14 @@ class _DistributionsScreenState extends State<DistributionsScreen> {
 
   Widget _buildDistCard(dynamic dist) {
     return GestureDetector(
-      onTap: () => _launchURL(dist['link']),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DistributionDetailScreen(distribution: dist),
+          ),
+        );
+      },
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.cardColor,
@@ -169,17 +177,5 @@ class _DistributionsScreenState extends State<DistributionsScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _launchURL(String? urlString) async {
-    if (urlString == null || urlString.isEmpty) return;
-    final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
-        );
-      }
-    }
   }
 }

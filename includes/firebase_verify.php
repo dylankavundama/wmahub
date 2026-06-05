@@ -88,6 +88,16 @@ function verifyFirebaseIdToken(string $idToken): array
         }
     }
 
+    $photoUrl = $firebaseUser['photoUrl'] ?? '';
+    if ($photoUrl === '') {
+        foreach ($firebaseUser['providerUserInfo'] ?? [] as $provider) {
+            if (!empty($provider['photoUrl'])) {
+                $photoUrl = $provider['photoUrl'];
+                break;
+            }
+        }
+    }
+
     if ($name === '') {
         $name = $email !== '' ? explode('@', $email)[0] : 'Utilisateur';
     }
@@ -98,5 +108,6 @@ function verifyFirebaseIdToken(string $idToken): array
         'name'      => $name,
         'google_id' => $googleId,
         'apple_id'  => $appleId,
+        'photo_url' => $photoUrl !== '' ? $photoUrl : null,
     ];
 }

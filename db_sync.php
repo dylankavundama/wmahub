@@ -56,6 +56,14 @@ try {
     echo "<p class='success'>[OK] Table 'hero_slides' vérifiée/créée.</p>";
 
     // 3. Vérification des colonnes manquantes (Migration douce)
+    // Checking if 'contract_signature' exists in 'users'
+    try {
+        $db->query("SELECT contract_signature FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $db->exec("ALTER TABLE users ADD COLUMN contract_signature LONGTEXT NULL AFTER is_certified");
+        echo "<p class='info'>[MAJ] Colonne 'contract_signature' ajoutée à la table 'users'.</p>";
+    }
+
     // Exemple : Vérifier si 'provided_files' existe dans 'projects'
     try {
         $db->query("SELECT provided_files FROM projects LIMIT 1");

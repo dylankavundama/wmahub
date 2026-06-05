@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'contract_screen.dart';
 import 'pending_validation_screen.dart';
 import 'agent_tasks_screen.dart';
-import 'main_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -24,6 +23,27 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   bool _isLoading = false;
   bool _termsAccepted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingUserWithoutRole();
+  }
+
+  void _checkExistingUserWithoutRole() async {
+    final user = await _authService.getCurrentUser();
+    if (user != null) {
+      final role = user['role']?.toString().toLowerCase().trim();
+      if (role == null || role.isEmpty || role == 'null') {
+        final userId = int.tryParse(user['id']?.toString() ?? '0') ?? 0;
+        if (userId > 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showRoleSelectionBottomSheet(userId);
+          });
+        }
+      }
+    }
+  }
 
   void _handlePostLoginRouting(Map<String, dynamic> user) async {
     final userId = int.tryParse(user['id']?.toString() ?? '0') ?? 0;
@@ -107,88 +127,77 @@ class _LoginScreenState extends State<LoginScreen> {
       enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF141418),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(10),
+        return PopScope(
+          canPop: false,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF141418),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 48,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "Choisissez votre profil",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                  color: Colors.white,
+                const SizedBox(height: 24),
+                const Text(
+                  "Choisissez votre profil",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Comment souhaitez-vous utiliser WMA HUB ?",
-                style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
-              ),
-              const SizedBox(height: 28),
-              _buildRoleOptionItem(
-                title: "Artiste",
-                description: "Distribuez votre musique, suivez vos stats et vos revenus.",
-                icon: Icons.music_note_rounded,
-                color: AppTheme.primaryColor,
-                onTap: () async {
-                  Navigator.pop(sheetContext);
-                  setState(() => _isLoading = true);
-                  final updatedUser = await _authService.updateUserRole(userId, 'artiste');
-                  setState(() => _isLoading = false);
-                  if (updatedUser != null) {
-                    _handlePostLoginRouting(updatedUser);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildRoleOptionItem(
-                title: "Agent / Employé",
-                description: "Accédez à vos missions quotidiennes et collaborez avec l'équipe.",
-                icon: Icons.support_agent_rounded,
-                color: Colors.amberAccent,
-                onTap: () async {
-                  Navigator.pop(sheetContext);
-                  setState(() => _isLoading = true);
-                  final updatedUser = await _authService.updateUserRole(userId, 'employe');
-                  setState(() => _isLoading = false);
-                  if (updatedUser != null) {
-                    _handlePostLoginRouting(updatedUser);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildRoleOptionItem(
-                title: "Utilisateur Simple",
-                description: "Découvrez notre catalogue d'artistes et suivez nos actualités.",
-                icon: Icons.person_rounded,
-                color: Colors.tealAccent,
-                onTap: () async {
-                  Navigator.pop(sheetContext);
-                  setState(() => _isLoading = true);
-                  final updatedUser = await _authService.updateUserRole(userId, 'simple_user');
-                  setState(() => _isLoading = false);
-                  if (updatedUser != null) {
-                    _handlePostLoginRouting(updatedUser);
-                  }
-                },
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Text(
+                  "Comment souhaitez-vous utiliser WMA HUB ?",
+                  style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
+                ),
+                const SizedBox(height: 28),
+                _buildRoleOptionItem(
+                  title: "Artiste",
+                  description: "Distribuez votre musique, suivez vos stats et vos revenus.",
+                  icon: Icons.music_note_rounded,
+                  color: AppTheme.primaryColor,
+                  onTap: () async {
+                    HapticFeedback.mediumImpact();
+                    Navigator.pop(sheetContext);
+                    setState(() => _isLoading = true);
+                    final updatedUser = await _authService.updateUserRole(userId, 'artiste');
+                    setState(() => _isLoading = false);
+                    if (updatedUser != null) {
+                      _handlePostLoginRouting(updatedUser);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildRoleOptionItem(
+                  title: "Utilisateur",
+                  description: "Découvrez notre catalogue d'artistes et suivez nos actualités.",
+                  icon: Icons.person_rounded,
+                  color: Colors.tealAccent,
+                  onTap: () async {
+                    HapticFeedback.mediumImpact();
+                    Navigator.pop(sheetContext);
+                    setState(() => _isLoading = true);
+                    final updatedUser = await _authService.updateUserRole(userId, 'simple_user');
+                    setState(() => _isLoading = false);
+                    if (updatedUser != null) {
+                      _handlePostLoginRouting(updatedUser);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -246,6 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
     try {
       final result = await _authService.loginWithGoogle();
@@ -277,24 +287,16 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Updated Apple login handling: navigates to MainNavigation after successful sign-in
+  // Updated Apple login handling: routes user after successful sign-in
   Future<void> _handleAppleLogin() async {
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
     try {
       final result = await _authService.loginWithApple();
       if (mounted) {
         setState(() => _isLoading = false);
         if (result != null && result['success'] == true) {
-          // Force role to 'artiste' to ensure full navigation options
-          final prefs = await SharedPreferences.getInstance();
-          final userMap = Map<String, dynamic>.from(result['user'] as Map);
-          userMap['role'] = 'artiste';
-          await prefs.setString('auth_user', json.encode(userMap));
-          // Navigate to the main navigation screen displaying all menu options
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainNavigation()),
-          );
+          _handlePostLoginRouting(result['user']);
         } else {
           final message = result?['message'] ?? 'Échec de la connexion Apple';
           _showErrorDialog(message);
@@ -312,10 +314,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showErrorDialog(String message) {
-    showDialog(
+    showAdaptiveDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => AlertDialog.adaptive(
         backgroundColor: AppTheme.cardColor,
         title: const Text(
           'Erreur',
@@ -328,6 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () async {
+              HapticFeedback.lightImpact();
               Navigator.pop(dialogContext);
               await _authService.logout();
               if (mounted) {

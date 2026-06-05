@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:wmahub_mobile/screens/login_screen.dart';
 import 'package:wmahub_mobile/screens/profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_theme.dart';
 import '../widgets/full_screen_image_view.dart';
 import '../services/favorites_service.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../services/wordpress_service.dart';
+import 'project_detail_screen.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final dynamic post;
@@ -25,12 +29,51 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final FavoritesService _favService = FavoritesService();
+  final WordPressService _wpService = WordPressService();
   bool _isFavorite = false;
+  bool _isExpanded = false;
+  List<dynamic> _latestReleases = [];
+  bool _isReleasesLoading = true;
+  int _viewCount = 0;
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
+    _isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    final rawId = widget.post['id'];
+    final int id = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+    _viewCount = FavoritesService.getViewCount(id);
     _checkFavorite();
+    _loadLatestReleases();
+    _incrementAndLoadViews(id);
+  }
+
+  Future<void> _incrementAndLoadViews(int id) async {
+    final views = await _wpService.incrementPostViewCount(id);
+    if (mounted) {
+      setState(() {
+        _viewCount = views;
+      });
+    }
+  }
+
+  Future<void> _loadLatestReleases() async {
+    try {
+      final releases = await _wpService.fetchLatestDistributed();
+      if (mounted) {
+        setState(() {
+          _latestReleases = releases;
+          _isReleasesLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isReleasesLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _checkFavorite() async {
@@ -39,6 +82,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   void _toggleFavorite() async {
+    HapticFeedback.mediumImpact();
     await _favService.toggleFavorite(widget.post);
     _checkFavorite();
   }
@@ -49,12 +93,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     Share.share('$title\n\nDécouvrez cet article sur WMA UA : $link');
   }
 
-  Future<void> _launchURL(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      debugPrint('Could not launch $urlString');
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -74,16 +113,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             expandedHeight: 300,
             pinned: true,
             actions: [
-              IconButton(
-                icon: Icon(
-                  _isFavorite
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: _isFavorite ? Colors.redAccent : Colors.white,
+              if (_isLoggedIn)
+                IconButton(
+                  icon: Icon(
+                    _isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: _isFavorite ? Colors.redAccent : Colors.white,
+                  ),
+                  onPressed: _toggleFavorite,
+                  tooltip: 'Favori',
                 ),
-                onPressed: _toggleFavorite,
-                tooltip: 'Favori',
-              ),
               IconButton(
                 icon: const Icon(Icons.share_rounded),
                 onPressed: _sharePost,
@@ -137,24 +177,47 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      formattedDate,
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        letterSpacing: 1,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          formattedDate,
+                          style: const TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.visibility_outlined,
+                            size: 16,
+                            color: AppTheme.textGrey,
+                          ),
+                          const SizedBox(width: 6),
+                           Text(
+                            '$_viewCount vues',
+                            style: const TextStyle(
+                              color: AppTheme.textGrey,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   HtmlWidget(
@@ -170,31 +233,145 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     padding: EdgeInsets.symmetric(vertical: 32.0),
                     child: Divider(color: Colors.white10),
                   ),
-                  HtmlWidget(
-                    content,
-                    textStyle: const TextStyle(
-                      color: AppTheme.textGrey,
-                      fontSize: 17,
-                      height: 1.7,
-                    ),
-                    onLoadingBuilder: (context, element, loadingProgress) =>
-                        const Center(
-                          child: CircularProgressIndicator(
-                            color: AppTheme.primaryColor,
+                  Builder(
+                    builder: (context) {
+                      final String contentRaw = content;
+                      final String plainText = contentRaw.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+                      final bool isLongContent = plainText.length > 250;
+
+                      if (!isLongContent) {
+                        return HtmlWidget(
+                          contentRaw,
+                          textStyle: const TextStyle(
+                            color: AppTheme.textGrey,
+                            fontSize: 17,
+                            height: 1.7,
                           ),
-                        ),
-                    onTapImage: (imageMetadata) {
-                      final url = imageMetadata.sources.first.url;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              FullScreenImageView(imageUrl: url),
-                        ),
+                          onLoadingBuilder: (context, element, loadingProgress) =>
+                              const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                          onTapImage: (imageMetadata) {
+                            final url = imageMetadata.sources.first.url;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FullScreenImageView(imageUrl: url),
+                              ),
+                            );
+                          },
+                        );
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _isExpanded
+                              ? HtmlWidget(
+                                  contentRaw,
+                                  textStyle: const TextStyle(
+                                    color: AppTheme.textGrey,
+                                    fontSize: 17,
+                                    height: 1.7,
+                                  ),
+                                  onLoadingBuilder: (context, element, loadingProgress) =>
+                                      const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                  onTapImage: (imageMetadata) {
+                                    final url = imageMetadata.sources.first.url;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FullScreenImageView(imageUrl: url),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Stack(
+                                  alignment: Alignment.bottomCenter,
+                                  children: [
+                                    SizedBox(
+                                      height: 145,
+                                      child: ShaderMask(
+                                        shaderCallback: (bounds) =>
+                                            LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          stops: const [0.0, 0.6, 1.0],
+                                          colors: [
+                                            Colors.white,
+                                            Colors.white,
+                                            Colors.transparent,
+                                          ],
+                                        ).createShader(bounds),
+                                        blendMode: BlendMode.dstIn,
+                                        child: SingleChildScrollView(
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          child: HtmlWidget(
+                                            contentRaw,
+                                            textStyle: const TextStyle(
+                                              color: AppTheme.textGrey,
+                                              fontSize: 17,
+                                              height: 1.7,
+                                            ),
+                                            onLoadingBuilder: (context, element,
+                                                    loadingProgress) =>
+                                                const Center(
+                                              child: CircularProgressIndicator(
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                            onTapImage: (imageMetadata) {
+                                              final url = imageMetadata
+                                                  .sources.first.url;
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      FullScreenImageView(
+                                                          imageUrl: url),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _isExpanded = !_isExpanded;
+                                });
+                              },
+                              icon: Icon(
+                                _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                color: AppTheme.primaryColor,
+                              ),
+                              label: Text(
+                                _isExpanded ? "LIRE MOINS" : "LIRE LA SUITE",
+                                style: const TextStyle(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 40),
                   if (widget.allPosts.isNotEmpty) ...[
                     const Text(
                       "À LIRE AUSSI",
@@ -209,6 +386,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     _buildRelatedPosts(context),
                     const SizedBox(height: 60),
                   ],
+                  _buildLatestReleasesSection(),
                   _buildCTAButton(context),
                   const SizedBox(height: 100),
                 ],
@@ -220,20 +398,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          FloatingActionButton(
-            heroTag: "fav",
-            onPressed: _toggleFavorite,
-            backgroundColor: _isFavorite
-                ? Colors.redAccent
-                : AppTheme.cardColor,
-            child: Icon(
-              _isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              color: Colors.white,
+          if (_isLoggedIn) ...[
+            FloatingActionButton(
+              heroTag: "fav",
+              onPressed: _toggleFavorite,
+              backgroundColor: _isFavorite
+                  ? Colors.redAccent
+                  : AppTheme.cardColor,
+              child: Icon(
+                _isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: Colors.white,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
+          ],
           FloatingActionButton(
             heroTag: "share",
             onPressed: _sharePost,
@@ -299,7 +479,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget _buildRelatedPosts(BuildContext context) {
     final related = widget.allPosts
         .where((p) => p['id'] != widget.post['id'])
-        .take(6)
+        .take(3)
         .toList();
 
     return SizedBox(
@@ -365,6 +545,178 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildLatestReleasesSection() {
+    if (_isReleasesLoading) {
+      return _buildReleasesShimmer();
+    }
+    if (_latestReleases.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'NOS DERNIÈRES SORTIES',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _latestReleases.length,
+            itemBuilder: (context, index) {
+              final release = _latestReleases[index];
+              return _buildReleaseCard(release);
+            },
+          ),
+        ),
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+
+  Widget _buildReleaseCard(dynamic release) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProjectDetailScreen(project: release as Map<String, dynamic>),
+          ),
+        );
+      },
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  release['cover_path'] != null && release['cover_path'] != ""
+                      ? CachedNetworkImage(
+                          imageUrl: "https://wmahub.com/dashboards/artiste/uploads/${release['cover_path']}",
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.white10),
+                          errorWidget: (context, url, error) => const Icon(
+                            Icons.music_note,
+                            color: AppTheme.primaryColor,
+                            size: 40,
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.music_note,
+                            color: AppTheme.primaryColor,
+                            size: 40,
+                          ),
+                        ),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    release['title'] ?? 'Sans titre',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    release['artist_name'] ?? 'Artiste',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppTheme.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95));
+  }
+
+  Widget _buildReleasesShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'NOS DERNIÈRES SORTIES',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 6,
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.white.withValues(alpha: 0.1),
+                highlightColor: Colors.white.withValues(alpha: 0.2),
+                child: Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 60),
+      ],
     );
   }
 }

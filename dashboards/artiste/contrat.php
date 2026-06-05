@@ -5,6 +5,12 @@ require_once __DIR__ . '/../../includes/mailer.php';
 $pageTitle = 'Contrat de Distribution - WMA Hub';
 $db = getDBConnection();
 
+$userId = $_SESSION['user_id'];
+$userStmt = $db->prepare("SELECT contract_signature FROM users WHERE id = ?");
+$userStmt->execute([$userId]);
+$currentUserData = $userStmt->fetch();
+$existing_signature = $currentUserData['contract_signature'] ?? '';
+
 $success_message = '';
 $error_message = '';
 
@@ -40,6 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_contract'])) {
         
         if ($sent) {
             $success_message = "Votre contrat a été signé et envoyé avec succès à l'administration.";
+            
+            // Save signature to user DB row
+            $updateStmt = $db->prepare("UPDATE users SET contract_signature = ? WHERE id = ?");
+            $updateStmt->execute([$signature_data, $userId]);
+            $existing_signature = $signature_data;
             
             // Create a notification for the artist
             createNotification($_SESSION['user_id'], 'project_update', "Votre contrat de distribution a été envoyé avec succès.", null);
@@ -259,27 +270,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_contract'])) {
                     </h3>
                     
                     <div class="w-full max-w-[500px]">
-                        <canvas id="signature-pad" width="500" height="250" class="w-full shadow-2xl shadow-orange-500/10 mb-6"></canvas>
-                        
-                        <div class="flex gap-4 mb-8">
-                            <button id="clear" class="flex-1 py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/5 flex items-center justify-center gap-2">
-                                <i class="fas fa-eraser"></i> Effacer
-                            </button>
-                            <button id="validate" class="flex-1 py-3 px-6 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-xl font-bold transition-all border border-orange-500/20 flex items-center justify-center gap-2">
-                                <i class="fas fa-check"></i> Valider
-                            </button>
-                        </div>
+                        <?php if (!empty($existing_signature)): ?>
+                            <div class="w-full bg-white p-4 rounded-2xl border border-white/5 shadow-2xl flex items-center justify-center mb-6">
+                                <img src="<?= htmlspecialchars($existing_signature) ?>" alt="Votre Signature" style="max-height: 200px; max-width: 100%;">
+                            </div>
+                            <p class="text-center text-green-500 font-bold uppercase tracking-widest text-xs">
+                                <i class="fas fa-check-circle"></i> Contrat déjà signé
+                            </p>
+                        <?php else: ?>
+                            <canvas id="signature-pad" width="500" height="250" class="w-full shadow-2xl shadow-orange-500/10 mb-6"></canvas>
+                            
+                            <div class="flex gap-4 mb-8">
+                                <button id="clear" class="flex-1 py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/5 flex items-center justify-center gap-2">
+                                    <i class="fas fa-eraser"></i> Effacer
+                                </button>
+                                <button id="validate" class="flex-1 py-3 px-6 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-xl font-bold transition-all border border-orange-500/20 flex items-center justify-center gap-2">
+                                    <i class="fas fa-check"></i> Valider
+                                </button>
+                            </div>
 
-                        <form method="POST" id="contractForm" class="hidden">
-                            <input type="hidden" name="signature_data" id="signature_data">
-                            <button type="submit" name="send_contract" class="w-full py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-300 text-black font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-orange-500/20 hover:scale-[1.02] flex items-center justify-center gap-3">
-                                <i class="fas fa-paper-plane"></i> Envoyer le Contrat Signé
-                            </button>
-                        </form>
+                            <form method="POST" id="contractForm" class="hidden">
+                                <input type="hidden" name="signature_data" id="signature_data">
+                                <button type="submit" name="send_contract" class="w-full py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-300 text-black font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-orange-500/20 hover:scale-[1.02] flex items-center justify-center gap-3">
+                                    <i class="fas fa-paper-plane"></i> Envoyer le Contrat Signé
+                                </button>
+                            </form>
 
-                        <p id="instruction" class="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-4">
-                            Veuillez signer ci-dessus puis cliquer sur "Valider"
-                        </p>
+                            <p id="instruction" class="text-center text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-4">
+                                Veuillez signer ci-dessus puis cliquer sur "Valider"
+                            </p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -288,79 +308,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_contract'])) {
 
     <script>
         const canvas = document.getElementById('signature-pad');
-        const ctx = canvas.getContext('2d');
-        const clearBtn = document.getElementById('clear');
-        const validateBtn = document.getElementById('validate');
-        const contractForm = document.getElementById('contractForm');
-        const signatureDataInput = document.getElementById('signature_data');
-        const instruction = document.getElementById('instruction');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            const clearBtn = document.getElementById('clear');
+            const validateBtn = document.getElementById('validate');
+            const contractForm = document.getElementById('contractForm');
+            const signatureDataInput = document.getElementById('signature_data');
+            const instruction = document.getElementById('instruction');
 
-        let drawing = false;
-        let points = 0;
+            let drawing = false;
+            let points = 0;
 
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return {
-                x: (e.clientX || (e.touches ? e.touches[0].clientX : 0)) - rect.left,
-                y: (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - rect.top
-            };
-        }
-
-        function startDrawing(e) {
-            drawing = true;
-            ctx.beginPath();
-            const pos = getPos(e);
-            ctx.moveTo(pos.x, pos.y);
-            e.preventDefault();
-        }
-
-        function draw(e) {
-            if (!drawing) return;
-            const pos = getPos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#000';
-            ctx.stroke();
-            points++;
-            e.preventDefault();
-        }
-
-        function stopDrawing() {
-            drawing = false;
-        }
-
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', stopDrawing);
-
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-
-        clearBtn.addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            contractForm.classList.add('hidden');
-            instruction.classList.remove('hidden');
-            points = 0;
-        });
-
-        validateBtn.addEventListener('click', () => {
-            if (points < 20) {
-                alert("Veuillez fournir une signature plus complète.");
-                return;
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                return {
+                    x: (e.clientX || (e.touches ? e.touches[0].clientX : 0)) - rect.left,
+                    y: (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - rect.top
+                };
             }
-            const dataURL = canvas.toDataURL();
-            signatureDataInput.value = dataURL;
-            contractForm.classList.remove('hidden');
-            instruction.classList.add('hidden');
-            
-            // Scroll to the button
-            contractForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
+
+            function startDrawing(e) {
+                drawing = true;
+                ctx.beginPath();
+                const pos = getPos(e);
+                ctx.moveTo(pos.x, pos.y);
+                e.preventDefault();
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+                points++;
+                e.preventDefault();
+            }
+
+            function stopDrawing() {
+                drawing = false;
+            }
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDrawing);
+
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+
+            clearBtn.addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                contractForm.classList.add('hidden');
+                instruction.classList.remove('hidden');
+                points = 0;
+            });
+
+            validateBtn.addEventListener('click', () => {
+                if (points < 20) {
+                    alert("Veuillez fournir une signature plus complète.");
+                    return;
+                }
+                const dataURL = canvas.toDataURL();
+                signatureDataInput.value = dataURL;
+                contractForm.classList.remove('hidden');
+                instruction.classList.add('hidden');
+                
+                // Scroll to the button
+                contractForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        }
 
         // Sidebar logic
         const sidebar = document.getElementById('sidebar');

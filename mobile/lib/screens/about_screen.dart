@@ -404,7 +404,7 @@ class _AboutScreenState extends State<AboutScreen> {
 
   Future<void> _launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(url, mode: LaunchMode.inAppBrowserView)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Impossible d\'ouvrir $urlString')),

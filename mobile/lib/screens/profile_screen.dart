@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/cache_service.dart';
 import '../main.dart';
 import 'login_screen.dart';
 import 'distribution_screen.dart';
@@ -17,6 +19,9 @@ import '../services/wordpress_service.dart';
 import 'pending_validation_screen.dart';
 import 'simple_profile_screen.dart';
 import 'agent_tasks_screen.dart';
+import 'about_screen.dart';
+import 'services_screen.dart';
+import 'favorites_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -75,6 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final data = json.decode(response.body);
       if (mounted && data['success'] == true) {
+        await CacheService.save('cache_artist_dashboard_$userId', data['data']);
         setState(() {
           _dashboardData = data['data'];
           _isDashboardLoading = false;
@@ -82,7 +88,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       debugPrint("Error fetching dashboard: $e");
-      if (mounted) setState(() => _isDashboardLoading = false);
+      if (mounted) {
+        final userId = _currentUser!['id'];
+        final cached = await CacheService.load('cache_artist_dashboard_$userId');
+        setState(() {
+          if (cached != null) {
+            _dashboardData = cached;
+          }
+          _isDashboardLoading = false;
+        });
+      }
     }
   }
 
@@ -101,6 +116,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final role = _currentUser!['role']?.toString().toLowerCase().trim();
+    if (role == null || role.isEmpty || role == 'null') {
+      return LoginScreen(onLoginSuccess: _checkAuth);
+    }
+
     final isActive = int.tryParse(_currentUser!['is_active']?.toString() ?? '0') ?? 0;
 
     if (role == 'admin' || role == 'administrator' || role == 'superadmin') {
@@ -409,6 +428,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
+          _buildDashboardCard(
+            Icons.favorite_outline_rounded,
+            'Mes Favoris',
+            'Vos actualités aimées et enregistrées',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoritesScreen(),
+                ),
+              );
+            },
+          ),
           // _buildDashboardCard(
           //   Icons.auto_awesome_outlined,
           //   'Assistant d\'écriture',
@@ -430,6 +462,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Consultez nos engagements légaux',
             onTap: () => _launchURL('https://wmahub.com/privacy.php'),
           ),
+          _buildDashboardCard(
+            Icons.business_center_outlined,
+            'Services Artiste',
+            'Découvrez nos services de distribution et promo',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ServicesScreen(),
+                ),
+              );
+            },
+          ),
+          _buildDashboardCard(
+            Icons.info_outline_rounded,
+            'À propos de WMA',
+            'En savoir plus sur WMA Hub',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AboutScreen(),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 24),
           TextButton.icon(
             onPressed: _showDeleteAccountDialog,
@@ -445,9 +503,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showLogoutDialog() {
-    showDialog(
+    showAdaptiveDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => AlertDialog.adaptive(
         backgroundColor: AppTheme.cardColor,
         title: const Text('Se déconnecter ?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
@@ -456,11 +514,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(dialogContext);
+            },
             child: const Text('ANNULER', style: TextStyle(color: AppTheme.textGrey)),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
+              HapticFeedback.mediumImpact();
               final navigatorContext = context;
               Navigator.pop(dialogContext);
               await _authService.logout();
@@ -468,8 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 RestartWidget.restartApp(navigatorContext);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            child: const Text('SE DÉCONNECTER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            child: const Text('SE DÉCONNECTER', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -477,9 +538,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showDeleteAccountDialog() {
-    showDialog(
+    showAdaptiveDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog.adaptive(
         backgroundColor: AppTheme.cardColor,
         title: const Text('Supprimer le compte ?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
@@ -488,16 +549,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(dialogContext);
+            },
             child: const Text('ANNULER', style: TextStyle(color: AppTheme.textGrey)),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              HapticFeedback.mediumImpact();
+              Navigator.pop(dialogContext);
               _deleteAccount();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('CONFIRMER LA SUPPRESSION', style: TextStyle(fontSize: 11)),
+            child: const Text('CONFIRMER', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -559,7 +623,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _launchURL(String url) async {
     final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d\'ouvrir le lien')),

@@ -78,6 +78,44 @@ class NotificationService {
       existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
+
+  static Future<void> showMusicNotification({
+    required String title,
+    required String artist,
+    required bool isPlaying,
+  }) async {
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'music_player_channel',
+      'Lecteur de Musique',
+      channelDescription: 'Contrôles de lecture audio en cours',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: isPlaying,
+      showWhen: false,
+      onlyAlertOnce: true,
+      autoCancel: false,
+      styleInformation: const MediaStyleInformation(),
+    );
+
+    final NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: const DarwinNotificationDetails(
+        presentAlert: false,
+        presentSound: false,
+      ),
+    );
+
+    await _notificationsPlugin.show(
+      999,
+      isPlaying ? 'Lecture en cours' : 'Pause',
+      '$title • $artist',
+      platformDetails,
+    );
+  }
+
+  static Future<void> cancelMusicNotification() async {
+    await _notificationsPlugin.cancel(999);
+  }
 }
 
 // Top-level function for Workmanager

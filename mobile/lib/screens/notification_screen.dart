@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/app_theme.dart';
 import '../services/wordpress_service.dart';
+import '../services/cache_service.dart';
 
 class NotificationScreen extends StatefulWidget {
   final int userId;
@@ -31,12 +32,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
       );
       final data = json.decode(response.body);
       if (data['success'] == true) {
+        await CacheService.save('cache_notifications_${widget.userId}', data['data']);
         setState(() => _notifications = data['data']);
       }
     } catch (e) {
       debugPrint("Error: $e");
+      final cached = await CacheService.load('cache_notifications_${widget.userId}');
+      if (mounted && cached != null) {
+        setState(() => _notifications = cached);
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

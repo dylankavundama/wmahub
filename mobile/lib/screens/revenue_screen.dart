@@ -6,6 +6,8 @@ import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_theme.dart';
 import '../services/wordpress_service.dart';
+import '../services/cache_service.dart';
+import '../services/biometric_service.dart';
 
 class RevenueScreen extends StatefulWidget {
   final int userId;
@@ -18,11 +20,27 @@ class RevenueScreen extends StatefulWidget {
 class _RevenueScreenState extends State<RevenueScreen> {
   Map<String, dynamic>? _revenueData;
   bool _isLoading = true;
+  bool _authFailed = false;
+  final BiometricService _biometricService = BiometricService();
 
   @override
   void initState() {
     super.initState();
-    _fetchRevenues();
+    _authenticateUser();
+  }
+
+  Future<void> _authenticateUser() async {
+    final success = await _biometricService.authenticate();
+    if (mounted) {
+      if (success) {
+        _fetchRevenues();
+      } else {
+        setState(() {
+          _authFailed = true;
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchRevenues() async {
@@ -35,12 +53,19 @@ class _RevenueScreenState extends State<RevenueScreen> {
       );
       final data = json.decode(response.body);
       if (data['success'] == true) {
+        await CacheService.save('cache_artist_revenues_${widget.userId}', data['data']);
         setState(() => _revenueData = data['data']);
       }
     } catch (e) {
       debugPrint("Error: $e");
+      final cached = await CacheService.load('cache_artist_revenues_${widget.userId}');
+      if (mounted && cached != null) {
+        setState(() => _revenueData = cached);
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -61,7 +86,66 @@ class _RevenueScreenState extends State<RevenueScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             )
-          : _buildBody(),
+          : (_authFailed ? _buildLockedView() : _buildBody()),
+    );
+  }
+
+  Widget _buildLockedView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_outline_rounded,
+                size: 64,
+                color: Colors.redAccent,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Accès Verrouillé',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Veuillez vous authentifier pour consulter vos revenus financiers.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textGrey, fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                  _authFailed = false;
+                });
+                _authenticateUser();
+              },
+              icon: const Icon(Icons.fingerprint_rounded),
+              label: const Text('S\'AUTHENTIFIER'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                minimumSize: const Size(200, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

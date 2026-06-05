@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -7,8 +8,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/wordpress_service.dart';
+import '../services/cache_service.dart';
 import '../main.dart';
 import 'admin_accounting_screen.dart';
+import 'about_screen.dart';
+import 'services_screen.dart';
+import 'favorites_screen.dart';
 
 class SimpleProfileScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -27,17 +32,19 @@ class SimpleProfileScreen extends StatefulWidget {
 class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
   final _authService = AuthService();
   bool _pushNotifications = true;
-  bool _darkMode = true;
-  String _selectedLanguage = 'Français';
-  double _cacheSizeMb = 24.8;
+  double _cacheSizeMb = 3.5;
   bool _isClearingCache = false;
+  bool _isActivatingArtist = false;
 
   Future<void> _launchURL(String url) async {
     final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+          const SnackBar(
+            content: Text('Impossible d\'ouvrir le lien'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -49,13 +56,14 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
         const SnackBar(
           content: Text('Le cache est déjà vide.'),
           backgroundColor: AppTheme.primaryColor,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
     setState(() => _isClearingCache = true);
-    await Future.delayed(const Duration(seconds: 1)); // Simulation d'effacement
+    await CacheService.clearAll();
     if (mounted) {
       setState(() {
         _cacheSizeMb = 0.0;
@@ -65,15 +73,16 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
         const SnackBar(
           content: Text('Cache système vidé avec succès !'),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
   void _showDeleteAccountDialog() {
-    showDialog(
+    showAdaptiveDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => AlertDialog.adaptive(
         backgroundColor: AppTheme.cardColor,
         title: const Text(
           'Supprimer le compte ?',
@@ -85,16 +94,19 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(dialogContext);
+            },
             child: const Text('ANNULER', style: TextStyle(color: AppTheme.textGrey)),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.pop(dialogContext);
               _deleteAccount();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('CONFIRMER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text('CONFIRMER', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -102,9 +114,9 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
   }
 
   void _showLogoutDialog() {
-    showDialog(
+    showAdaptiveDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => AlertDialog.adaptive(
         backgroundColor: AppTheme.cardColor,
         title: const Text('Se déconnecter ?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
@@ -113,11 +125,15 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(dialogContext);
+            },
             child: const Text('ANNULER', style: TextStyle(color: AppTheme.textGrey)),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
+              HapticFeedback.mediumImpact();
               final navigatorContext = context;
               Navigator.pop(dialogContext);
               await _authService.logout();
@@ -125,8 +141,7 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
                 RestartWidget.restartApp(navigatorContext);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            child: const Text('SE DÉCONNECTER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            child: const Text('SE DÉCONNECTER', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -176,15 +191,168 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
           }
         } else {
           ScaffoldMessenger.of(navigatorContext).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Erreur lors de la suppression'), backgroundColor: Colors.redAccent),
+            SnackBar(content: Text(data['message'] ?? 'Erreur lors de la suppression'), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
           );
         }
       }
     } catch (e) {
       if (navigatorContext.mounted) {
         ScaffoldMessenger.of(navigatorContext).showSnackBar(
-          const SnackBar(content: Text('Erreur lors de la suppression'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Erreur lors de la suppression'), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
         );
+      }
+    }
+  }
+
+  Widget _buildActivateArtistCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryColor.withValues(alpha: 0.15),
+            AppTheme.accentColor.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'ESPACE COMPTE ARTISTE',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.primaryColor,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Distribuez votre musique sur le monde entier",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Activez votre espace artiste pour soumettre vos chansons, albums, et suivre l'évolution de vos royalties et statistiques d'écoutes.",
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.textGrey,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isActivatingArtist ? null : _activateArtistProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: _isActivatingArtist
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'ACTIVER MON PROFIL ARTISTE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  Future<void> _activateArtistProfile() async {
+    final rawId = widget.user['id'];
+    final userId = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+    if (userId == 0) return;
+
+    setState(() => _isActivatingArtist = true);
+    
+    try {
+      final result = await _authService.updateUserRole(userId, 'artiste');
+      if (result != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Espace Artiste activé avec succès !'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        // Attendre 1 seconde pour voir le message de confirmation
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          RestartWidget.restartApp(context);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Une erreur s'est produite lors de la mise à jour."),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur : $e"),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isActivatingArtist = false);
       }
     }
   }
@@ -210,6 +378,9 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
     } else if (role == 'artiste') {
       roleLabel = 'ARTISTE';
       roleColor = AppTheme.primaryColor;
+    } else {
+      roleLabel = 'UTILISATEUR';
+      roleColor = AppTheme.textGrey;
     }
 
     return Scaffold(
@@ -320,6 +491,11 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
                     ],
                   ),
                 ).animate().fadeIn(delay: 200.ms),
+
+                if (role == 'simple_user' || role == '' || role == null) ...[
+                  const SizedBox(height: 20),
+                  _buildActivateArtistCard(context),
+                ],
 
                 const SizedBox(height: 28),
 
@@ -449,6 +625,33 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
                           ],
                         ),
                       ),
+                      // Favorites
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const FavoritesScreen()),
+                          );
+                        },
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.03),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.favorite_outline_rounded, color: Colors.white70, size: 20),
+                        ),
+                        title: const Text(
+                          'Mes Favoris',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                        ),
+                        subtitle: const Text(
+                          'Vos actualités aimées et enregistrées',
+                          style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textGrey),
+                      ),
                       _buildDivider(),
 
                       // Privacy Policy
@@ -472,6 +675,64 @@ class _SimpleProfileScreenState extends State<SimpleProfileScreen> {
                           style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
                         ),
                         trailing: const Icon(Icons.open_in_new_rounded, color: AppTheme.textGrey, size: 18),
+                      ),
+                      _buildDivider(),
+
+                      // Services Artiste
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ServicesScreen()),
+                          );
+                        },
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.03),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.business_center_outlined, color: Colors.white70, size: 20),
+                        ),
+                        title: const Text(
+                          'Services Artiste',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                        ),
+                        subtitle: const Text(
+                          'Découvrez nos services de distribution et promo',
+                          style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textGrey),
+                      ),
+                      _buildDivider(),
+
+                      // À propos
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AboutScreen()),
+                          );
+                        },
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.03),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 20),
+                        ),
+                        title: const Text(
+                          'À propos de WMA',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                        ),
+                        subtitle: const Text(
+                          'En savoir plus sur WMA Hub',
+                          style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textGrey),
                       ),
                       if (role == 'admin' || role == 'administrator' || role == 'superadmin') ...[
                         _buildDivider(),
