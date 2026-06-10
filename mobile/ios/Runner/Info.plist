@@ -52,8 +52,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>WMA UA utilise le suivi pour améliorer votre expérience. Veuillez autoriser le suivi.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>WMA UA nécessite l'accès à FaceID pour sécuriser votre portefeuille financier.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
