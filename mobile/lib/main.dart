@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +11,8 @@ import 'utils/app_theme.dart';
 import 'services/notification_service.dart';
 
 void main() async {
+  HttpOverrides.global = AppHttpOverrides();
+
   // 1. Initialisation vitale des widgets
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -110,5 +113,13 @@ class _RestartWidgetState extends State<RestartWidget> {
       key: _key,
       child: widget.child,
     );
+  }
+}
+
+class AppHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1';
   }
 }

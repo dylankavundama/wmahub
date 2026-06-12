@@ -40,6 +40,7 @@ function sendEmail($to, $subject, $htmlBody, $replyTo = null) {
         $mail->SMTPSecure = (SMTP_PORT === 465) ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = SMTP_PORT;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 3; // Limiter le temps d'attente de connexion SMTP à 3 secondes
         
         // Expéditeur
         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);

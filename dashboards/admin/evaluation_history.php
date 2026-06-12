@@ -39,18 +39,7 @@ $awards = $stmt->fetchAll(PDO::FETCH_GROUP);
     </style>
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <h1 class="text-xl font-black text-orange-500 tracking-tighter">WMA HUB</h1>
-        </div>
-        <nav class="flex-1">
-            <a href="index.php" class="nav-link"><i class="fas fa-layer-group"></i> Projets</a>
-            <a href="employees.php" class="nav-link"><i class="fas fa-users-cog"></i> Staff</a>
-            <a href="evaluation.php" class="nav-link active"><i class="fas fa-star"></i> Évaluations</a>
-        </nav>
-        <a href="evaluation.php" class="nav-link !text-gray-400 mt-auto"><i class="fas fa-arrow-left"></i> Retour</a>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
     <main class="main-content">
         <header class="mb-12">

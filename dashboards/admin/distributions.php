@@ -101,52 +101,7 @@ try {
 </head>
 <body>
     <div class="bg-glow"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <div>
-                <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
-            </div>
-        </div>
-        <nav class="flex-1" style="overflow-y:auto;overflow-x:hidden;padding-right:0.5rem;">
-            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
-            <a href="subscriptions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'subscriptions.php' ? 'active' : '' ?>"><i class="fas fa-crown"></i> Abonnements</a>
-            <a href="payments.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'active' : '' ?>"><i class="fas fa-history"></i> Paiements</a>
-            <a href="artists.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'artists.php' ? 'active' : '' ?>"><i class="fas fa-microphone-alt"></i> Artistes</a>
-            <a href="distributors.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'distributors.php' ? 'active' : '' ?>"><i class="fas fa-truck-loading"></i> Distributeurs</a>
-            <a href="revenues.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'revenues.php' ? 'active' : '' ?>"><i class="fas fa-wallet"></i> Revenus Gérés</a>
-            <a href="payouts.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'payouts.php' ? 'active' : '' ?>"><i class="fas fa-money-bill-transfer"></i> Retraits &amp; Payouts</a>
-            <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe &amp; Staff</a>
-            <a href="tasks.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'tasks.php' ? 'active' : '' ?>"><i class="fas fa-tasks"></i> Gestion Tâches</a>
-            <a href="salaries.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'salaries.php' ? 'active' : '' ?>"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
-            <a href="project_files.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'project_files.php' ? 'active' : '' ?>"><i class="fas fa-folder-open"></i> Fichier Projet</a>
-            <a href="service_cards.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'service_cards.php' ? 'active' : '' ?>"><i class="fas fa-id-card"></i> Cartes de Service</a>
-            <a href="notifications.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'notifications.php' ? 'active' : '' ?>"><i class="fas fa-bell"></i> Notifications</a>
-            <a href="finance.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'finance.php' ? 'active' : '' ?>"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
-            <a href="site_stats.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'site_stats.php' ? 'active' : '' ?>"><i class="fas fa-chart-line"></i> Statistiques Site</a>
-            <a href="comptabilite.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'comptabilite.php' ? 'active' : '' ?>"><i class="fas fa-calculator"></i> Comptabilité</a>
-            <a href="hero_slider.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'hero_slider.php' ? 'active' : '' ?>"><i class="fas fa-images"></i> Gestion Slider</a>
-            <a href="distributions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'distributions.php' ? 'active' : '' ?>"><i class="fas fa-music"></i> Distributions Vitrine</a>
-            <a href="users.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'users.php' ? 'active' : '' ?>"><i class="fas fa-user-friends"></i> Utilisateurs</a>
-            <?php if ($_SESSION['role'] === 'superadmin'): ?>
-                <div class="mt-4 pt-4 border-t border-white/5">
-                    <p class="text-[9px] text-yellow-500/50 font-black uppercase tracking-widest px-4 mb-2">Master Controls</p>
-                    <a href="../superadmin/index.php" class="nav-link !text-yellow-500 hover:!bg-yellow-500/10"><i class="fas fa-crown"></i> Console Superadmin</a>
-                </div>
-            <?php endif; ?>
-        </nav>
-        <div class="mt-auto pt-6 border-t border-white/5">
-            <div class="flex items-center gap-4 mb-4 px-2">
-                <div class="w-10 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500"><i class="fas fa-user-shield"></i></div>
-                <div>
-                    <p class="text-sm font-bold text-white"><?= explode(' ', $_SESSION['user_name'])[0] ?></p>
-                    <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest"><?= $_SESSION['role'] ?></p>
-                </div>
-            </div>
-            <a href="../../auth/logout.php" class="nav-link !text-red-500 hover:!bg-red-500/10"><i class="fas fa-power-off"></i> Déconnexion</a>
-        </div>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
     <main class="main-content">
         <header class="flex justify-between items-center mb-12">

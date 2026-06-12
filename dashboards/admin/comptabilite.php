@@ -123,25 +123,7 @@ $month_expense = $stmt_month_expense->fetchColumn() ?: 0;
     </style>
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <div>
-                <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
-            </div>
-        </div>
-        <nav class="flex-1 overflow-y-auto">
-            <a href="index.php" class="nav-link"><i class="fas fa-layer-group"></i> Gestion Projets</a>
-            <a href="subscriptions.php" class="nav-link"><i class="fas fa-crown"></i> Abonnements</a>
-            <a href="comptabilite.php" class="nav-link active"><i class="fas fa-calculator"></i> Comptabilité</a>
-            <a href="finance.php" class="nav-link"><i class="fas fa-chart-pie"></i> Rapports</a>
-            <a href="users.php" class="nav-link"><i class="fas fa-user-friends"></i> Utilisateurs</a>
-            <div class="mt-8 pt-8 border-t border-white/5">
-                <a href="../../auth/logout.php" class="nav-link text-red-500"><i class="fas fa-power-off"></i> Déconnexion</a>
-            </div>
-        </nav>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
     <main class="main-content">
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">

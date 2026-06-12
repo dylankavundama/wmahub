@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/app_theme.dart';
 import '../services/wordpress_service.dart';
+import '../services/cache_service.dart';
 import '../services/favorites_service.dart';
 import 'project_detail_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -49,14 +50,26 @@ class _AllDistributedProjectsScreenState extends State<AllDistributedProjectsScr
     }
   }
 
-  Future<void> _loadInitialProjects() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _currentPage = 1;
-      _hasMore = true;
-      _projects.clear();
-    });
+  Future<void> _loadInitialProjects({bool isBackground = false}) async {
+    if (_projects.isEmpty && !isBackground) {
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _currentPage = 1;
+          _hasMore = true;
+        });
+      }
+    }
+
+    if (_projects.isEmpty) {
+      final cached = await CacheService.load('cache_all_distributed_page_1');
+      if (cached is List && cached.isNotEmpty && mounted) {
+        setState(() {
+          _projects = cached;
+          _isLoading = false;
+        });
+      }
+    }
 
     try {
       final data = await _wpService.fetchAllDistributed(page: 1, limit: _limit);
@@ -64,12 +77,15 @@ class _AllDistributedProjectsScreenState extends State<AllDistributedProjectsScr
         setState(() {
           _projects = data;
           _isLoading = false;
+          _currentPage = 1;
+          _hasMore = true;
           if (data.length < _limit) {
             _hasMore = false;
           }
         });
       }
     } catch (e) {
+      debugPrint("Error loading initial projects: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;

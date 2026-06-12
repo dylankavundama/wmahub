@@ -95,28 +95,7 @@ $db = getDBConnection();
         </button>
     </header>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <div>
-                <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
-            </div>
-        </div>
-        <nav class="flex-1 overflow-y-auto pr-2">
-            <a href="index.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : '' ?>"><i class="fas fa-layer-group"></i> Gestion Projets</a>
-            <a href="subscriptions.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'subscriptions.php' ? 'active' : '' ?>"><i class="fas fa-crown"></i> Abonnements</a>
-            <a href="employees.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'employees.php' ? 'active' : '' ?>"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
-            <a href="tasks.php" class="nav-link"><i class="fas fa-tasks"></i> Gestion Tâches</a>
-            <a href="salaries.php" class="nav-link"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
-            <a href="project_files.php" class="nav-link <?= basename($_SERVER['PHP_SELF']) === 'project_files.php' ? 'active' : '' ?>"><i class="fas fa-folder-open"></i> Fichier Projet</a>
-            <a href="service_cards.php" class="nav-link"><i class="fas fa-id-card"></i> Cartes de Service</a>
-            <a href="notifications.php" class="nav-link"><i class="fas fa-bell"></i> Notifications</a>
-            <a href="finance.php" class="nav-link"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
-            <a href="site_stats.php" class="nav-link"><i class="fas fa-chart-line"></i> Statistiques Site</a>
-            <a href="users.php" class="nav-link"><i class="fas fa-user-friends"></i> Utilisateurs</a>
-        </nav>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
     <main class="main-content">
         <header class="p-8 border-b border-white/5 flex flex-col items-start gap-6">

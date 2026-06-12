@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/wordpress_service.dart';
+import '../services/cache_service.dart';
 import '../utils/app_theme.dart';
 
 class AboutScreen extends StatefulWidget {
@@ -14,193 +15,223 @@ class AboutScreen extends StatefulWidget {
 
 class _AboutScreenState extends State<AboutScreen> {
   final WordPressService _wpService = WordPressService();
-  late Future<Map<String, dynamic>> _aboutFuture;
+  Map<String, dynamic> _aboutData = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _aboutFuture = _wpService.fetchAboutInfo();
+    _loadAboutData();
+  }
+
+  Future<void> _loadAboutData() async {
+    // 1. Try to load cached data first
+    final cached = await CacheService.load('cache_about_info');
+    if (cached is Map<String, dynamic> && cached.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _aboutData = cached;
+          _isLoading = false;
+        });
+      }
+    }
+
+    // 2. Fetch fresh data from network in background
+    try {
+      final fresh = await _wpService.fetchAboutInfo();
+      if (mounted && fresh.isNotEmpty) {
+        setState(() {
+          _aboutData = fresh;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching about info in background: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading && _aboutData.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
+        ),
+      );
+    }
+
+    final data = _aboutData;
+
     return Scaffold(
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _aboutFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
-            );
-          }
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 220,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              // title: const Text(
+              //   'À PROPOS',
+              //   style: TextStyle(
+              //     fontWeight: FontWeight.w900,
+              //     letterSpacing: 2,
+              //   ),
+              // ),
+              centerTitle: true,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedNetworkImage(
+                    imageUrl: 'https://wmahub.com/asset/off.png',
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      child: const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white24,
+                          size: 50,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.8),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(data['title'] ?? "QUI SOMMES NOUS ?"),
+                  const SizedBox(height: 16),
+                  _buildText(
+                    data['who_we_are'] ??
+                        "WMA Hub est une plateforme internationale de distribution musicale qui accompagne les artistes et les labels dans leur développement.",
+                  ),
 
-          final data = snapshot.data ?? {};
+                  const SizedBox(height: 40),
+                  _buildHeader("NOTRE MISSION"),
+                  const SizedBox(height: 16),
+                  _buildText(
+                    data['distribution'] ??
+                        "Distribuez votre musique facilement sur plus de 200 plateformes de streaming mondiales.",
+                  ),
 
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 220,
-                pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  // title: const Text(
-                  //   'À PROPOS',
-                  //   style: TextStyle(
-                  //     fontWeight: FontWeight.w900,
-                  //     letterSpacing: 2,
-                  //   ),
+                  // const SizedBox(height: 40),
+                  // _buildHeader("PROJET"),
+                  // const SizedBox(height: 16),
+                  // // Padding(
+                  // //   padding: const EdgeInsets.all(8.0),
+                  // //   child: Text('WMAPLUS'),
+                  // // ),
+                  // Padding(
+                  //   padding: const EdgeInsets.all(8.0),
+                  //   child: Text('WMAUNITEDAFRICA'),
                   // ),
-                  centerTitle: true,
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CachedNetworkImage(
-                        imageUrl: 'https://wmahub.com/asset/off.png',
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+
+                  const SizedBox(height: 40),
+                  _buildStats(
+                    data['stats'] ??
+                        [
+                          {"label": "Plateformes", "value": "+200"},
+                          {"label": "Artistes", "value": "+720"},
+                          {"label": "Écoutes / mois", "value": "+80M"},
+                          {"label": "Titres", "value": "+100K"},
+                        ],
+                  ),
+
+                  const SizedBox(height: 40),
+                  _buildGlobalPresenceSection(data['global_presence']),
+
+                  const SizedBox(height: 40),
+                  _buildHeader("SUIVEZ-NOUS"),
+                  const SizedBox(height: 16),
+                  ...(data['socials'] as List? ??
+                          [
+                            {
+                              "platform": "Instagram",
+                              "url":
+                                  "https://www.instagram.com/wmaunitedafrica?igsh=aDBoM3c3anIzcXEx",
+                              "handle": "@wmaunitedafrica",
+                            },
+                            {
+                              "platform": "WhatsApp",
+                              "url": "https://wa.me/256743297668",
+                              "handle": "+256 743 297 668",
+                            },
+                            {
+                              "platform": "TikTok",
+                              "url":
+                                  "https://www.tiktok.com/@wmaplus?_r=1&_t=ZS-95Wi0zXYH5w",
+                              "handle": "@wmaplus",
+                            },
+                            {
+                              "platform": "Facebook",
+                              "url":
+                                  "https://www.share/1FQHLego9Z/",
+                              "handle": "WMA Hub Official",
+                            },
+                          ])
+                      .map(
+                        (s) => _buildSocialTile(
+                          s['platform'],
+                          s['handle'],
+                          s['url'],
                         ),
-                        errorWidget: (context, url, error) => Container(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          child: const Center(
-                            child: Icon(
-                              Icons.broken_image_outlined,
-                              color: Colors.white24,
-                              size: 50,
-                            ),
+                      )
+                      .toList(),
+
+                  const SizedBox(height: 60),
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          "Version ${data['version'] ?? '1.0.0'}",
+                          style: const TextStyle(
+                            color: AppTheme.textGrey,
+                            fontSize: 12,
                           ),
                         ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.8),
-                            ],
+                        const SizedBox(height: 4),
+                        Text(
+                          "Développé par ${data['developed_by'] ?? 'Next Byte Technology'}",
+                          style: const TextStyle(
+                            color: AppTheme.textGrey,
+                            fontSize: 11,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 100),
+                ],
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(data['title'] ?? "QUI SOMMES NOUS ?"),
-                      const SizedBox(height: 16),
-                      _buildText(
-                        data['who_we_are'] ??
-                            "WMA Hub est une plateforme internationale de distribution musicale qui accompagne les artistes et les labels dans leur développement.",
-                      ),
-
-                      const SizedBox(height: 40),
-                      _buildHeader("NOTRE MISSION"),
-                      const SizedBox(height: 16),
-                      _buildText(
-                        data['distribution'] ??
-                            "Distribuez votre musique facilement sur plus de 200 plateformes de streaming mondiales.",
-                      ),
-
-                      // const SizedBox(height: 40),
-                      // _buildHeader("PROJET"),
-                      // const SizedBox(height: 16),
-                      // // Padding(
-                      // //   padding: const EdgeInsets.all(8.0),
-                      // //   child: Text('WMAPLUS'),
-                      // // ),
-                      // Padding(
-                      //   padding: const EdgeInsets.all(8.0),
-                      //   child: Text('WMAUNITEDAFRICA'),
-                      // ),
-
-                      const SizedBox(height: 40),
-                      _buildStats(
-                        data['stats'] ??
-                            [
-                              {"label": "Plateformes", "value": "+200"},
-                              {"label": "Artistes", "value": "+720"},
-                              {"label": "Écoutes / mois", "value": "+80M"},
-                              {"label": "Titres", "value": "+100K"},
-                            ],
-                      ),
-
-                      const SizedBox(height: 40),
-                      _buildGlobalPresenceSection(data['global_presence']),
-
-                      const SizedBox(height: 40),
-                      _buildHeader("SUIVEZ-NOUS"),
-                      const SizedBox(height: 16),
-                      ...(data['socials'] as List? ??
-                              [
-                                {
-                                  "platform": "Instagram",
-                                  "url":
-                                      "https://www.instagram.com/wmaunitedafrica?igsh=aDBoM3c3anIzcXEx",
-                                  "handle": "@wmaunitedafrica",
-                                },
-                                {
-                                  "platform": "WhatsApp",
-                                  "url": "https://wa.me/256743297668",
-                                  "handle": "+256 743 297 668",
-                                },
-                                {
-                                  "platform": "TikTok",
-                                  "url":
-                                      "https://www.tiktok.com/@wmaplus?_r=1&_t=ZS-95Wi0zXYH5w",
-                                  "handle": "@wmaplus",
-                                },
-                                {
-                                  "platform": "Facebook",
-                                  "url":
-                                      "https://www.facebook.com/share/1FQHLego9Z/",
-                                  "handle": "WMA Hub Official",
-                                },
-                              ])
-                          .map(
-                            (s) => _buildSocialTile(
-                              s['platform'],
-                              s['handle'],
-                              s['url'],
-                            ),
-                          )
-                          .toList(),
-
-                      const SizedBox(height: 60),
-                      Center(
-                        child: Column(
-                          children: [
-                            Text(
-                              "Version ${data['version'] ?? '1.0.0'}",
-                              style: const TextStyle(
-                                color: AppTheme.textGrey,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Développé par ${data['developed_by'] ?? 'Next Byte Technology'}",
-                              style: const TextStyle(
-                                color: AppTheme.textGrey,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ),
+        ],
       ),
     );
   }

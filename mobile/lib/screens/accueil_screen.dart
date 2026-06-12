@@ -9,9 +9,11 @@ import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/wordpress_service.dart';
 import '../services/favorites_service.dart';
+import '../services/cache_service.dart';
 import '../utils/app_theme.dart';
 import 'post_detail_screen.dart';
 import 'no_internet_screen.dart';
+import 'timeout_screen.dart';
 import 'slide_detail_screen.dart';
 import 'main_navigation.dart';
 import 'project_detail_screen.dart';
@@ -39,6 +41,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
   bool _isFeaturedLoading = true;
   bool _isError = false;
   bool _isOffline = false;
+  bool _isTimeout = false;
   StreamSubscription? _connectivitySubscription;
   Timer? _refreshTimer;
 
@@ -56,7 +59,12 @@ class _AccueilScreenState extends State<AccueilScreen> {
   void initState() {
     super.initState();
     _checkInitialConnectivity();
-    _loadInitialData();
+    
+    // Cache-First then Network Update (Stale-While-Revalidate)
+    _loadCachedData().then((_) {
+      _loadInitialData(isBackground: true);
+    });
+
     _scrollController.addListener(_onScroll);
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       results,
@@ -66,7 +74,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
       } else {
         if (_isOffline) {
           setState(() => _isOffline = false);
-          _loadInitialData();
+          _loadInitialData(isBackground: true);
         }
       }
     });
@@ -74,7 +82,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
     // Auto-refresh every 10 minutes
     _refreshTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
       if (!_isOffline) {
-        _loadInitialData();
+        _loadInitialData(isBackground: true);
       }
     });
   }
@@ -103,13 +111,51 @@ class _AccueilScreenState extends State<AccueilScreen> {
     }
   }
 
-  Future<void> _loadInitialData() async {
+  Future<void> _loadCachedData() async {
+    try {
+      final cachedSlides = await CacheService.load('cache_hero_slides');
+      final cachedPosts = await CacheService.load('cache_posts_page_1');
+      final cachedLatest = await CacheService.load('cache_latest_distributed');
+      final cachedDistributions = await CacheService.load('cache_distributions');
+
+      if (mounted) {
+        setState(() {
+          if (cachedSlides is List && cachedSlides.isNotEmpty) {
+            _slides = cachedSlides;
+            _isSlidesLoading = false;
+          }
+          if (cachedPosts is List && cachedPosts.isNotEmpty) {
+            _posts = cachedPosts;
+            _isPostsLoading = false;
+          }
+          if (cachedLatest is List && cachedLatest.isNotEmpty) {
+            _latestReleases = cachedLatest;
+            _isReleasesLoading = false;
+          }
+          if (cachedDistributions is List && cachedDistributions.isNotEmpty) {
+            _featuredProject = cachedDistributions.first;
+            _isFeaturedLoading = false;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading cached data: $e");
+    }
+  }
+
+  Future<void> _loadInitialData({bool isBackground = false}) async {
+    if (!isBackground) {
+      setState(() {
+        _isPostsLoading = true;
+        _isSlidesLoading = true;
+        _isReleasesLoading = true;
+        _isFeaturedLoading = true;
+        _isError = false;
+        _isTimeout = false;
+      });
+    }
+    
     setState(() {
-      _isPostsLoading = true;
-      _isSlidesLoading = true;
-      _isReleasesLoading = true;
-      _isFeaturedLoading = true;
-      _isError = false;
       _currentPage = 1;
       _hasMore = true;
       _paginationError = false;
@@ -138,18 +184,45 @@ class _AccueilScreenState extends State<AccueilScreen> {
           _isPostsLoading = false;
           _isReleasesLoading = false;
           _isFeaturedLoading = false;
+          _isError = false; // Reset error state on success
+          _isTimeout = false;
           if (_posts.length < 10) _hasMore = false;
         });
       }
     } catch (e) {
+      final isTimeoutError = e is TimeoutException || e.toString().contains('TimeoutException');
       if (mounted) {
         setState(() {
-          _isError = true;
+          // Si on est en tâche de fond et qu'on a déjà des données, on ne montre pas d'erreur
+          if (!isBackground || (_posts.isEmpty && _slides.isEmpty)) {
+            _isError = true;
+            _isTimeout = isTimeoutError;
+          }
           _isPostsLoading = false;
           _isSlidesLoading = false;
           _isReleasesLoading = false;
           _isFeaturedLoading = false;
         });
+
+        // Feedback flottant si on a déjà du cache mais que le rafraîchissement manuel a expiré
+        if (!isBackground && _posts.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isTimeoutError 
+                  ? 'Connexion lente : le serveur a mis trop de temps à répondre.' 
+                  : 'Impossible d\'actualiser les données.',
+              ),
+              backgroundColor: AppTheme.cardColor,
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'RÉESSAYER',
+                textColor: AppTheme.primaryColor,
+                onPressed: () => _loadInitialData(),
+              ),
+            ),
+          );
+        }
       }
     }
   }
@@ -187,7 +260,10 @@ class _AccueilScreenState extends State<AccueilScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isOffline && _posts.isEmpty) {
-      return NoInternetScreen(onRetry: _loadInitialData);
+      return NoInternetScreen(onRetry: () => _loadInitialData());
+    }
+    if (_isTimeout && _posts.isEmpty) {
+      return TimeoutScreen(onRetry: () => _loadInitialData());
     }
     if (_isError && _posts.isEmpty) return _buildErrorView();
 
@@ -650,7 +726,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _loadInitialData,
+            onPressed: () => _loadInitialData(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
             ),
@@ -703,7 +779,7 @@ class _AccueilScreenState extends State<AccueilScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: _loadInitialData,
+              onPressed: () => _loadInitialData(),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text(
                 'ACTUALISER',

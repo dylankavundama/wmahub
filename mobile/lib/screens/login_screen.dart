@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../utils/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'contract_screen.dart';
 import 'pending_validation_screen.dart';
@@ -354,10 +355,10 @@ class _LoginScreenState extends State<LoginScreen> {
         fit: StackFit.expand,
         children: [
           // Background Image
-          Image.network(
-            'https://wmahub.com/asset/aspi.jpg',
+          CachedNetworkImage(
+            imageUrl: 'https://wmahub.com/asset/aspi.jpg',
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
+            errorWidget: (context, url, error) =>
                 Container(color: Colors.black),
           ),
 

@@ -71,27 +71,7 @@ $distributors = $db->query($query)->fetchAll();
     <div id="wma-global-loader"><div class="loader-spin"></div></div>
     <div class="bg-glow"></div>
 
-    <aside class="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <div>
-                <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">Control Center</p>
-            </div>
-        </div>
-        <nav class="flex-1">
-            <a href="index.php" class="nav-link"><i class="fas fa-layer-group"></i> Projets</a>
-            <a href="subscriptions.php" class="nav-link"><i class="fas fa-crown"></i> Abonnements</a>
-            <a href="payments.php" class="nav-link"><i class="fas fa-history"></i> Paiements</a>
-            <a href="artists.php" class="nav-link"><i class="fas fa-microphone-alt"></i> Artistes</a>
-            <a href="distributors.php" class="nav-link active"><i class="fas fa-truck-loading"></i> Distributeurs</a>
-            <a href="employees.php" class="nav-link"><i class="fas fa-users-cog"></i> Équipe</a>
-            <a href="users.php" class="nav-link"><i class="fas fa-user-friends"></i> Utilisateurs</a>
-        </nav>
-        <div class="mt-auto pt-6 border-t border-white/5">
-            <a href="../../auth/logout.php" class="nav-link !text-red-500"><i class="fas fa-power-off"></i> Déconnexion</a>
-        </div>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
     <main class="main-content">
         <header class="mb-12">

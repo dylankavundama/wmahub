@@ -15,6 +15,7 @@ class WordPressService {
   }
 
   Future<List<dynamic>> fetchPosts({int page = 1, int perPage = 10}) async {
+    Object? exception;
     try {
       final response = await http
           .get(Uri.parse("$baseUrl/posts?_embed&per_page=$perPage&page=$page"))
@@ -29,15 +30,20 @@ class WordPressService {
       }
     } catch (e) {
       debugPrint("Error fetching posts: $e");
+      exception = e;
     }
     if (page == 1) {
       final cached = await CacheService.load('cache_posts_page_1');
-      if (cached is List) return cached;
+      if (cached is List && cached.isNotEmpty) return cached;
+    }
+    if (exception != null) {
+      throw exception;
     }
     return [];
   }
 
   Future<List<dynamic>> fetchHeroSlides() async {
+    Object? exception;
     try {
       final url = "$apiBaseUrl/get_hero_slides.php";
       final response = await http
@@ -53,13 +59,18 @@ class WordPressService {
       }
     } catch (e) {
       debugPrint("Slider API Error (Falling back): $e");
+      exception = e;
     }
     final cached = await CacheService.load('cache_hero_slides');
-    if (cached is List) return cached;
+    if (cached is List && cached.isNotEmpty) return cached;
+    if (exception != null) {
+      throw exception;
+    }
     return [];
   }
 
   Future<Map<String, dynamic>> fetchAboutInfo() async {
+    Object? exception;
     try {
       final url = "$apiBaseUrl/get_about_info.php";
       final response = await http
@@ -75,13 +86,18 @@ class WordPressService {
       }
     } catch (e) {
       debugPrint("About API Error (Falling back): $e");
+      exception = e;
     }
     final cached = await CacheService.load('cache_about_info');
-    if (cached is Map<String, dynamic>) return cached;
+    if (cached is Map<String, dynamic> && cached.isNotEmpty) return cached;
+    if (exception != null) {
+      throw exception;
+    }
     return {};
   }
 
   Future<List<dynamic>> fetchDistributions() async {
+    Object? exception;
     try {
       final url = "$apiBaseUrl/get_distributions.php";
       final response = await http
@@ -97,13 +113,18 @@ class WordPressService {
       }
     } catch (e) {
       debugPrint("Distributions API Error: $e");
+      exception = e;
     }
     final cached = await CacheService.load('cache_distributions');
-    if (cached is List) return cached;
+    if (cached is List && cached.isNotEmpty) return cached;
+    if (exception != null) {
+      throw exception;
+    }
     return [];
   }
 
   Future<List<dynamic>> fetchLatestDistributed() async {
+    Object? exception;
     try {
       final url = "$apiBaseUrl/get_latest_distributed.php";
       final response = await http
@@ -119,13 +140,18 @@ class WordPressService {
       }
     } catch (e) {
       debugPrint("Latest Distributed API Error: $e");
+      exception = e;
     }
     final cached = await CacheService.load('cache_latest_distributed');
-    if (cached is List) return cached;
+    if (cached is List && cached.isNotEmpty) return cached;
+    if (exception != null) {
+      throw exception;
+    }
     return [];
   }
 
   Future<List<dynamic>> fetchAllDistributed({int page = 1, int limit = 20}) async {
+    Object? exception;
     try {
       final url = "$apiBaseUrl/get_all_distributed.php?page=$page&limit=$limit";
       final response = await http
@@ -143,10 +169,14 @@ class WordPressService {
       }
     } catch (e) {
       debugPrint("All Distributed API Error: $e");
+      exception = e;
     }
     if (page == 1) {
       final cached = await CacheService.load('cache_all_distributed_page_1');
-      if (cached is List) return cached;
+      if (cached is List && cached.isNotEmpty) return cached;
+    }
+    if (exception != null) {
+      throw exception;
     }
     return [];
   }

@@ -305,17 +305,19 @@ if (!isset($_GET['pending_push'])) {
         });
 
         // Polling pour le statut du paiement
-        <?php if ((isset($_GET['pending_push']) && isset($_SESSION['pending_order_number'])) || !empty($autoCheckOrderNumber)): 
+        <?php if ((isset($_GET['pending_push']) && isset($_SESSION['pending_order_number'])) || !empty($autoCheckOrderNumber)) { 
             $checkTarget = isset($_GET['pending_push']) ? $_SESSION['pending_order_number'] : $autoCheckOrderNumber;
         ?>
         console.log("Démarrage de la vérification pour : <?= $checkTarget ?>");
+        let checkDelay = 2000;
+        let statusTimeout;
         const checkStatus = async () => {
             try {
                 const response = await fetch(`../api/check-payment-status.php?orderNumber=<?= $checkTarget ?>`);
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    if (typeof statusInterval !== 'undefined') clearInterval(statusInterval);
+                    if (typeof statusTimeout !== 'undefined') clearTimeout(statusTimeout);
                     
                     Swal.fire({
                         icon: 'success',
@@ -329,9 +331,16 @@ if (!isset($_GET['pending_push'])) {
                     }).then(() => {
                         window.location.href = '<?= ($_SESSION['role'] === 'distributeur') ? '../dashboards/distributeur/index.php?payment_success=1' : '../dashboards/artiste/index.php?payment_success=1' ?>';
                     });
+                    return;
                 }
+                
+                // Plan next check with dynamic delay (max 12s)
+                if (checkDelay < 12000) checkDelay += 1000;
+                statusTimeout = setTimeout(checkStatus, checkDelay);
             } catch (error) {
                 console.error("Erreur de vérification :", error);
+                if (checkDelay < 12000) checkDelay += 1000;
+                statusTimeout = setTimeout(checkStatus, checkDelay);
             }
         };
 
@@ -339,16 +348,16 @@ if (!isset($_GET['pending_push'])) {
         <?php if (!isset($_GET['pending_push'])): ?>
             checkStatus();
         <?php else: ?>
-            // Vérifier toutes les 2 secondes (détection rapide pour Push)
-            const statusInterval = setInterval(checkStatus, 2000);
+            // Vérifier avec délai progressif
+            statusTimeout = setTimeout(checkStatus, checkDelay);
             // Arrêter après 5 minutes
             setTimeout(() => {
-                if (typeof statusInterval !== 'undefined') clearInterval(statusInterval);
+                if (typeof statusTimeout !== 'undefined') clearTimeout(statusTimeout);
                 console.log("Polling arrêté après timeout.");
             }, 300000);
         <?php endif; ?>
 
-        <?php endif; ?>
+        <?php } ?>
     </script>
 </body>
 </html>

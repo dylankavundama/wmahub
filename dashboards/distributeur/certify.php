@@ -212,15 +212,16 @@ $pageTitle = 'Certification de Compte - WMA Hub';
         });
 
         // Polling pour le statut du paiement
-        <?php if (isset($_GET['pending_push']) && isset($_SESSION['pending_order_number'])): ?>
-        console.log("Démarrage du polling pour : <?= $_SESSION['pending_order_number'] ?>");
+        <?php if (isset($_GET['pending_push']) && isset($_SESSION['pending_order_number'])) { ?>
+                let checkDelay = 2000;
+        let statusTimeout;
         const checkStatus = async () => {
             try {
                 const response = await fetch(`../../api/check-payment-status.php?orderNumber=<?= $_SESSION['pending_order_number'] ?>`);
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    clearInterval(statusInterval);
+                    if (typeof statusTimeout !== 'undefined') clearTimeout(statusTimeout);
                     Swal.fire({
                         icon: 'success',
                         title: 'Certification Activée !',
@@ -233,20 +234,27 @@ $pageTitle = 'Certification de Compte - WMA Hub';
                     }).then(() => {
                         window.location.href = 'index.php?payment_success=1';
                     });
+                    return;
                 }
+                
+                // Plan next check with dynamic delay (max 12s)
+                if (checkDelay < 12000) checkDelay += 1000;
+                statusTimeout = setTimeout(checkStatus, checkDelay);
             } catch (error) {
                 console.error("Erreur de vérification :", error);
+                if (checkDelay < 12000) checkDelay += 1000;
+                statusTimeout = setTimeout(checkStatus, checkDelay);
             }
         };
 
-        // Vérifier toutes les 2 secondes (détection rapide)
-        const statusInterval = setInterval(checkStatus, 2000);
+        // Vérifier avec délai progressif
+        statusTimeout = setTimeout(checkStatus, checkDelay);
         // Arrêter après 5 minutes
         setTimeout(() => {
-            clearInterval(statusInterval);
+            if (typeof statusTimeout !== 'undefined') clearTimeout(statusTimeout);
             console.log("Polling arrêté après timeout.");
         }, 300000);
-        <?php endif; ?>
+        <?php } ?>
     </script>
 </body>
 </html>

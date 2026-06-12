@@ -118,7 +118,6 @@ if (isset($_POST['pay_card'])) {
         $error = "Erreur FlexPay : " . ($result['message'] ?? "L'initiation du paiement a échoué.");
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -264,37 +263,37 @@ if (isset($_POST['pay_card'])) {
                     <h3 class="text-2xl font-bold mb-4">Finaliser le paiement</h3>
                     <p class="text-gray-400 mb-8">Votre demande est prête. Une fois le paiement de <?= getSetting('card_fee_usd', 1) ?>$ (<?= number_format(getSetting('card_fee_cdf', 3000), 0, '.', ' ') ?> FC) effectué, notre équipe validera votre carte sous 24h.</p>
                     
-                    <div class="mb-8">
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Choisir l'opérateur</label>
-                        <div class="grid grid-cols-4 gap-4">
-                            <label class="cursor-pointer group">
-                                <input type="radio" name="operator" value="Orange" class="peer sr-only" checked>
-                                <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:shadow-[0_0_20px_rgba(255,102,0,0.3)] group-hover:scale-105">
-                                    <img src="../../asset/img/operators/orange.png" alt="Orange" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
-                                </div>
-                            </label>
-                            <label class="cursor-pointer group">
-                                <input type="radio" name="operator" value="Airtel" class="peer sr-only">
-                                <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-red-500 peer-checked:bg-red-500/10 peer-checked:shadow-[0_0_20px_rgba(239,68,68,0.3)] group-hover:scale-105">
-                                    <img src="../../asset/img/operators/airtel.png" alt="Airtel" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
-                                </div>
-                            </label>
-                            <label class="cursor-pointer group">
-                                <input type="radio" name="operator" value="Vodacom" class="peer sr-only">
-                                <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-red-600 peer-checked:bg-red-600/10 peer-checked:shadow-[0_0_20px_rgba(220,38,38,0.3)] group-hover:scale-105">
-                                    <img src="../../asset/img/operators/vodacom.png" alt="Vodacom" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
-                                </div>
-                            </label>
-                            <label class="cursor-pointer group">
-                                <input type="radio" name="operator" value="Africell" class="peer sr-only">
-                                <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-purple-500 peer-checked:bg-purple-500/10 peer-checked:shadow-[0_0_20px_rgba(168,85,247,0.3)] group-hover:scale-105">
-                                    <img src="../../asset/img/operators/africell.png" alt="Africell" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
                     <form method="POST" class="space-y-6">
+                        <div class="mb-8">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Choisir l'opérateur</label>
+                            <div class="grid grid-cols-4 gap-4">
+                                <label class="cursor-pointer group">
+                                    <input type="radio" name="operator" value="Orange" class="peer sr-only" checked>
+                                    <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-orange-500 peer-checked:bg-orange-500/10 peer-checked:shadow-[0_0_20px_rgba(255,102,0,0.3)] group-hover:scale-105">
+                                        <img src="../../asset/img/operators/orange.png" alt="Orange" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer group">
+                                    <input type="radio" name="operator" value="Airtel" class="peer sr-only">
+                                    <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-red-500 peer-checked:bg-red-500/10 peer-checked:shadow-[0_0_20px_rgba(239,68,68,0.3)] group-hover:scale-105">
+                                        <img src="../../asset/img/operators/airtel.png" alt="Airtel" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer group">
+                                    <input type="radio" name="operator" value="Vodacom" class="peer sr-only">
+                                    <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-red-600 peer-checked:bg-red-600/10 peer-checked:shadow-[0_0_20px_rgba(220,38,38,0.3)] group-hover:scale-105">
+                                        <img src="../../asset/img/operators/vodacom.png" alt="Vodacom" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer group">
+                                    <input type="radio" name="operator" value="Africell" class="peer sr-only">
+                                    <div class="aspect-square rounded-2xl border-2 border-gray-700 bg-gray-900/50 flex items-center justify-center p-3 transition-all peer-checked:border-purple-500 peer-checked:bg-purple-500/10 peer-checked:shadow-[0_0_20px_rgba(168,85,247,0.3)] group-hover:scale-105">
+                                        <img src="../../asset/img/operators/africell.png" alt="Africell" class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all opacity-70 group-hover:opacity-100 peer-checked:opacity-100">
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <label class="cursor-pointer">
                                 <input type="radio" name="currency" value="USD" checked class="sr-only peer">
@@ -317,7 +316,6 @@ if (isset($_POST['pay_card'])) {
                     </form>
                 </div>
 
-                <!-- Preview of data -->
                 <div class="glass-card border-orange-500/20 bg-orange-500/5">
                     <h4 class="text-sm font-black uppercase tracking-widest text-orange-500 mb-6">Aperçu des informations</h4>
                     <div class="flex items-center gap-6 mb-8">
@@ -376,7 +374,6 @@ if (isset($_POST['pay_card'])) {
                     <button class="btn-premium w-full mt-8 opacity-50 cursor-not-allowed">Télécharger la Carte (Bientôt)</button>
                 </div>
                 
-                <!-- Front Card Preview -->
                 <div class="glass-card relative overflow-hidden h-[350px] flex flex-col justify-between p-10 border-orange-500/30">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                     <div class="flex justify-between items-start">
@@ -407,7 +404,7 @@ if (isset($_POST['pay_card'])) {
                         </div>
                     </div>
                 </div>
-             </div>
+            </div>
         <?php endif; ?>
     </main>
 
@@ -421,15 +418,16 @@ if (isset($_POST['pay_card'])) {
         });
 
         // Polling pour le statut du paiement
-        <?php if (isset($_GET['pending_push']) && isset($_SESSION['pending_order_number'])): ?>
-        console.log("Démarrage du polling pour : <?= $_SESSION['pending_order_number'] ?>");
+        <?php if (isset($_GET['pending_push']) && isset($_SESSION['pending_order_number'])) { ?>
+        let checkDelay = 2000;
+        let statusTimeout;
         const checkStatus = async () => {
             try {
                 const response = await fetch(`../../api/check-payment-status.php?orderNumber=<?= $_SESSION['pending_order_number'] ?>`);
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    clearInterval(statusInterval);
+                    if (typeof statusTimeout !== 'undefined') clearTimeout(statusTimeout);
                     Swal.fire({
                         icon: 'success',
                         title: 'Paiement Validé !',
@@ -442,20 +440,27 @@ if (isset($_POST['pay_card'])) {
                     }).then(() => {
                         window.location.href = 'service_card.php?success=1';
                     });
+                    return;
                 }
+                
+                // Plan next check with dynamic delay (max 12s)
+                if (checkDelay < 12000) checkDelay += 1000;
+                statusTimeout = setTimeout(checkStatus, checkDelay);
             } catch (error) {
                 console.error("Erreur de vérification :", error);
+                if (checkDelay < 12000) checkDelay += 1000;
+                statusTimeout = setTimeout(checkStatus, checkDelay);
             }
         };
 
-        // Vérifier toutes les 2 secondes (détection rapide)
-        const statusInterval = setInterval(checkStatus, 2000);
+        // Vérifier avec délai progressif
+        statusTimeout = setTimeout(checkStatus, checkDelay);
         // Arrêter après 5 minutes
         setTimeout(() => {
-            clearInterval(statusInterval);
+            if (typeof statusTimeout !== 'undefined') clearTimeout(statusTimeout);
             console.log("Polling arrêté après timeout.");
         }, 300000);
-        <?php endif; ?>
+        <?php } ?>
     </script>
 </body>
 </html>

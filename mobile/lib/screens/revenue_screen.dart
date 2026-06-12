@@ -43,24 +43,46 @@ class _RevenueScreenState extends State<RevenueScreen> {
     }
   }
 
-  Future<void> _fetchRevenues() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchRevenues({bool isBackground = false}) async {
+    if (_revenueData == null && !isBackground) {
+      setState(() => _isLoading = true);
+    }
+
+    if (_revenueData == null) {
+      final cached = await CacheService.load('cache_artist_revenues_${widget.userId}');
+      if (cached is Map<String, dynamic> && cached.isNotEmpty && mounted) {
+        setState(() {
+          _revenueData = cached;
+          _isLoading = false;
+        });
+      }
+    }
+
     try {
       final response = await http.get(
         Uri.parse(
           "${WordPressService.apiBaseUrl}/get_artist_revenues.php?user_id=${widget.userId}",
         ),
-      );
+      ).timeout(const Duration(seconds: 15));
+
       final data = json.decode(response.body);
       if (data['success'] == true) {
         await CacheService.save('cache_artist_revenues_${widget.userId}', data['data']);
-        setState(() => _revenueData = data['data']);
+        if (mounted) {
+          setState(() {
+            _revenueData = data['data'];
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint("Error: $e");
       final cached = await CacheService.load('cache_artist_revenues_${widget.userId}');
       if (mounted && cached != null) {
-        setState(() => _revenueData = cached);
+        setState(() {
+          _revenueData = cached;
+          _isLoading = false;
+        });
       }
     } finally {
       if (mounted) {

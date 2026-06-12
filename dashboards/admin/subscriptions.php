@@ -110,28 +110,7 @@ $total_in_cdf = $rev_cdf + ($rev_usd * $exchange_rate);
     <div id="wma-global-loader"><div class="loader-spin"></div></div>
     <div class="bg-glow"></div>
 
-    <aside class="sidebar">
-        <div class="flex items-center gap-4 mb-12 px-2">
-            <img src="../../asset/trans.png" alt="Logo" class="h-10">
-            <div>
-                <h1 class="text-xl font-black bg-gradient-to-r from-orange-500 to-orange-300 bg-clip-text text-transparent tracking-tighter leading-tight">WMA HUB</h1>
-                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[1px] -mt-1">We move, WMAFam</p>
-            </div>
-        </div>
-        <nav class="flex-1">
-            <a href="index.php" class="nav-link"><i class="fas fa-layer-group"></i> Gestion Projets</a>
-            <a href="subscriptions.php" class="nav-link active"><i class="fas fa-crown"></i> Abonnements</a>
-            <a href="revenues.php" class="nav-link"><i class="fas fa-wallet"></i> Revenus Gérés</a>
-            <a href="employees.php" class="nav-link"><i class="fas fa-users-cog"></i> Équipe & Staff</a>
-            <a href="tasks.php" class="nav-link"><i class="fas fa-tasks"></i> Gestion Tâches</a>
-            <a href="salaries.php" class="nav-link"><i class="fas fa-money-check-alt"></i> Gestion Salaires</a>
-            <a href="finance.php" class="nav-link"><i class="fas fa-chart-pie"></i> Rapports Financiers</a>
-            <a href="users.php" class="nav-link"><i class="fas fa-user-friends"></i> Utilisateurs</a>
-        </nav>
-        <div class="mt-auto pt-6 border-t border-white/5">
-            <a href="../../auth/logout.php" class="nav-link !text-red-500"><i class="fas fa-power-off"></i> Déconnexion</a>
-        </div>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
     <main class="main-content">
         <header class="flex justify-between items-center mb-12">

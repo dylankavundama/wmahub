@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/wordpress_service.dart';
+import '../services/cache_service.dart';
 import '../utils/app_theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'distribution_detail_screen.dart';
@@ -23,14 +23,36 @@ class _DistributionsScreenState extends State<DistributionsScreen> {
     _loadDistributions();
   }
 
-  Future<void> _loadDistributions() async {
-    setState(() => _isLoading = true);
-    final data = await _wpService.fetchDistributions();
-    if (!mounted) return;
-    setState(() {
-      _distributions = data;
-      _isLoading = false;
-    });
+  Future<void> _loadDistributions({bool isBackground = false}) async {
+    if (_distributions.isEmpty && !isBackground) {
+      setState(() => _isLoading = true);
+    }
+    
+    if (_distributions.isEmpty) {
+      final cached = await CacheService.load('cache_distributions');
+      if (cached is List && cached.isNotEmpty && mounted) {
+        setState(() {
+          _distributions = cached;
+          _isLoading = false;
+        });
+      }
+    }
+
+    try {
+      final data = await _wpService.fetchDistributions();
+      if (!mounted) return;
+      setState(() {
+        _distributions = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Error loading distributions: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override

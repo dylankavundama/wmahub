@@ -31,8 +31,8 @@ function verifyFirebaseIdToken(string $idToken): array
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => json_encode(['idToken' => $idToken]),
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 15,
-        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT        => 7,
+        CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
         CURLOPT_SSL_VERIFYPEER => true,
     ]);

@@ -168,7 +168,7 @@ class AuthService {
 
     final response = await http
         .post(Uri.parse(apiUrl), body: body)
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 30));
 
     Map<String, dynamic> data;
     try {
@@ -219,7 +219,7 @@ class AuthService {
             Uri.parse("${WordPressService.apiBaseUrl}/update_user_role.php"),
             body: {'user_id': userId.toString(), 'role': role},
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
 
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {

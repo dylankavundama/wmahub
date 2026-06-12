@@ -24,22 +24,44 @@ class _NotificationScreenState extends State<NotificationScreen> {
     _fetchNotifications();
   }
 
-  Future<void> _fetchNotifications() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchNotifications({bool isBackground = false}) async {
+    if (_notifications.isEmpty && !isBackground) {
+      setState(() => _isLoading = true);
+    }
+
+    if (_notifications.isEmpty) {
+      final cached = await CacheService.load('cache_notifications_${widget.userId}');
+      if (cached is List && cached.isNotEmpty && mounted) {
+        setState(() {
+          _notifications = cached;
+          _isLoading = false;
+        });
+      }
+    }
+
     try {
       final response = await http.get(
         Uri.parse("${WordPressService.apiBaseUrl}/get_notifications.php?user_id=${widget.userId}"),
-      );
+      ).timeout(const Duration(seconds: 10));
+
       final data = json.decode(response.body);
       if (data['success'] == true) {
         await CacheService.save('cache_notifications_${widget.userId}', data['data']);
-        setState(() => _notifications = data['data']);
+        if (mounted) {
+          setState(() {
+            _notifications = data['data'];
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       debugPrint("Error: $e");
       final cached = await CacheService.load('cache_notifications_${widget.userId}');
       if (mounted && cached != null) {
-        setState(() => _notifications = cached);
+        setState(() {
+          _notifications = cached;
+          _isLoading = false;
+        });
       }
     } finally {
       if (mounted) {

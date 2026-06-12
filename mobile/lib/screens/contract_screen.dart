@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import '../utils/app_theme.dart';
 import 'main_navigation.dart';
 import '../services/wordpress_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ContractScreen extends StatefulWidget {
   final int userId;
@@ -204,10 +205,10 @@ class _ContractScreenState extends State<ContractScreen> {
         fit: StackFit.expand,
         children: [
           // Background Image
-          Image.network(
-            'https://wmahub.com/asset/aspi.jpg',
+          CachedNetworkImage(
+            imageUrl: 'https://wmahub.com/asset/aspi.jpg',
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
+            errorWidget: (context, url, error) =>
                 Container(color: Colors.black),
           ),
 
