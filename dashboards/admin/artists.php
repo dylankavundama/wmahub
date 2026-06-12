@@ -21,17 +21,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_status'])) {
     exit;
 }
 
-// Récupérer les artistes avec statistiques
+// Traitement du toggle d'artiste UA
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_ua'])) {
+    $userId = (int)$_POST['user_id'];
+    $newUaStatus = (int)$_POST['new_ua_status'];
+    
+    // Vérifier si un enregistrement existe déjà dans ua_artists pour cet utilisateur
+    $stmt = $db->prepare("SELECT id FROM ua_artists WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $uaArtist = $stmt->fetch();
+    
+    if ($uaArtist) {
+        // Enregistrement existant : mettre à jour le statut is_ua
+        $stmt = $db->prepare("UPDATE ua_artists SET is_ua = ? WHERE user_id = ?");
+        $stmt->execute([$newUaStatus, $userId]);
+    } else {
+        // Enregistrement inexistant : créer un nouvel enregistrement
+        // Récupérer les informations de l'artiste depuis la table users
+        $stmt = $db->prepare("SELECT name, photo_url FROM users WHERE id = ? AND role = 'artiste'");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        
+        if ($user) {
+            $name = $user['name'];
+            $photo_url = $user['photo_url'] ?? null;
+            // Insérer dans ua_artists
+            $stmt = $db->prepare("INSERT INTO ua_artists (name, photo_url, is_ua, user_id) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$name, $photo_url, $newUaStatus, $userId]);
+        }
+    }
+    
+    header('Location: artists.php');
+    exit;
+}
+
+// Récupérer les artistes avec statistiques et statut UA
 $query = "SELECT u.*, 
                  (SELECT COUNT(*) FROM projects WHERE user_id = u.id) as project_count,
                  s.status as sub_status, 
-                 s.end_date as sub_end_date
+                 s.end_date as sub_end_date,
+                 ua.is_ua
           FROM users u 
           LEFT JOIN (
               SELECT user_id, status, end_date
               FROM subscriptions
               WHERE id IN (SELECT MAX(id) FROM subscriptions GROUP BY user_id)
           ) s ON u.id = s.user_id
+          LEFT JOIN ua_artists ua ON u.id = ua.user_id
           WHERE u.role = 'artiste'
           ORDER BY u.created_at DESC";
 
@@ -81,6 +117,12 @@ $pageTitle = 'Gestion des Artistes - Admin';
             <p class="text-gray-400 mt-2">Suivez les activités, abonnements et accès des artistes de la plateforme.</p>
         </header>
 
+        <!-- Barre de recherche -->
+        <div class="mb-6 flex max-w-md bg-white/5 border border-white/10 rounded-xl px-4 py-3 items-center gap-3">
+            <i class="fas fa-search text-gray-400"></i>
+            <input type="text" id="artistSearch" placeholder="Rechercher par nom ou email..." class="bg-transparent text-white placeholder-gray-500 text-sm outline-none w-full">
+        </div>
+
         <div class="glass-card p-0 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="admin-table text-left">
@@ -97,6 +139,7 @@ $pageTitle = 'Gestion des Artistes - Admin';
                     <tbody>
                         <?php foreach ($artists as $a): 
                             $isActive = (bool)$a['is_active'];
+                            $isUa = isset($a['is_ua']) ? (bool)$a['is_ua'] : false;
                             $subStatus = $a['sub_status'] ?? 'aucun';
                             $subColor = match($subStatus) {
                                 'active' => 'bg-green-500/10 text-green-500',
@@ -111,7 +154,12 @@ $pageTitle = 'Gestion des Artistes - Admin';
                                             <i class="fas fa-user"></i>
                                         </div>
                                         <div>
-                                            <div class="font-bold text-white"><?= htmlspecialchars($a['name']) ?></div>
+                                            <div class="font-bold text-white flex items-center gap-2">
+                                                <?= htmlspecialchars($a['name']) ?>
+                                                <?php if ($isUa): ?>
+                                                    <span class="text-[9px] bg-orange-500/20 text-orange-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">UA</span>
+                                                <?php endif; ?>
+                                            </div>
                                             <div class="text-[9px] text-gray-500 uppercase tracking-tighter"><?= htmlspecialchars($a['email']) ?></div>
                                         </div>
                                     </div>
@@ -136,14 +184,27 @@ $pageTitle = 'Gestion des Artistes - Admin';
                                     </span>
                                 </td>
                                 <td>
-                                    <form method="POST" onsubmit="return confirm('Voulez-vous vraiment changer l\'état de cet artiste ?')">
-                                        <input type="hidden" name="user_id" value="<?= $a['id'] ?>">
-                                        <input type="hidden" name="new_status" value="<?= $isActive ? 0 : 1 ?>">
-                                        <button type="submit" name="toggle_status" class="btn-toggle <?= $isActive ? 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white' ?>">
-                                            <i class="fas <?= $isActive ? 'fa-user-slash' : 'fa-user-check' ?> mr-2"></i>
-                                            <?= $isActive ? 'Suspendre' : 'Rétablir' ?>
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center gap-2">
+                                        <!-- Statut Actif/Suspendu -->
+                                        <form method="POST" onsubmit="return confirm('Voulez-vous vraiment changer l\'état de cet artiste ?')">
+                                            <input type="hidden" name="user_id" value="<?= $a['id'] ?>">
+                                            <input type="hidden" name="new_status" value="<?= $isActive ? 0 : 1 ?>">
+                                            <button type="submit" name="toggle_status" class="btn-toggle <?= $isActive ? 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white' : 'bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white' ?>">
+                                                <i class="fas <?= $isActive ? 'fa-user-slash' : 'fa-user-check' ?> mr-2"></i>
+                                                <?= $isActive ? 'Suspendre' : 'Rétablir' ?>
+                                            </button>
+                                        </form>
+
+                                        <!-- Statut Artiste UA -->
+                                        <form method="POST" onsubmit="return confirm('Voulez-vous vraiment modifier le statut Artiste UA de cet artiste ?')">
+                                            <input type="hidden" name="user_id" value="<?= $a['id'] ?>">
+                                            <input type="hidden" name="new_ua_status" value="<?= $isUa ? 0 : 1 ?>">
+                                            <button type="submit" name="toggle_ua" class="btn-toggle <?= $isUa ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white' : 'bg-gray-500/10 text-gray-400 hover:bg-gray-500 hover:text-white' ?>">
+                                                <i class="fas fa-microphone-alt mr-2"></i>
+                                                <?= $isUa ? 'Retirer UA' : 'Promouvoir UA' ?>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -162,6 +223,42 @@ $pageTitle = 'Gestion des Artistes - Admin';
             if (loader) {
                 loader.style.opacity = '0';
                 setTimeout(() => loader.style.display = 'none', 500);
+            }
+        });
+
+        // Filtrage de la table des artistes
+        const searchInput = document.getElementById('artistSearch');
+        const tableRows = document.querySelectorAll('.admin-table tbody tr');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+            let noMatchRow = document.getElementById('no-match-row');
+            
+            tableRows.forEach(row => {
+                if (row.id === 'no-match-row') return;
+                if (row.cells.length < 6) return; // ignorer la ligne vide par défaut
+
+                const content = row.cells[0].textContent.toLowerCase();
+                if (content.includes(query)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0 && query !== '') {
+                if (!noMatchRow) {
+                    noMatchRow = document.createElement('tr');
+                    noMatchRow.id = 'no-match-row';
+                    noMatchRow.innerHTML = `<td colspan="6" class="text-center py-20 text-gray-500 italic">Aucun artiste ne correspond à votre recherche.</td>`;
+                    document.querySelector('.admin-table tbody').appendChild(noMatchRow);
+                } else {
+                    noMatchRow.style.display = '';
+                }
+            } else if (noMatchRow) {
+                noMatchRow.style.display = 'none';
             }
         });
     </script>

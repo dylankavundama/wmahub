@@ -32,7 +32,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
             ['file' => 'logs.php', 'icon' => 'fas fa-exclamation-triangle text-red-500', 'label' => 'Journaux d\'Erreurs'],
             ['file' => 'comptabilite.php', 'icon' => 'fas fa-calculator', 'label' => 'Comptabilité'],
             ['file' => 'hero_slider.php', 'icon' => 'fas fa-images', 'label' => 'Gestion Slider'],
-            ['file' => 'distributions.php', 'icon' => 'fas fa-music', 'label' => 'Distributions Vitrine'],
             ['file' => 'users.php', 'icon' => 'fas fa-user-friends', 'label' => 'Utilisateurs'],
         ];
 
@@ -40,6 +39,20 @@ $current_page = basename($_SERVER['PHP_SELF']);
             $active = ($current_page === $item['file']) ? 'active' : '';
             echo '<a href="' . $item['file'] . '" class="nav-link ' . $active . '"><i class="' . $item['icon'] . '"></i> ' . $item['label'] . '</a>';
         }
+
+        // Section WMA United Africa (UA)
+        echo '<div class="mt-6 pt-4 border-t border-white/5">';
+        echo '<p class="text-[9px] text-orange-500 font-black uppercase tracking-widest px-4 mb-2">WMA United Africa (UA)</p>';
+        
+        $ua_menu_items = [
+            ['file' => 'ua_artists.php', 'icon' => 'fas fa-microphone-alt', 'label' => 'Artistes UA'],
+            ['file' => 'ua_distributions.php', 'icon' => 'fas fa-music', 'label' => 'Distributions UA'],
+        ];
+        foreach ($ua_menu_items as $item) {
+            $active = ($current_page === $item['file']) ? 'active' : '';
+            echo '<a href="' . $item['file'] . '" class="nav-link ' . $active . '"><i class="' . $item['icon'] . '"></i> ' . $item['label'] . '</a>';
+        }
+        echo '</div>';
         
         if (isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin') {
             echo '<div class="mt-4 pt-4 border-t border-white/5">';

@@ -66,6 +66,22 @@ $schema_requirements = [
             `post_id` INT PRIMARY KEY,
             `views_count` INT DEFAULT 0,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;",
+
+        'ua_artists' => "CREATE TABLE `ua_artists` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `name` VARCHAR(255) NOT NULL,
+            `photo_url` VARCHAR(255),
+            `onerpm_link` VARCHAR(255),
+            `bio` TEXT,
+            `is_ua` TINYINT(1) DEFAULT 0,
+            `user_id` INT NULL DEFAULT NULL,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;",
+
+        'visite_ua' => "CREATE TABLE `visite_ua` (
+            `visit_date` DATE PRIMARY KEY,
+            `visits` INT NOT NULL DEFAULT 0
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;"
     ],
     'columns' => [
@@ -108,6 +124,35 @@ $schema_requirements = [
                 'type' => 'TINYINT(1) DEFAULT 0',
                 'after' => 'rating',
                 'sql' => "ALTER TABLE `tasks` ADD COLUMN `is_archived` TINYINT(1) DEFAULT 0 AFTER `rating`;"
+            ]
+        ],
+        'distributions' => [
+            'artist_id' => [
+                'type' => 'INT NULL DEFAULT NULL',
+                'after' => 'artist',
+                'sql' => "ALTER TABLE `distributions` ADD COLUMN `artist_id` INT NULL DEFAULT NULL AFTER `artist`;"
+            ],
+            'type' => [
+                'type' => "VARCHAR(50) DEFAULT 'Single'",
+                'after' => 'title',
+                'sql' => "ALTER TABLE `distributions` ADD COLUMN `type` VARCHAR(50) DEFAULT 'Single' AFTER `title`;"
+            ],
+            'release_date' => [
+                'type' => 'DATE NULL DEFAULT NULL',
+                'after' => 'type',
+                'sql' => "ALTER TABLE `distributions` ADD COLUMN `release_date` DATE NULL DEFAULT NULL AFTER `type`;"
+            ]
+        ],
+        'ua_artists' => [
+            'is_ua' => [
+                'type' => 'TINYINT(1) DEFAULT 0',
+                'after' => 'bio',
+                'sql' => "ALTER TABLE `ua_artists` ADD COLUMN `is_ua` TINYINT(1) DEFAULT 0 AFTER `bio`;"
+            ],
+            'user_id' => [
+                'type' => 'INT NULL DEFAULT NULL',
+                'after' => 'is_ua',
+                'sql' => "ALTER TABLE `ua_artists` ADD COLUMN `user_id` INT NULL DEFAULT NULL AFTER `is_ua`;"
             ]
         ]
     ],
@@ -171,6 +216,25 @@ try {
                     ];
                 }
             }
+        }
+        
+        // Initialisation de la table visite_ua si elle est vide
+        try {
+            $existingTables = getExistingTables($db);
+            if (in_array('visite_ua', $existingTables)) {
+                $count_stmt = $db->query("SELECT COUNT(*) FROM `visite_ua`");
+                if ($count_stmt->fetchColumn() == 0) {
+                    $db->exec("INSERT INTO `visite_ua` (`visit_date`, `visits`) VALUES ('2026-06-11', 100);");
+                    $update_results[] = [
+                        'type' => 'table_seed',
+                        'target' => 'visite_ua',
+                        'success' => true,
+                        'message' => "Table 'visite_ua' initialisée avec 100 visites."
+                    ];
+                }
+            }
+        } catch (PDOException $e) {
+            // Ignorer l'erreur ou l'ajouter aux logs
         }
         
         // 2. Ajout des colonnes manquantes

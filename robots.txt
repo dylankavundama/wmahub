@@ -1,0 +1,13 @@
+# robots.txt for https://wmahub.com
+User-agent: *
+Allow: /
+
+# Exclude sensitive dashboard and admin directories from search results
+Disallow: /dashboards/
+Disallow: /auth/
+Disallow: /includes/
+Disallow: /api/
+Disallow: /vendor/
+
+# Link to your XML sitemap
+Sitemap: https://wmahub.com/sitemap.xml
