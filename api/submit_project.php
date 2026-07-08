@@ -27,6 +27,7 @@ try {
     $project_type = $_POST['project_type'] ?? 'Single';
     $genre = $_POST['genre'] ?? 'Afrobeats';
     $user_id = $_POST['user_id'] ?? 0;
+    $platforms = $_POST['platforms'] ?? '';
 
     if (empty($title) || empty($artist_name) || empty($email) || empty($full_name)) {
         throw new Exception("Tous les champs obligatoires (*) doivent être remplis.");
@@ -54,8 +55,8 @@ try {
 
     // Insert into the 'projects' table used by the web dashboard
     $sql = "INSERT INTO projects 
-            (user_id, title, artist_name, full_name, email, type, genre, date_sortie, status, audio_file, cover_file, authorization, phone, city, languages, details, promo_pack) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            (user_id, title, artist_name, full_name, email, type, genre, date_sortie, status, audio_file, cover_file, authorization, phone, city, languages, details, promo_pack, platforms) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $db->prepare($sql);
     $stmt->execute([
@@ -75,7 +76,8 @@ try {
         $city,
         $languages,
         $details,
-        $promo_pack
+        $promo_pack,
+        $platforms
     ]);
 
     // Notification par Email à l'administrateur (Caleb & Team)

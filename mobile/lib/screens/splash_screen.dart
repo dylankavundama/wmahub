@@ -96,9 +96,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 // color: AppTheme.primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Image.asset('assets/logo.png', fit: BoxFit.cover, height: 150, width: 150),
+              child: Image.asset('assets/logo.png', fit: BoxFit.cover, height: 200, width: 200),
             ).animate().scale(duration: 600.ms).fadeIn(),
-            const SizedBox(height: 30),
+            const SizedBox(height: 50),
             // const Text(
             //   'WMA UA',
             //   style: TextStyle(

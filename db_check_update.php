@@ -82,6 +82,15 @@ $schema_requirements = [
         'visite_ua' => "CREATE TABLE `visite_ua` (
             `visit_date` DATE PRIMARY KEY,
             `visits` INT NOT NULL DEFAULT 0
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;",
+
+        'ua_coming_soon' => "CREATE TABLE `ua_coming_soon` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `title` VARCHAR(255) NOT NULL,
+            `image_url` VARCHAR(255) DEFAULT '',
+            `end_date` DATETIME NULL DEFAULT NULL,
+            `is_active` TINYINT(1) DEFAULT 1,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;"
     ],
     'columns' => [
@@ -117,6 +126,11 @@ $schema_requirements = [
                 'type' => 'TEXT NULL DEFAULT NULL',
                 'after' => 'languages',
                 'sql' => "ALTER TABLE `projects` ADD COLUMN `provided_files` TEXT NULL DEFAULT NULL AFTER `languages`;"
+            ],
+            'platforms' => [
+                'type' => 'TEXT NULL DEFAULT NULL',
+                'after' => 'provided_files',
+                'sql' => "ALTER TABLE `projects` ADD COLUMN `platforms` TEXT NULL DEFAULT NULL AFTER `provided_files`;"
             ]
         ],
         'tasks' => [
@@ -153,6 +167,13 @@ $schema_requirements = [
                 'type' => 'INT NULL DEFAULT NULL',
                 'after' => 'is_ua',
                 'sql' => "ALTER TABLE `ua_artists` ADD COLUMN `user_id` INT NULL DEFAULT NULL AFTER `is_ua`;"
+            ]
+        ],
+        'ua_coming_soon' => [
+            'end_date' => [
+                'type' => 'DATETIME NULL DEFAULT NULL',
+                'after' => 'image_url',
+                'sql' => "ALTER TABLE `ua_coming_soon` ADD COLUMN `end_date` DATETIME NULL DEFAULT NULL AFTER `image_url`;"
             ]
         ]
     ],

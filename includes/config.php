@@ -52,9 +52,13 @@ define('GOOGLE_REDIRECT_URL', getenv('GOOGLE_REDIRECT_URL') ?: $baseUrl . '/auth
 define('APPLE_REDIRECT_URL', getenv('APPLE_REDIRECT_URL') ?: $baseUrl . '/auth/apple_callback.php');
 
 /**
- * Retourne une instance de connexion PDO
+ * Retourne une instance de connexion PDO (Optimisé avec cache/singleton)
  */
 function getDBConnection() {
+    static $pdo = null;
+    if ($pdo !== null) {
+        return $pdo;
+    }
     try {
         $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
         $options = [
@@ -62,9 +66,33 @@ function getDBConnection() {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ];
-        return new PDO($dsn, DB_USER, DB_PASS, $options);
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        return $pdo;
     } catch (PDOException $e) {
         die("Erreur de connexion : " . $e->getMessage());
+    }
+}
+
+/**
+ * Vérifie si une colonne existe dans une table (Optimisé avec cache statique)
+ */
+if (!function_exists('columnExists')) {
+    function columnExists(PDO $db, string $table, string $column): bool {
+        static $columnCache = [];
+        $key = "$table.$column";
+        if (isset($columnCache[$key])) {
+            return $columnCache[$key];
+        }
+        try {
+            $stmt = $db->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
+            $stmt->execute([$column]);
+            $exists = $stmt->rowCount() > 0;
+            $columnCache[$key] = $exists;
+            return $exists;
+        } catch (Exception $e) {
+            $columnCache[$key] = false;
+            return false;
+        }
     }
 }
 
@@ -121,8 +149,6 @@ if (isset($_SESSION['user_id'])) {
  * Système de suivi analytique et erreurs
  */
 if (php_sapi_name() !== 'cli') {
-    $db_stats = getDBConnection();
-    
     // Suivi des visites
     $current_page = $_SERVER['SCRIPT_NAME'];
     
@@ -130,12 +156,11 @@ if (php_sapi_name() !== 'cli') {
     if (strpos($current_page, '.php') !== false && strpos($current_page, '/api/') === false) {
         // Log de la visite individuelle
         try {
+            $db_stats = getDBConnection();
             $stmt_visit = $db_stats->prepare("INSERT INTO site_visits (page) VALUES (?)");
             $stmt_visit->execute([$current_page]);
-        } catch (Exception $e) {}
 
-        // Incrémenter le compteur de visiteurs global (Indépendant du log)
-        try {
+            // Incrémenter le compteur de visiteurs global (Indépendant du log)
             // S'assurer que le compteur id=1 existe, sinon l'initialiser
             $db_stats->query("INSERT IGNORE INTO visitor_stats (id, count) VALUES (1, 0)");
             $db_stats->query("UPDATE visitor_stats SET count = count + 1 WHERE id = 1");
@@ -286,10 +311,11 @@ if (php_sapi_name() !== 'cli') {
     }
 
     // Gestionnaire d'erreurs personnalisé
-    set_error_handler(function($errno, $errstr, $errfile, $errline) use ($db_stats) {
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
         if (!(error_reporting() & $errno)) return false;
-        // Enregistrement en DB
+        // Enregistrement en DB (Connexion différée/lazy)
         try {
+            $db_stats = getDBConnection();
             $stmt_err = $db_stats->prepare("INSERT INTO system_errors (message, file, line) VALUES (?, ?, ?)");
             $stmt_err->execute([$errstr, $errfile, $errline]);
         } catch (Exception $e) {}
@@ -299,11 +325,12 @@ if (php_sapi_name() !== 'cli') {
     });
 
     // Capturer les erreurs fatales lors de l'arrêt du script
-    register_shutdown_function(function() use ($db_stats) {
+    register_shutdown_function(function() {
         $error = error_get_last();
         if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-            // Enregistrement en DB
+            // Enregistrement en DB (Connexion différée/lazy)
             try {
+                $db_stats = getDBConnection();
                 $stmt_err = $db_stats->prepare("INSERT INTO system_errors (message, file, line) VALUES (?, ?, ?)");
                 $stmt_err->execute(["FATAL: " . $error['message'], $error['file'], $error['line']]);
             } catch (Exception $e) {}

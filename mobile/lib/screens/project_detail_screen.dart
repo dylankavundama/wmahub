@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../utils/app_theme.dart';
 import '../services/notification_service.dart';
 import '../services/audio_cache_service.dart';
+import '../services/audio_playback_service.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Map<String, dynamic> project;
@@ -18,67 +19,89 @@ class ProjectDetailScreen extends StatefulWidget {
 }
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
-  late AudioPlayer _audioPlayer;
+  final AudioPlaybackService _audioPlaybackService = AudioPlaybackService();
   bool _isPlaying = false;
   bool _isLoadingAudio = false;
   bool _isCached = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
-
-
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
     _checkIfAudioCached();
 
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() {
-          _isPlaying = state == PlayerState.playing;
-          if (_isPlaying ||
-              state == PlayerState.paused ||
-              state == PlayerState.stopped) {
-            _isLoadingAudio = false;
-          }
-        });
-      }
+    // Initial state check
+    if (_isCurrentProject()) {
+      _isPlaying = _audioPlaybackService.playerState.value == PlayerState.playing;
+      _isLoadingAudio = _audioPlaybackService.isLoading.value;
+      _duration = _audioPlaybackService.duration.value;
+      _position = _audioPlaybackService.position.value;
+    }
 
-      final String title = widget.project['title'] ?? 'Sans titre';
-      final String artist = widget.project['artist_name'] ?? 'Artiste inconnu';
-      if (state == PlayerState.playing) {
-        NotificationService.showMusicNotification(
-          title: title,
-          artist: artist,
-          isPlaying: true,
-        );
-      } else if (state == PlayerState.paused) {
-        NotificationService.showMusicNotification(
-          title: title,
-          artist: artist,
-          isPlaying: false,
-        );
-      } else if (state == PlayerState.stopped || state == PlayerState.completed) {
-        NotificationService.cancelMusicNotification();
-      }
-    });
+    // Listen to global player state
+    _audioPlaybackService.playerState.addListener(_onPlayerStateChanged);
+    _audioPlaybackService.duration.addListener(_onDurationChanged);
+    _audioPlaybackService.position.addListener(_onPositionChanged);
+    _audioPlaybackService.isLoading.addListener(_onLoadingChanged);
+    _audioPlaybackService.currentProject.addListener(_onCurrentProjectChanged);
+  }
 
-    _audioPlayer.onDurationChanged.listen((newDuration) {
-      if (mounted) {
-        setState(() {
-          _duration = newDuration;
-        });
-      }
-    });
+  void _onPlayerStateChanged() {
+    if (mounted) {
+      final isPlayingThis = _isCurrentProject();
+      setState(() {
+        _isPlaying = isPlayingThis && _audioPlaybackService.playerState.value == PlayerState.playing;
+      });
+    }
+  }
 
-    _audioPlayer.onPositionChanged.listen((newPosition) {
-      if (mounted) {
-        setState(() {
-          _position = newPosition;
-        });
-      }
-    });
+  void _onDurationChanged() {
+    if (mounted && _isCurrentProject()) {
+      setState(() {
+        _duration = _audioPlaybackService.duration.value;
+      });
+    }
+  }
+
+  void _onPositionChanged() {
+    if (mounted && _isCurrentProject()) {
+      setState(() {
+        _position = _audioPlaybackService.position.value;
+      });
+    }
+  }
+
+  void _onLoadingChanged() {
+    if (mounted && _isCurrentProject()) {
+      setState(() {
+        _isLoadingAudio = _audioPlaybackService.isLoading.value;
+      });
+    }
+  }
+
+  void _onCurrentProjectChanged() {
+    if (mounted) {
+      setState(() {
+        // If the project changes, reset UI for this project unless it matches
+        if (!_isCurrentProject()) {
+          _isPlaying = false;
+          _isLoadingAudio = false;
+          _duration = Duration.zero;
+          _position = Duration.zero;
+        } else {
+          _isPlaying = _audioPlaybackService.playerState.value == PlayerState.playing;
+          _isLoadingAudio = _audioPlaybackService.isLoading.value;
+          _duration = _audioPlaybackService.duration.value;
+          _position = _audioPlaybackService.position.value;
+        }
+      });
+    }
+  }
+
+  bool _isCurrentProject() {
+    final cur = _audioPlaybackService.currentProject.value;
+    return cur != null && cur['id'] == widget.project['id'];
   }
 
   Future<void> _checkIfAudioCached() async {
@@ -94,57 +117,42 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
   }
 
-
-
   @override
   void dispose() {
-    NotificationService.cancelMusicNotification();
-    _audioPlayer.dispose();
+    // Remove listeners to avoid memory leaks, but DO NOT stop the player!
+    _audioPlaybackService.playerState.removeListener(_onPlayerStateChanged);
+    _audioPlaybackService.duration.removeListener(_onDurationChanged);
+    _audioPlaybackService.position.removeListener(_onPositionChanged);
+    _audioPlaybackService.isLoading.removeListener(_onLoadingChanged);
+    _audioPlaybackService.currentProject.removeListener(_onCurrentProjectChanged);
     super.dispose();
   }
 
   Future<void> _togglePlay() async {
     HapticFeedback.lightImpact();
-    if (_isPlaying) {
-      await _audioPlayer.pause();
-    } else {
-      String? audioPath =
-          widget.project['audio_path'] ?? widget.project['file_path'];
-      if (audioPath != null && audioPath.isNotEmpty) {
-        String url = "https://wmahub.com/dashboards/artiste/uploads/$audioPath";
+    
+    // Set loading indicator immediately
+    setState(() {
+      _isLoadingAudio = true;
+    });
 
+    try {
+      await _audioPlaybackService.play(widget.project);
+      _checkIfAudioCached(); // recheck cache if it completed
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _isLoadingAudio = true;
+          _isLoadingAudio = false;
         });
-
-        try {
-          final localPath = await AudioCacheService().getOrDownloadAudio(url);
-          if (mounted) {
-            setState(() {
-              _isCached = true;
-            });
-          }
-          await _audioPlayer.play(DeviceFileSource(localPath));
-        } catch (e) {
-          if (mounted) {
-            setState(() {
-              _isLoadingAudio = false;
-            });
-            String errorMsg = 'Erreur lors du chargement de l\'audio';
-            if (e is SocketException || e is HttpException) {
-              errorMsg = 'Connexion internet requise pour télécharger l\'audio';
-            }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMsg),
-              ),
-            );
-          }
+        String errorMsg = 'Erreur lors de la lecture de l\'audio';
+        if (e is SocketException || e is HttpException) {
+          errorMsg = 'Veuillez vérifier votre connexion internet pour lire ce titre';
+        } else if (e.toString().contains('Aucun fichier audio')) {
+          errorMsg = 'Aucun fichier audio disponible pour ce projet';
         }
-      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aucun fichier audio disponible pour ce projet'),
+          SnackBar(
+            content: Text(errorMsg),
           ),
         );
       }
@@ -200,41 +208,57 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            Hero(
-              tag: 'project_cover_${widget.project['id']}',
-              child:
-                  widget.project['cover_path'] != null &&
-                      widget.project['cover_path'] != ""
-                  ? CachedNetworkImage(
-                      imageUrl:
-                          "https://wmahub.com/dashboards/artiste/uploads/${widget.project['cover_path']}",
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      color: AppTheme.cardColor,
-                      child: const Icon(
-                        Icons.music_note,
-                        size: 100,
-                        color: AppTheme.primaryColor,
+        background: GestureDetector(
+          onTap: () {
+            if (widget.project['cover_path'] != null &&
+                widget.project['cover_path'] != "") {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FullScreenImageScreen(
+                    imageUrl:
+                        "https://wmahub.com/dashboards/artiste/uploads/${widget.project['cover_path']}",
+                    heroTag: 'project_cover_${widget.project['id']}',
+                  ),
+                ),
+              );
+            }
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Hero(
+                tag: 'project_cover_${widget.project['id']}',
+                child: widget.project['cover_path'] != null &&
+                        widget.project['cover_path'] != ""
+                    ? CachedNetworkImage(
+                        imageUrl:
+                            "https://wmahub.com/dashboards/artiste/uploads/${widget.project['cover_path']}",
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        color: AppTheme.cardColor,
+                        child: const Icon(
+                          Icons.music_note,
+                          size: 100,
+                          color: AppTheme.primaryColor,
+                        ),
                       ),
-                    ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.3),
-                    AppTheme.backgroundColor,
-                  ],
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.3),
+                      AppTheme.backgroundColor,
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -294,6 +318,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 4.0),
+                      child: Icon(Icons.verified, size: 14, color: Colors.blue),
                     ),
                   ),
                 ],
@@ -391,7 +422,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       value: _position.inSeconds.toDouble(),
                       onChanged: (value) async {
                         final position = Duration(seconds: value.toInt());
-                        await _audioPlayer.seek(position);
+                        await _audioPlaybackService.seek(position);
                       },
                     ),
                     Padding(
@@ -566,5 +597,53 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ),
       ],
     ).animate().fadeIn(delay: 800.ms);
+  }
+}
+
+class FullScreenImageScreen extends StatelessWidget {
+  final String imageUrl;
+  final String heroTag;
+
+  const FullScreenImageScreen({
+    super.key,
+    required this.imageUrl,
+    required this.heroTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      extendBodyBehindAppBar: true,
+      body: Center(
+        child: InteractiveViewer(
+          panEnabled: true,
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Hero(
+            tag: heroTag,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: double.infinity,
+              placeholder: (context, url) => const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              ),
+              errorWidget: (context, url, error) => const Icon(
+                Icons.music_note,
+                size: 100,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

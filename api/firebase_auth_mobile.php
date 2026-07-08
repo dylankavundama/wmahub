@@ -169,21 +169,6 @@ try {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
-function columnExists(PDO $db, string $table, string $column): bool
-{
-    static $cache = [];
-    $key = "$table.$column";
-    if (isset($cache[$key])) {
-        return $cache[$key];
-    }
-    $stmt = $db->prepare(
-        'SELECT COUNT(*) FROM information_schema.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute([$table, $column]);
-    $cache[$key] = (int) $stmt->fetchColumn() > 0;
-    return $cache[$key];
-}
 
 function linkFirebaseIdentity(
     PDO $db,

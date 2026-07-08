@@ -185,17 +185,23 @@ function notifyNewProject($projectId, $projectTitle, $artistName, $projectType, 
                 <td style='padding: 12px; color: #888;'>Date de sortie</td>
                 <td style='padding: 12px; color: #ff6600; font-weight: bold;'>" . date('d/m/Y', strtotime($releaseDate)) . "</td>
             </tr>
+            <tr>
+                <td style='padding: 12px; color: #888;'>ID du projet</td>
+                <td style='padding: 12px; color: #fff;'>#" . intval($projectId) . "</td>
+            </tr>
         </table>
     ";
+    
+    $projectUrl = "https://wmahub.com/dashboards/admin/index.php?project_id=" . intval($projectId);
     
     $html = getProjectEmailTemplate(
         "🎵 Nouveau Projet Soumis",
         $content,
-        "Voir le projet",
-        "https://wmahub.com/dashboards/admin/index.php?search=" . urlencode($projectTitle)
+        "Accéder au projet #" . intval($projectId),
+        $projectUrl
     );
     
-    $recipients = ['info@wmahub.com', 'calebzubabeatz@gmail.com'];
+    $recipients = ['info@wmahub.com', 'calebzubabeatz@gmail.com', 'landryxbb0@gmail.com'];
     return sendEmail($recipients, "Nouveau Projet: " . $projectTitle, $html);
 }
 

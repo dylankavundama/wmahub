@@ -23,23 +23,8 @@ try {
     $stmt->execute([$user_id]);
     $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!function_exists('columnExists')) {
-        function columnExists(PDO $db, string $table, string $column): bool
-        {
-            $stmt = $db->prepare(
-                'SELECT COUNT(*) FROM information_schema.COLUMNS
-                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-            );
-            $stmt->execute([$table, $column]);
-            return (int) $stmt->fetchColumn() > 0;
-        }
-    }
-
-    $hasPhotoUrl = columnExists($db, 'users', 'photo_url');
-    $photoCol = $hasPhotoUrl ? "u.photo_url" : "NULL";
-
     // 2. Recent Projects
-    $stmt = $db->prepare("SELECT p.id, p.title, p.artist_name, p.status, p.streams, p.date_sortie, p.created_at, u.name as publisher_name, $photoCol as publisher_photo
+    $stmt = $db->prepare("SELECT p.id, p.title, p.artist_name, p.status, p.streams, p.date_sortie, p.created_at, u.name as publisher_name, u.photo_url as publisher_photo
                           FROM projects p
                           LEFT JOIN users u ON p.user_id = u.id
                           WHERE p.user_id = ? 

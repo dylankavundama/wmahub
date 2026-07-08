@@ -315,6 +315,11 @@ $total_projects_revenue -= $total_paid_out;
                                 <td class="px-8">
                                     <div class="font-bold text-white"><?= htmlspecialchars($project['title']) ?></div>
                                     <div class="text-[10px] text-orange-500 font-black uppercase"><?= htmlspecialchars($project['artist_name'] ?: $project['user_name']) ?></div>
+                                    <?php if (!empty($project['date_sortie'])): ?>
+                                        <div class="text-[10px] text-gray-400 mt-1">
+                                            <i class="fas fa-calendar-day mr-1"></i> Sortie: <?= htmlspecialchars(date('d/m/Y', strtotime($project['date_sortie']))) ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                  <td>
                                     <div class="text-xs font-bold text-white"><?= htmlspecialchars($project['full_name'] ?? 'N/A') ?></div>

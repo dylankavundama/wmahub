@@ -40,7 +40,10 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   File? _coverFile;
   File? _audioFile;
 
-  // Step 5: Pack & Legal
+  // Step 5: Platforms
+  final List<String> _selectedPlatforms = [];
+
+  // Step 6: Pack & Legal
   String _selectedPack = 'Aucun';
   bool _isAuthorized = false;
 
@@ -77,7 +80,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
   Future<void> _pickAudio() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.audio,
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'm4a', 'flac', 'aac'],
     );
     if (result != null) {
       setState(() {
@@ -163,6 +167,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       )[0];
       request.fields['promo_pack'] = _selectedPack;
       request.fields['authorization'] = _isAuthorized ? '1' : '0';
+      request.fields['platforms'] = _selectedPlatforms.join(', ');
 
       request.files.add(
         await http.MultipartFile.fromPath('cover', _coverFile!.path),
@@ -244,7 +249,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           _buildStepLine(2),
           _buildStepDot(3, 'Médias'),
           _buildStepLine(3),
-          _buildStepDot(4, 'Pack'),
+          _buildStepDot(4, 'Plates.'),
+          _buildStepLine(4),
+          _buildStepDot(5, 'Pack'),
         ],
       ),
     );
@@ -316,6 +323,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       case 3:
         return _buildStepMedia();
       case 4:
+        return _buildStepPlatforms();
+      case 5:
         return _buildStepPack();
       default:
         return const SizedBox();
@@ -449,6 +458,141 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         ),
         const SizedBox(height: 32),
         _buildAuthorizationCheckbox(),
+      ],
+    ).animate().fadeIn();
+  }
+
+  static const List<Map<String, dynamic>> _platformList = [
+    {'name': 'Spotify',                    'color': 0xFF1DB954},
+    {'name': 'Apple Music',                'color': 0xFFFC3C44},
+    {'name': 'YouTube Music',              'color': 0xFFFF0000},
+    {'name': 'Amazon Music',               'color': 0xFF00A8E1},
+    {'name': 'Deezer',                     'color': 0xFFA238FF},
+    {'name': 'Tidal',                      'color': 0xFF00E5FF},
+    {'name': 'TikTok / TikTok Music',      'color': 0xFF69C9D0},
+    {'name': 'Instagram / Facebook Music', 'color': 0xFFE1306C},
+    {'name': 'YouTube Shorts',             'color': 0xFFFF0000},
+    {'name': 'SoundCloud',                 'color': 0xFFFF5500},
+    {'name': 'Audiomack',                  'color': 0xFFFFA500},
+    {'name': 'Bandcamp',                   'color': 0xFF1DA0C3},
+    {'name': 'iTunes Store',               'color': 0xFFFC3C44},
+  ];
+
+  Widget _buildStepPlatforms() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('5. PLATEFORMES DE DISTRIBUTION'),
+        const SizedBox(height: 8),
+        const Text(
+          'Sélectionnez les plateformes sur lesquelles vous souhaitez distribuer votre projet.',
+          style: TextStyle(color: AppTheme.textGrey, fontSize: 11),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${_selectedPlatforms.length} plateforme(s) sélectionnée(s)',
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  if (_selectedPlatforms.length == _platformList.length) {
+                    _selectedPlatforms.clear();
+                  } else {
+                    _selectedPlatforms.clear();
+                    _selectedPlatforms.addAll(
+                        _platformList.map((p) => p['name'] as String));
+                  }
+                });
+              },
+              child: Text(
+                _selectedPlatforms.length == _platformList.length
+                    ? 'Tout désélectionner'
+                    : 'Tout sélectionner',
+                style: const TextStyle(
+                    color: AppTheme.primaryColor, fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 2.8,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          itemCount: _platformList.length,
+          itemBuilder: (context, i) {
+            final platform = _platformList[i];
+            final name = platform['name'] as String;
+            final color = Color(platform['color'] as int);
+            final isSelected = _selectedPlatforms.contains(name);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedPlatforms.remove(name);
+                  } else {
+                    _selectedPlatforms.add(name);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? color.withOpacity(0.15)
+                      : AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected ? color : Colors.white10,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        isSelected ? Icons.check_circle : Icons.circle_outlined,
+                        color: isSelected ? color : Colors.white24,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.white54,
+                          fontSize: 10,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
       ],
     ).animate().fadeIn();
   }
@@ -738,7 +882,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   }
 
   Widget _buildBottomActions() {
-    bool isLast = _currentStep == 4;
+    bool isLast = _currentStep == 5;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(

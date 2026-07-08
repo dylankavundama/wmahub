@@ -69,8 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_project'])) {
         }
 
         $stmt = $db->prepare("INSERT INTO projects 
-            (user_id, title, artist_name, type, genre, date_sortie, details, phone, city, languages, provided_files, promo_pack, authorization, audio_file, cover_file) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            (user_id, title, artist_name, type, genre, date_sortie, details, phone, city, languages, provided_files, promo_pack, authorization, audio_file, cover_file, platforms) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         $stmt->execute([
             $userId,
@@ -87,7 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_project'])) {
             $_POST['pack_promo'] ?? 'Aucun',
             (($_POST['autorisation'] ?? 'Non') === 'Oui' ? 1 : 0),
             $audio_file,
-            $cover_file
+            $cover_file,
+            isset($_POST['platforms']) ? implode(', ', $_POST['platforms']) : ''
         ]);
 
         $projectId = $db->lastInsertId();
@@ -113,6 +114,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_project'])) {
             'Genre' => $_POST['genre'] ?? 'Non spécifié',
             'Date de sortie' => date('d/m/Y', strtotime($_POST['date_sortie'] ?? 'now'))
         ], 'https://wmahub.com/dashboards/admin/index.php?search=' . urlencode($_POST['titre_projet']));
+
+        // Notifier aussi Landry Xbb et l'équipe complète
+        notifyNewProject(
+            $projectId,
+            $_POST['titre_projet'] ?? 'Sans titre',
+            $artist_name ?: ($_POST['nom_artiste_manuel'] ?? 'Artiste inconnu'),
+            $_POST['type_projet'] ?? 'Single',
+            $_POST['date_sortie'] ?? date('Y-m-d')
+        );
 
         header('Location: submit.php?success=1');
         exit;
@@ -152,6 +162,8 @@ $pageTitle = 'Distribuer un Projet - WMA Hub';
         .submit-btn:hover { transform: scale(1.02); filter: brightness(1.1); }
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
         #modal.active { display: flex; }
+        .platform-chip.selected { border-color: var(--p-color) !important; background: color-mix(in srgb, var(--p-color) 10%, transparent) !important; }
+        .platform-chip.selected .check-icon { opacity: 1 !important; }
     </style>
 </head>
 <body>
@@ -275,6 +287,45 @@ $pageTitle = 'Distribuer un Projet - WMA Hub';
                 </div>
             </section>
 
+            <!-- Section 4 : Plateformes de distribution -->
+            <section class="glass-card">
+                <h3 class="text-xl font-bold mb-2 flex items-center gap-3 text-orange-500"><i class="fas fa-satellite-dish"></i> 4. Plateformes de Distribution</h3>
+                <p class="text-sm text-gray-400 mb-6">Sélectionnez les plateformes sur lesquelles vous souhaitez distribuer ce projet.</p>
+                <div class="flex justify-end mb-4">
+                    <button type="button" onclick="toggleAllPlatforms()" id="toggleAllBtn" class="text-xs font-bold px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-orange-500/10 hover:border-orange-500/50 transition-all">
+                        Tout sélectionner
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="platformGrid">
+<?php
+$platformList = [
+    ['name' => 'Spotify',                    'icon' => 'fab fa-spotify',       'color' => '#1DB954'],
+    ['name' => 'Apple Music',                'icon' => 'fab fa-apple',         'color' => '#FC3C44'],
+    ['name' => 'YouTube Music',              'icon' => 'fab fa-youtube',       'color' => '#FF0000'],
+    ['name' => 'Amazon Music',               'icon' => 'fab fa-amazon',        'color' => '#00A8E1'],
+    ['name' => 'Deezer',                     'icon' => 'fas fa-music',         'color' => '#A238FF'],
+    ['name' => 'Tidal',                      'icon' => 'fas fa-water',         'color' => '#00FFFF'],
+    ['name' => 'TikTok / TikTok Music',      'icon' => 'fab fa-tiktok',        'color' => '#69C9D0'],
+    ['name' => 'Instagram / Facebook Music', 'icon' => 'fab fa-instagram',     'color' => '#E1306C'],
+    ['name' => 'YouTube Shorts',             'icon' => 'fab fa-youtube',       'color' => '#FF0000'],
+    ['name' => 'SoundCloud',                 'icon' => 'fab fa-soundcloud',    'color' => '#FF5500'],
+    ['name' => 'Audiomack',                  'icon' => 'fas fa-headphones',    'color' => '#FFA500'],
+    ['name' => 'Bandcamp',                   'icon' => 'fab fa-bandcamp',      'color' => '#1DA0C3'],
+    ['name' => 'iTunes Store',               'icon' => 'fab fa-itunes-note',   'color' => '#FC3C44'],
+];
+foreach ($platformList as $p): ?>
+                    <label class="platform-chip cursor-pointer flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all" style="--p-color:<?= $p['color'] ?>">
+                        <input type="checkbox" name="platforms[]" value="<?= htmlspecialchars($p['name']) ?>" class="hidden platform-cb" onchange="updateChip(this)">
+                        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background:<?= $p['color'] ?>22">
+                            <i class="<?= $p['icon'] ?> text-lg" style="color:<?= $p['color'] ?>"></i>
+                        </div>
+                        <span class="text-sm font-semibold leading-tight"><?= htmlspecialchars($p['name']) ?></span>
+                        <i class="fas fa-check ml-auto text-xs check-icon opacity-0 transition-opacity" style="color:<?= $p['color'] ?>"></i>
+                    </label>
+<?php endforeach; ?>
+                </div>
+            </section>
+
             <button type="submit" class="submit-btn group py-6 text-xl">
                 Lancer la distribution <i class="fas fa-paper-plane ml-3 group-hover:translate-x-2 transition-transform"></i>
             </button>
@@ -326,6 +377,24 @@ $pageTitle = 'Distribuer un Projet - WMA Hub';
             } catch (e) {
                 alert('Une erreur est survenue');
             }
+        }
+
+        function updateChip(cb) {
+            const label = cb.closest('.platform-chip');
+            label.classList.toggle('selected', cb.checked);
+            const allCbs = document.querySelectorAll('.platform-cb');
+            const allChecked = [...allCbs].every(c => c.checked);
+            document.getElementById('toggleAllBtn').textContent = allChecked ? 'Tout désélectionner' : 'Tout sélectionner';
+        }
+
+        let _allSelected = false;
+        function toggleAllPlatforms() {
+            _allSelected = !_allSelected;
+            document.querySelectorAll('.platform-cb').forEach(cb => {
+                cb.checked = _allSelected;
+                cb.closest('.platform-chip').classList.toggle('selected', _allSelected);
+            });
+            document.getElementById('toggleAllBtn').textContent = _allSelected ? 'Tout désélectionner' : 'Tout sélectionner';
         }
     </script>
 </body>

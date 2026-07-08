@@ -20,7 +20,10 @@ import {
   Sun,
   Moon,
   Languages,
-  Share2
+  Share2,
+  Menu,
+  Bell,
+  BellOff
 } from 'lucide-react';
 
 const TRANSLATIONS = {
@@ -64,7 +67,7 @@ const TRANSLATIONS = {
     empty_release_title: "Aucune distribution trouvée",
     empty_release_desc: "Aucun projet ne correspond à vos critères de recherche.",
     modal_no_bio: "Aucune description biographique disponible pour cet artiste.",
-    modal_onerpm_btn: "Profil ONErpm officiel",
+    modal_onerpm_btn: "Profil artiste",
     modal_projects_title: "Projets Distribués",
     modal_empty_projects: "Aucun projet encore publié pour cet artiste.",
     modal_error: "Une erreur est survenue lors du chargement des détails.",
@@ -90,6 +93,7 @@ const TRANSLATIONS = {
     footer_dev: "Développé par ",
     footer_project_suffix: " projet",
     footer_projects_suffix: " projets",
+    artist_card_btn: "Consulter",
     video_title: "Découvrez l'un de nos ",
     video_span: "Succès",
     video_subtitle: "Découvrez l'un de nos plus grands succès de distribution musicale sur les plateformes mondiales.",
@@ -99,6 +103,15 @@ const TRANSLATIONS = {
     blog_subtitle: "Découvrez les derniers articles, actualités et conseils du réseau WMA United Africa.",
     blog_read_more: "Lire la suite",
     blog_empty: "Aucun article disponible pour le moment.",
+    blog_notifications_enable: "M'abonner aux notifications",
+    blog_notifications_disable: "Me désabonner des notifications",
+    blog_notifications_denied: "Notifications bloquées par votre navigateur. Veuillez les autoriser pour être alerté.",
+    new_post_notification_title: "Nouveau sur le Blog WMA !",
+    new_post_notification_body: "Découvrez notre nouvel article : {title}",
+    blog_notif_banner_title: "Restez connecté !",
+    blog_notif_banner_desc: "Abonnez-vous aux notifications du blog pour recevoir nos dernières actualités en temps réel.",
+    blog_notif_banner_accept: "Activer",
+    blog_notif_banner_decline: "Plus tard",
     cta_distribute_badge: "Prêt à diffuser ?",
     cta_distribute_title: "Distribuez votre musique à l'échelle internationale",
     cta_distribute_desc: "Rejoignez le réseau WMA United Africa et diffusez vos singles, EPs ou albums sur Spotify, Apple Music, Deezer, TikTok et plus encore.",
@@ -144,7 +157,7 @@ const TRANSLATIONS = {
     empty_release_title: "No distribution found",
     empty_release_desc: "No project matches your search criteria.",
     modal_no_bio: "No biographical description available for this artist.",
-    modal_onerpm_btn: "Official ONErpm profile",
+    modal_onerpm_btn: "Artist profile",
     modal_projects_title: "Distributed Projects",
     modal_empty_projects: "No projects published yet for this artist.",
     modal_error: "An error occurred while loading details.",
@@ -170,6 +183,7 @@ const TRANSLATIONS = {
     footer_dev: "Developed by ",
     footer_project_suffix: " project",
     footer_projects_suffix: " projects",
+    artist_card_btn: "View profile",
     video_title: "Discover One of Our ",
     video_span: "Successes",
     video_subtitle: "Discover one of our greatest music distribution successes across global platforms.",
@@ -179,6 +193,15 @@ const TRANSLATIONS = {
     blog_subtitle: "Discover the latest articles, news, and tips from the WMA United Africa network.",
     blog_read_more: "Read more",
     blog_empty: "No articles available at the moment.",
+    blog_notifications_enable: "Subscribe to notifications",
+    blog_notifications_disable: "Unsubscribe from notifications",
+    blog_notifications_denied: "Notifications blocked by your browser. Please allow them to get alerts.",
+    new_post_notification_title: "New on WMA Blog!",
+    new_post_notification_body: "Discover our new post: {title}",
+    blog_notif_banner_title: "Stay Connected!",
+    blog_notif_banner_desc: "Subscribe to blog notifications to receive our latest news in real time.",
+    blog_notif_banner_accept: "Enable",
+    blog_notif_banner_decline: "Later",
     cta_distribute_badge: "Ready to release?",
     cta_distribute_title: "Distribute your music worldwide",
     cta_distribute_desc: "Join the WMA United Africa network and release your singles, EPs, or albums on Spotify, Apple Music, Deezer, TikTok, and more.",
@@ -193,6 +216,19 @@ const SUCCESS_VIDEOS = [
   "prYxXdFdUhc"
 ];
 
+const HERO_BACKGROUNDS = [
+  './header/0.jpg',
+  './header/1.png',
+  './header/2.png',
+  './header/3.png',
+  './header/4.jpg',
+  './header/5.png',
+  './header/6.png',
+  './header/7.jpeg',
+  './header/8.jpg',
+  './header/9.jpg'
+];
+
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost/wmahub/api'
   : 'https://wmahub.com/api';
@@ -201,6 +237,11 @@ export default function App() {
   const [selectedVideoId] = useState(() => {
     const randomIndex = Math.floor(Math.random() * SUCCESS_VIDEOS.length);
     return SUCCESS_VIDEOS[randomIndex];
+  });
+
+  const [heroBg] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * HERO_BACKGROUNDS.length);
+    return HERO_BACKGROUNDS[randomIndex];
   });
 
   const [theme, setTheme] = useState(() => {
@@ -218,7 +259,7 @@ export default function App() {
     }
     const saved = localStorage.getItem('wma-lang');
     if (saved) return saved;
-    const systemLang = navigator.language || 'fr';
+    const systemLang = navigator.language || navigator.userLanguage || 'fr';
     return systemLang.toLowerCase().startsWith('en') ? 'en' : 'fr';
   });
 
@@ -230,18 +271,38 @@ export default function App() {
     return text;
   };
 
+  // Dynamically listen to system theme changes if the user hasn't set an explicit preference
+  useEffect(() => {
+    const saved = localStorage.getItem('wma-theme');
+    if (saved) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
+
   useEffect(() => {
     document.body.className = theme === 'dark' ? 'dark-theme' : 'light-theme';
-    localStorage.setItem('wma-theme', theme);
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem('wma-lang', lang);
+    document.documentElement.lang = lang;
   }, [lang]);
 
   const [showHeader, setShowHeader] = useState(true);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
+  const mouseTimeoutRef = useRef(null);
+  const isHoveringHeaderRef = useRef(false);
 
   useEffect(() => {
     const updateHeader = () => {
@@ -263,10 +324,52 @@ export default function App() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // PC/Desktop mouse movements show/hide navbar behavior
+    const handleMouseMove = (e) => {
+      if (window.matchMedia('(pointer: fine)').matches) {
+        setShowHeader(true);
+
+        if (mouseTimeoutRef.current) {
+          clearTimeout(mouseTimeoutRef.current);
+        }
+
+        // Hide after 3 seconds of mouse inactivity, only if we are scrolled down
+        // and NOT hovering over the header itself
+        if (window.scrollY > 80 && !isHoveringHeaderRef.current) {
+          mouseTimeoutRef.current = setTimeout(() => {
+            setShowHeader(false);
+          }, 3000);
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (mouseTimeoutRef.current) {
+        clearTimeout(mouseTimeoutRef.current);
+      }
+    };
   }, []);
 
   const [activeTab, setActiveTab] = useState('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setMobileMenuOpen(false);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowLogo(prev => !prev);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
   const [artists, setArtists] = useState([]);
   const [projects, setProjects] = useState([]);
   const [artistsLoading, setArtistsLoading] = useState(true);
@@ -287,11 +390,48 @@ export default function App() {
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistSuccess, setWaitlistSuccess] = useState(false);
   const [waitlistError, setWaitlistError] = useState('');
+  const [comingSoonConfig, setComingSoonConfig] = useState({
+    is_active: 1,
+    end_date: null,
+    expired: false,
+    image_url: ''
+  });
+  const [showComingSoonPopup, setShowComingSoonPopup] = useState(false);
 
   const [blogPosts, setBlogPosts] = useState([]);
   const [blogLoading, setBlogLoading] = useState(true);
   const [shareCopied, setShareCopied] = useState(false);
   const [visitStats, setVisitStats] = useState({ total: 100, today: 0 });
+
+  const [notificationsSupported, setNotificationsSupported] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState('default');
+  const [showNotificationPromptBanner, setShowNotificationPromptBanner] = useState(false);
+
+  const handleAcceptBannerNotification = async () => {
+    setShowNotificationPromptBanner(false);
+    localStorage.setItem('wma-blog-notifications-prompted', 'true');
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    if (permission === 'granted') {
+      localStorage.setItem('wma-blog-notifications', 'true');
+      setNotificationsEnabled(true);
+      new Notification(t('new_post_notification_title'), {
+        body: lang === 'fr' 
+          ? "Vous recevrez une alerte lors de la publication d'un nouvel article !" 
+          : "You will receive an alert when a new article is published!",
+        icon: './logo_ua.png'
+      });
+    } else {
+      localStorage.setItem('wma-blog-notifications', 'false');
+      setNotificationsEnabled(false);
+    }
+  };
+
+  const handleDeclineBannerNotification = () => {
+    setShowNotificationPromptBanner(false);
+    localStorage.setItem('wma-blog-notifications-prompted', 'true');
+  };
 
   const handleShare = async () => {
     if (!artistDetails || !artistDetails.artist) return;
@@ -334,12 +474,108 @@ export default function App() {
     }
   }, []);
 
+  // Check notification support and status on mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationsSupported(true);
+      setNotificationPermission(Notification.permission);
+      const enabled = localStorage.getItem('wma-blog-notifications') === 'true' && Notification.permission === 'granted';
+      setNotificationsEnabled(enabled);
+
+      if (Notification.permission === 'default') {
+        const hasPrompted = localStorage.getItem('wma-blog-notifications-prompted') === 'true';
+        if (!hasPrompted) {
+          const timer = setTimeout(() => {
+            setShowNotificationPromptBanner(true);
+          }, 3500); // 3.5 seconds delay
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+  }, []);
+
+  const toggleNotifications = async () => {
+    if (!notificationsSupported) return;
+
+    if (notificationsEnabled) {
+      localStorage.setItem('wma-blog-notifications', 'false');
+      setNotificationsEnabled(false);
+    } else {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        localStorage.setItem('wma-blog-notifications', 'true');
+        setNotificationsEnabled(true);
+        new Notification(t('new_post_notification_title'), {
+          body: lang === 'fr' 
+            ? "Vous recevrez une alerte lors de la publication d'un nouvel article !" 
+            : "You will receive an alert when a new article is published!",
+          icon: './logo_ua.png'
+        });
+      } else {
+        localStorage.setItem('wma-blog-notifications', 'false');
+        setNotificationsEnabled(false);
+      }
+    }
+  };
+
+  // Polling hook for background check of new blog posts
+  useEffect(() => {
+    if (!notificationsEnabled) return;
+
+    const checkNewPosts = async () => {
+      try {
+        const res = await fetch('https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=1');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const latestPost = data[0];
+            const storedId = localStorage.getItem('wma-last-post-id');
+            
+            if (storedId && latestPost.id > parseInt(storedId, 10)) {
+              const title = t('new_post_notification_title');
+              const body = t('new_post_notification_body', { title: latestPost.title.rendered });
+              
+              const notification = new Notification(title, {
+                body: body.replace(/&#8217;/g, "'").replace(/&#8230;/g, "...").replace(/&#8211;/g, "-"),
+                icon: './logo_ua.png'
+              });
+
+              notification.onclick = () => {
+                window.focus();
+                if (latestPost.link) {
+                  window.open(latestPost.link, '_blank');
+                }
+              };
+              
+              localStorage.setItem('wma-last-post-id', latestPost.id.toString());
+              
+              // Refresh the main blog feed list to show the new post
+              fetchBlogPosts();
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error polling for new blog posts:", err);
+      }
+    };
+
+    // Run check initially when notifications get enabled
+    checkNewPosts();
+
+    // Poll every 3 minutes (180000ms)
+    const intervalId = setInterval(checkNewPosts, 180000);
+
+    return () => clearInterval(intervalId);
+  }, [notificationsEnabled, lang]);
+
   // Load all artists and projects on mount
   useEffect(() => {
     fetchArtists();
     fetchProjects();
     fetchBlogPosts();
     fetchVisitStats();
+    fetchComingSoon();
   }, []);
 
   const fetchBlogPosts = async () => {
@@ -348,7 +584,15 @@ export default function App() {
       const res = await fetch('https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=4&_embed');
       if (res.ok) {
         const data = await res.json();
-        setBlogPosts(Array.isArray(data) ? data : []);
+        const posts = Array.isArray(data) ? data : [];
+        setBlogPosts(posts);
+        
+        if (posts.length > 0) {
+          const lastStoredId = localStorage.getItem('wma-last-post-id');
+          if (!lastStoredId) {
+            localStorage.setItem('wma-last-post-id', posts[0].id.toString());
+          }
+        }
       }
     } catch (e) {
       console.error("Error fetching WordPress posts:", e);
@@ -371,6 +615,34 @@ export default function App() {
       }
     } catch (e) {
       console.error("Error fetching visit stats:", e);
+    }
+  };
+
+  const fetchComingSoon = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/ua_get_coming_soon.php`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          setComingSoonConfig({
+            is_active: data.is_active,
+            end_date: data.end_date,
+            expired: data.expired,
+            image_url: data.image_url
+          });
+          
+          if (data.is_active === 1 && !data.expired) {
+            const lastDate = localStorage.getItem('wma-coming-soon-popup-last-date');
+            const todayStr = new Date().toISOString().slice(0, 10);
+            if (lastDate !== todayStr) {
+              setShowComingSoonPopup(true);
+              localStorage.setItem('wma-coming-soon-popup-last-date', todayStr);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching coming soon status:", e);
     }
   };
 
@@ -472,12 +744,42 @@ export default function App() {
   return (
     <>
       {/* Header */}
-      <header className={`header ${showHeader ? '' : 'header-hidden'}`}>
+      <header 
+        className={`header ${showHeader ? '' : 'header-hidden'}`}
+        onMouseEnter={() => {
+          isHoveringHeaderRef.current = true;
+          if (mouseTimeoutRef.current) {
+            clearTimeout(mouseTimeoutRef.current);
+          }
+          setShowHeader(true);
+        }}
+        onMouseLeave={() => {
+          isHoveringHeaderRef.current = false;
+          if (window.scrollY > 80 && window.matchMedia('(pointer: fine)').matches) {
+            mouseTimeoutRef.current = setTimeout(() => {
+              setShowHeader(false);
+            }, 1500);
+          }
+        }}
+      >
         <div className="container header-container">
+          <button 
+            className="mobile-menu-toggle" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+          
           <a href="#" className="logo-link" onClick={(e) => { e.preventDefault(); setActiveTab('home'); }}>
-            <span className="logo-text">WMA UNITED AFRICA</span>
+            {showLogo ? (
+              <img src="./logo_ua.png" alt="WMA UA Logo" className="logo-img logo-transition" />
+            ) : (
+              <span className="logo-text logo-transition">WMA UNITED AFRICA</span>
+            )}
           </a>
-          <nav className="header-nav">
+
+          <nav className={`header-nav ${mobileMenuOpen ? 'mobile-nav-open' : ''}`}>
             <ul className="nav-menu">
               <li>
                 <a
@@ -510,7 +812,11 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <button 
                 className="icon-btn lang-toggle"
-                onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
+                onClick={() => {
+                  const newLang = lang === 'fr' ? 'en' : 'fr';
+                  setLang(newLang);
+                  localStorage.setItem('wma-lang', newLang);
+                }}
                 title={lang === 'fr' ? 'Switch to English' : 'Passer en Français'}
               >
                 <Languages size={16} />
@@ -518,7 +824,11 @@ export default function App() {
               </button>
               <button 
                 className="icon-btn theme-toggle"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={() => {
+                  const newTheme = theme === 'dark' ? 'light' : 'dark';
+                  setTheme(newTheme);
+                  localStorage.setItem('wma-theme', newTheme);
+                }}
                 title={theme === 'dark' ? 'Mode Clair' : 'Mode Sombre'}
               >
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -536,22 +846,33 @@ export default function App() {
         </div>
       </header>
 
+      {mobileMenuOpen && (
+        <div className="mobile-menu-backdrop" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* Main Content */}
       <main style={{ flex: 1 }}>
         {activeTab === 'home' && (
           <div>
             {/* Hero */}
             <section className="hero">
+              <div className="hero-bg-slideshow">
+                <div
+                  className="hero-bg-slide"
+                  style={{ backgroundImage: `url(${heroBg})` }}
+                />
+                <div className="hero-bg-overlay"></div>
+              </div>
               <div className="container">
+                <div className="hero-logo-wrapper">
+                  <img src="./logo_ua.png" alt="WMA Logo" className="hero-logo-img" />
+                </div>
                 <span className="hero-tag">
                   <Radio size={14} /> {t('hero_tag')}
                 </span>
                 <h1 className="hero-title">
                   {t('hero_title_1')}<span>{t('hero_title_span')}</span>{t('hero_title_2')}
                 </h1>
-                <p className="hero-subtitle">
-                  {t('hero_subtitle')}
-                </p>
                 <div className="hero-actions">
                   <button onClick={() => setActiveTab('distributions')} className="btn btn-solid">
                     {t('hero_btn_catalog')} <ArrowRight size={16} />
@@ -590,8 +911,17 @@ export default function App() {
               </div>
             </section>
 
+            {/* Tagline Section */}
+            <section className="tagline-section">
+              <div className="container">
+                <p className="tagline-text">
+                  WMA United Africa accompagne les labels et les artistes indépendants africains dans la distribution, la promotion et la monétisation de leurs projets musicaux sur plus de 200 plateformes à travers le monde.
+                </p>
+              </div>
+            </section>
+
             {/* Featured Artists preview */}
-            <section style={{ padding: '5rem 0' }}>
+            <section style={{ padding: '3rem 0 5rem' }}>
               <div className="container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
                   <h2 style={{ fontSize: '2rem' }}>{t('section_artists_title')}<span>UA</span></h2>
@@ -615,7 +945,7 @@ export default function App() {
                           />
                         </div>
                         <h3 className="artist-name">{art.name}</h3>
-                        <span className="artist-project-count">{art.project_count} {art.project_count > 1 ? t('footer_projects_suffix') : t('footer_project_suffix')}</span>
+                        <span className="artist-project-count">{t('artist_card_btn')}</span>
                       </div>
                     ))}
                   </div>
@@ -748,7 +1078,7 @@ export default function App() {
                           />
                         </div>
                         <h3 className="artist-name">{art.name}</h3>
-                        <span className="artist-project-count">{art.project_count} {art.project_count > 1 ? t('footer_projects_suffix') : t('footer_project_suffix')}</span>
+                        <span className="artist-project-count">{t('artist_card_btn')}</span>
                       </div>
                     ))
                   )}
@@ -935,6 +1265,80 @@ export default function App() {
         </div>
       )}
 
+      {/* Auto Promotion / Coming Soon Popup Modal */}
+      {showComingSoonPopup && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowComingSoonPopup(false)}
+          style={{ zIndex: 1100 }}
+        >
+          <div 
+            className="modal-content" 
+            style={{ 
+              maxWidth: '500px', 
+              padding: '0', 
+              overflow: 'hidden', 
+              borderRadius: '1.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'rgba(15, 15, 20, 0.95)',
+              backdropFilter: 'blur(20px)',
+              position: 'relative'
+            }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="modal-close-btn" 
+              onClick={() => setShowComingSoonPopup(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                zIndex: 10,
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={18} />
+            </button>
+            <div>
+              {comingSoonConfig.image_url ? (
+                <div style={{ width: '100%', height: '320px', overflow: 'hidden' }}>
+                  <img 
+                    src={comingSoonConfig.image_url.startsWith('http') ? comingSoonConfig.image_url : `${API_BASE.replace('/api', '')}/${comingSoonConfig.image_url}`} 
+                    alt={comingSoonConfig.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              ) : (
+                <div style={{ width: '100%', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--primary) 0%, #000 100%)' }}>
+                  <div style={{ color: '#fff', fontSize: '3rem', opacity: 0.15, fontWeight: 'bold' }}>WMA UA</div>
+                </div>
+              )}
+              <div style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
+                <h2 style={{ 
+                  fontSize: '1.75rem', 
+                  fontWeight: '800', 
+                  color: '#fff', 
+                  margin: '0',
+                  lineHeight: '1.3',
+                  letterSpacing: '-0.5px'
+                }}>
+                  {comingSoonConfig.title || 'Bientôt disponible'}
+                </h2>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Waitlist Modal */}
       {showWaitlistModal && (
         <div className="modal-overlay" onClick={() => { setShowWaitlistModal(false); setWaitlistSuccess(false); setWaitlistError(''); }}>
@@ -1022,7 +1426,7 @@ export default function App() {
             </p>
           </div>
           <div className="app-download-buttons">
-            <a href="#" className="app-btn store-btn" onClick={(e) => { e.preventDefault(); setShowWaitlistModal(true); }}>
+            <a href="https://apps.apple.com/us/app/wma-ua/id6764384950" target="_blank" rel="noopener noreferrer" className="app-btn store-btn">
               <span className="app-btn-icon"><Apple size={24} style={{ fill: 'currentColor' }} /></span>
               <div className="app-btn-text">
                 <span className="app-btn-sub">{t('app_download_appstore')}</span>
@@ -1047,6 +1451,25 @@ export default function App() {
           <div className="container">
             <h2 className="blog-title">{t('blog_title')}</h2>
             <p className="blog-subtitle">{t('blog_subtitle')}</p>
+
+            {notificationsSupported && (
+              <div className="blog-notification-toggle-wrapper">
+                <button 
+                  className={`blog-notification-btn ${notificationsEnabled ? 'active' : ''}`}
+                  onClick={toggleNotifications}
+                >
+                  {notificationsEnabled ? <Bell size={16} className="bell-icon active-bell" /> : <BellOff size={16} className="bell-icon" />}
+                  <span>
+                    {notificationsEnabled ? t('blog_notifications_disable') : t('blog_notifications_enable')}
+                  </span>
+                </button>
+                {notificationPermission === 'denied' && (
+                  <p className="blog-notification-status status-denied">
+                    {t('blog_notifications_denied')}
+                  </p>
+                )}
+              </div>
+            )}
             
             {blogLoading ? (
               <div className="spinner-wrapper" style={{ padding: '3rem 0' }}><div className="spinner"></div></div>
@@ -1225,6 +1648,29 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Blog Notification Banner Prompt */}
+      {showNotificationPromptBanner && (
+        <div className="blog-notification-banner">
+          <div className="banner-content">
+            <div className="banner-icon-wrapper">
+              <Bell size={20} className="bell-ring-animation" />
+            </div>
+            <div className="banner-text">
+              <h4>{t('blog_notif_banner_title')}</h4>
+              <p>{t('blog_notif_banner_desc')}</p>
+            </div>
+          </div>
+          <div className="banner-actions">
+            <button className="btn-banner-decline" onClick={handleDeclineBannerNotification}>
+              {t('blog_notif_banner_decline')}
+            </button>
+            <button className="btn-banner-accept" onClick={handleAcceptBannerNotification}>
+              {t('blog_notif_banner_accept')}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

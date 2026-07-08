@@ -46,6 +46,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         
         $ua_menu_items = [
             ['file' => 'ua_artists.php', 'icon' => 'fas fa-microphone-alt', 'label' => 'Artistes UA'],
+            ['file' => 'ua_coming_soon.php', 'icon' => 'fas fa-clock', 'label' => 'Coming Soon UA'],
             ['file' => 'ua_distributions.php', 'icon' => 'fas fa-music', 'label' => 'Distributions UA'],
         ];
         foreach ($ua_menu_items as $item) {
