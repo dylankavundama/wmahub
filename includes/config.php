@@ -1,40 +1,37 @@
 <?php
 ob_start();
- 
-// define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-// define('DB_NAME', getenv('DB_NAME') ?: 'wmahubco_hub');
-// define('DB_USER', getenv('DB_USER') ?: 'wmahubco_hub');
-// define('DB_PASS', getenv('DB_PASSWORD') ?: 'Y3OS;W-)bsQR6*D6');
 
+// Chargement sécurisé des variables d'environnement (.env)
+require_once __DIR__ . '/env.php';
 
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'wmahubco_hub');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASSWORD') ?: '');
+// Base de données MySQL
+define('DB_HOST', env('DB_HOST', 'localhost'));
+define('DB_NAME', env('DB_NAME', 'wmahubco_hub'));
+define('DB_USER', env('DB_USER', 'root'));
+define('DB_PASS', env('DB_PASSWORD', ''));
 
-// Configuration Google OAuth — site web uniquement (auth/login.php, callback.php).
-// L'app mobile utilise Firebase Auth (projet uawma-70e70), pas ces identifiants.
-define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '547408646820-eedhgi415138ulb823mhh9uhln8i9f60.apps.googleusercontent.com');
+// Configuration Google OAuth (Site Web)
+define('GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID', ''));
+define('GOOGLE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET', ''));
 
-// Firebase — app mobile uniquement (voir includes/firebase_verify.php, api/firebase_auth_mobile.php)
-define('FIREBASE_PROJECT_ID', getenv('FIREBASE_PROJECT_ID') ?: 'uawma-70e70');
-define('FIREBASE_WEB_API_KEY', getenv('FIREBASE_WEB_API_KEY') ?: 'AIzaSyDbSttnS1qfZ-C41OVlIGKABBnlAobfGzk');
-define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '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');
+// Configuration Firebase (App Mobile)
+define('FIREBASE_PROJECT_ID', env('FIREBASE_PROJECT_ID', ''));
+define('FIREBASE_WEB_API_KEY', env('FIREBASE_WEB_API_KEY', ''));
 
 // Configuration Apple OAuth (Service ID)
-define('APPLE_CLIENT_ID', getenv('APPLE_CLIENT_ID') ?: 'com.ua.wmahub.service');
+define('APPLE_CLIENT_ID', env('APPLE_CLIENT_ID', ''));
 
 // Configuration Gemini API
-define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: 'AIzaSyA_KgjNanXy09Hh2GMI-3pust2XjUqLgEA');
+define('GEMINI_API_KEY', env('GEMINI_API_KEY', ''));
 
 // Configuration Business
-define('WHATSAPP_NUMBER', getenv('WHATSAPP_NUMBER') ?: '243825555555');
-define('SUPPORT_EMAIL', getenv('SUPPORT_EMAIL') ?: 'info@wmahub.com');
+define('WHATSAPP_NUMBER', env('WHATSAPP_NUMBER', '243825555555'));
+define('SUPPORT_EMAIL', env('SUPPORT_EMAIL', 'info@wmahub.com'));
 
 // Configuration FlexPay
-define('FLEXPAY_MERCHANT', 'STC_SARL');
-define('FLEXPAY_TOKEN', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxODIyODE0NjM1LCJzdWIiOiI0NjEwYmVkZjg5YTdhNjQ5MjdlMDFkYzg4Yjk2MGZlOCJ9.siqrnMclrfpi6XbdIvTulvyLp8PoSrQhw5JPCbRuflE');
-define('FLEXPAY_API_URL', 'http://backend.flexpay.cd/api/rest/v1/paymentService');
+define('FLEXPAY_MERCHANT', env('FLEXPAY_MERCHANT', ''));
+define('FLEXPAY_TOKEN', env('FLEXPAY_TOKEN', ''));
+define('FLEXPAY_API_URL', env('FLEXPAY_API_URL', 'http://backend.flexpay.cd/api/rest/v1/paymentService'));
 
 // Détection dynamique de l'URL de base pour le redirect OAuth
 $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) ? "https://" : "http://";
@@ -48,8 +45,8 @@ $baseUrl = $protocol . $host . '/' . ltrim($webPath, '/');
 $baseUrl = rtrim($baseUrl, '/');
 
 // On permet de forcer l'URL de redirection via variable d'environnement si la détection automatique échoue
-define('GOOGLE_REDIRECT_URL', getenv('GOOGLE_REDIRECT_URL') ?: $baseUrl . '/auth/callback.php');
-define('APPLE_REDIRECT_URL', getenv('APPLE_REDIRECT_URL') ?: $baseUrl . '/auth/apple_callback.php');
+define('GOOGLE_REDIRECT_URL', env('GOOGLE_REDIRECT_URL') ?: $baseUrl . '/auth/callback.php');
+define('APPLE_REDIRECT_URL', env('APPLE_REDIRECT_URL') ?: $baseUrl . '/auth/apple_callback.php');
 
 /**
  * Retourne une instance de connexion PDO (Optimisé avec cache/singleton)
@@ -168,7 +165,7 @@ if (php_sapi_name() !== 'cli') {
     }
 
     // Email d'alerte développeur
-    define('DEV_ALERT_EMAIL', 'dylankavundama@gmail.com');
+    define('DEV_ALERT_EMAIL', env('DEV_ALERT_EMAIL', 'info@wmahub.com'));
 
     /**
      * Envoie un email d'alerte d'erreur au développeur.

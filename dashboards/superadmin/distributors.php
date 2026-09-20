@@ -80,7 +80,11 @@ $pageTitle = 'Master Control - Distributeurs';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" href="/asset/icon.png"><link rel="apple-touch-icon" href="/asset/icon.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/asset/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/asset/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/asset/favicon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/asset/apple-touch-icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>

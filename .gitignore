@@ -1,0 +1,75 @@
+# ===================================================================
+# WMA HUB - .gitignore
+# Fichiers sensibles, secrets, caches, logs et artefacts ignorés
+# ===================================================================
+
+# 1. Variables d'Environnement & Fichiers Secrets (CRITIQUE)
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.cert
+*.p12
+
+# 2. Caches & Logs
+*.log
+logs/
+api/logs/
+*.tmp
+*.cache
+.cache/
+
+# 3. Sauvegardes & Archives & Base de Données
+*.sql
+*.sql.gz
+*.sqlite
+*.db
+/db/*.sql
+*.zip
+/mobile.zip
+/mobile/ios/build/
+
+# 4. Scripts de Test / Scratch
+/scratch/
+
+# 5. Dépendances PHP (Composer)
+# Décommenter si vendor ne doit pas être versionné :
+# /vendor/
+
+# 6. Dépendances Node & Build Frontend (React / Vite)
+node_modules/
+/wmaunitedafrica/node_modules/
+/wmaunitedafrica/dist/
+/wmaunitedafrica/dist-ssr/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 7. Flutter / Mobile App Build & Cache
+/mobile/.dart_tool/
+/mobile/.flutter-plugins
+/mobile/.flutter-plugins-dependencies
+/mobile/.pub-cache/
+/mobile/.pub/
+/mobile/build/
+/mobile/ios/Pods/
+/mobile/ios/.symlinks/
+/mobile/ios/Flutter/Flutter.framework
+/mobile/ios/Flutter/Flutter.podspec
+/mobile/macos/Pods/
+/mobile/macos/Flutter/ephemeral/
+*.iml
+*.ipr
+*.iws
+
+# 8. Fichiers Systèmes & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json

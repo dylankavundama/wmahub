@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Music,
   Users,
@@ -11,7 +11,6 @@ import {
   Radio,
   Info,
   ChevronRight,
-  Sliders,
   Mail,
   MessageCircle,
   Download,
@@ -31,6 +30,7 @@ const TRANSLATIONS = {
     nav_home: "Accueil",
     nav_artists: "Artistes",
     nav_releases: "Sorties / Catalogue",
+    nav_newmusic: "New Music Friday",
     nav_join: "Rejoindre",
     hero_tag: "Distribution Musicale Mondiale",
     hero_title_1: "Propulsez votre ",
@@ -116,11 +116,19 @@ const TRANSLATIONS = {
     cta_distribute_title: "Distribuez votre musique à l'échelle internationale",
     cta_distribute_desc: "Rejoignez le réseau WMA United Africa et diffusez vos singles, EPs ou albums sur Spotify, Apple Music, Deezer, TikTok et plus encore.",
     cta_distribute_btn: "Distribuer ma musique",
+    nmf_badge: "Spotify Playlist",
+    nmf_title: "WMA UA — New Music Friday",
+    nmf_desc: "Découvrez chaque semaine les dernières sorties du réseau WMA United Africa.",
+    nmf_cta: "Écouter sur Spotify",
+    page_newmusic_desc: "Écoutez la playlist officielle WMA UA — New Music Friday et découvrez chaque semaine les dernières sorties du réseau.",
+    page_newmusic_tracks: "Titres de la playlist",
+    page_newmusic_open: "Ouvrir dans Spotify",
   },
   en: {
     nav_home: "Home",
     nav_artists: "Artists",
     nav_releases: "Releases / Catalog",
+    nav_newmusic: "New Music Friday",
     nav_join: "Join",
     hero_tag: "Global Music Distribution",
     hero_title_1: "Propel your ",
@@ -206,6 +214,13 @@ const TRANSLATIONS = {
     cta_distribute_title: "Distribute your music worldwide",
     cta_distribute_desc: "Join the WMA United Africa network and release your singles, EPs, or albums on Spotify, Apple Music, Deezer, TikTok, and more.",
     cta_distribute_btn: "Distribute my music",
+    nmf_badge: "Spotify Playlist",
+    nmf_title: "WMA UA — New Music Friday",
+    nmf_desc: "Discover the latest releases from the WMA United Africa network every week.",
+    nmf_cta: "Listen on Spotify",
+    page_newmusic_desc: "Listen to the official WMA UA — New Music Friday playlist and discover the latest releases from the network every week.",
+    page_newmusic_tracks: "Playlist tracks",
+    page_newmusic_open: "Open in Spotify",
   }
 };
 
@@ -215,6 +230,11 @@ const SUCCESS_VIDEOS = [
   "P7ecavBTwE4",
   "prYxXdFdUhc"
 ];
+
+const SPOTIFY_NMF_PLAYLIST_ID = '4VLFIANMX431VFOFDHmW9U';
+const SPOTIFY_NMF_PLAYLIST_URL = `https://open.spotify.com/playlist/${SPOTIFY_NMF_PLAYLIST_ID}`;
+
+const VALID_TABS = ['home', 'artists', 'distributions', 'newmusic'];
 
 const HERO_BACKGROUNDS = [
   './header/0.jpg',
@@ -326,7 +346,7 @@ export default function App() {
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     // PC/Desktop mouse movements show/hide navbar behavior
-    const handleMouseMove = (e) => {
+    const handleMouseMove = () => {
       if (window.matchMedia('(pointer: fine)').matches) {
         setShowHeader(true);
 
@@ -355,13 +375,35 @@ export default function App() {
     };
   }, []);
 
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return VALID_TABS.includes(hash) ? hash : 'home';
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogo, setShowLogo] = useState(false);
 
+  const changeTab = (tab) => {
+    setMobileMenuOpen(false);
+    setActiveTab(tab);
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (VALID_TABS.includes(hash)) {
+        changeTab(hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   useEffect(() => {
     window.scrollTo(0, 0);
-    setMobileMenuOpen(false);
+    if (window.location.hash !== `#${activeTab}`) {
+      window.history.replaceState(null, '', `#${activeTab}`);
+    }
   }, [activeTab]);
 
   useEffect(() => {
@@ -376,7 +418,15 @@ export default function App() {
   const [projectsLoading, setProjectsLoading] = useState(true);
 
   // Selected Artist details modal
-  const [selectedArtistId, setSelectedArtistId] = useState(null);
+  const [selectedArtistId, setSelectedArtistId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const artistId = params.get('artist');
+    if (artistId) {
+      const parsedId = parseInt(artistId, 10);
+      if (!isNaN(parsedId)) return parsedId;
+    }
+    return null;
+  });
   const [artistDetails, setArtistDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
@@ -403,9 +453,15 @@ export default function App() {
   const [shareCopied, setShareCopied] = useState(false);
   const [visitStats, setVisitStats] = useState({ total: 100, today: 0 });
 
-  const [notificationsSupported, setNotificationsSupported] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState('default');
+  const notificationsSupported = 'Notification' in window;
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() =>
+    notificationsSupported
+    && localStorage.getItem('wma-blog-notifications') === 'true'
+    && Notification.permission === 'granted'
+  );
+  const [notificationPermission, setNotificationPermission] = useState(() =>
+    notificationsSupported ? Notification.permission : 'default'
+  );
   const [showNotificationPromptBanner, setShowNotificationPromptBanner] = useState(false);
 
   const handleAcceptBannerNotification = async () => {
@@ -462,37 +518,42 @@ export default function App() {
     }
   };
 
-  // Check URL query parameters on mount to open specific artist modal
+  // Show notification prompt banner after delay on first visit
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const artistId = params.get('artist');
-    if (artistId) {
-      const parsedId = parseInt(artistId, 10);
-      if (!isNaN(parsedId)) {
-        setSelectedArtistId(parsedId);
-      }
-    }
-  }, []);
+    if (!notificationsSupported || Notification.permission !== 'default') return undefined;
 
-  // Check notification support and status on mount
-  useEffect(() => {
-    if ('Notification' in window) {
-      setNotificationsSupported(true);
-      setNotificationPermission(Notification.permission);
-      const enabled = localStorage.getItem('wma-blog-notifications') === 'true' && Notification.permission === 'granted';
-      setNotificationsEnabled(enabled);
+    const hasPrompted = localStorage.getItem('wma-blog-notifications-prompted') === 'true';
+    if (hasPrompted) return undefined;
 
-      if (Notification.permission === 'default') {
-        const hasPrompted = localStorage.getItem('wma-blog-notifications-prompted') === 'true';
-        if (!hasPrompted) {
-          const timer = setTimeout(() => {
-            setShowNotificationPromptBanner(true);
-          }, 3500); // 3.5 seconds delay
-          return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      setShowNotificationPromptBanner(true);
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [notificationsSupported]);
+
+  const fetchBlogPosts = async () => {
+    try {
+      setBlogLoading(true);
+      const res = await fetch('https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=4&_embed');
+      if (res.ok) {
+        const data = await res.json();
+        const posts = Array.isArray(data) ? data : [];
+        setBlogPosts(posts);
+
+        if (posts.length > 0) {
+          const lastStoredId = localStorage.getItem('wma-last-post-id');
+          if (!lastStoredId) {
+            localStorage.setItem('wma-last-post-id', posts[0].id.toString());
+          }
         }
       }
+    } catch (e) {
+      console.error("Error fetching WordPress posts:", e);
+    } finally {
+      setBlogLoading(false);
     }
-  }, []);
+  };
 
   const toggleNotifications = async () => {
     if (!notificationsSupported) return;
@@ -507,8 +568,8 @@ export default function App() {
         localStorage.setItem('wma-blog-notifications', 'true');
         setNotificationsEnabled(true);
         new Notification(t('new_post_notification_title'), {
-          body: lang === 'fr' 
-            ? "Vous recevrez une alerte lors de la publication d'un nouvel article !" 
+          body: lang === 'fr'
+            ? "Vous recevrez une alerte lors de la publication d'un nouvel article !"
             : "You will receive an alert when a new article is published!",
           icon: './logo_ua.png'
         });
@@ -516,88 +577,6 @@ export default function App() {
         localStorage.setItem('wma-blog-notifications', 'false');
         setNotificationsEnabled(false);
       }
-    }
-  };
-
-  // Polling hook for background check of new blog posts
-  useEffect(() => {
-    if (!notificationsEnabled) return;
-
-    const checkNewPosts = async () => {
-      try {
-        const res = await fetch('https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=1');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            const latestPost = data[0];
-            const storedId = localStorage.getItem('wma-last-post-id');
-            
-            if (storedId && latestPost.id > parseInt(storedId, 10)) {
-              const title = t('new_post_notification_title');
-              const body = t('new_post_notification_body', { title: latestPost.title.rendered });
-              
-              const notification = new Notification(title, {
-                body: body.replace(/&#8217;/g, "'").replace(/&#8230;/g, "...").replace(/&#8211;/g, "-"),
-                icon: './logo_ua.png'
-              });
-
-              notification.onclick = () => {
-                window.focus();
-                if (latestPost.link) {
-                  window.open(latestPost.link, '_blank');
-                }
-              };
-              
-              localStorage.setItem('wma-last-post-id', latestPost.id.toString());
-              
-              // Refresh the main blog feed list to show the new post
-              fetchBlogPosts();
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error polling for new blog posts:", err);
-      }
-    };
-
-    // Run check initially when notifications get enabled
-    checkNewPosts();
-
-    // Poll every 3 minutes (180000ms)
-    const intervalId = setInterval(checkNewPosts, 180000);
-
-    return () => clearInterval(intervalId);
-  }, [notificationsEnabled, lang]);
-
-  // Load all artists and projects on mount
-  useEffect(() => {
-    fetchArtists();
-    fetchProjects();
-    fetchBlogPosts();
-    fetchVisitStats();
-    fetchComingSoon();
-  }, []);
-
-  const fetchBlogPosts = async () => {
-    try {
-      setBlogLoading(true);
-      const res = await fetch('https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=4&_embed');
-      if (res.ok) {
-        const data = await res.json();
-        const posts = Array.isArray(data) ? data : [];
-        setBlogPosts(posts);
-        
-        if (posts.length > 0) {
-          const lastStoredId = localStorage.getItem('wma-last-post-id');
-          if (!lastStoredId) {
-            localStorage.setItem('wma-last-post-id', posts[0].id.toString());
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Error fetching WordPress posts:", e);
-    } finally {
-      setBlogLoading(false);
     }
   };
 
@@ -672,22 +651,6 @@ export default function App() {
     }
   };
 
-  const fetchArtistDetails = async (id) => {
-    try {
-      setDetailsLoading(true);
-      setArtistDetails(null);
-      const res = await fetch(`${API_BASE}/ua_get_artist_details.php?id=${id}`);
-      const data = await res.json();
-      if (data && !data.error) {
-        setArtistDetails(data);
-      }
-    } catch (e) {
-      console.error("Error fetching artist details:", e);
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
-
   const handleWaitlistSubmit = async (e) => {
     e.preventDefault();
     if (!waitlistEmail) return;
@@ -695,7 +658,7 @@ export default function App() {
     try {
       setWaitlistSubmitting(true);
       setWaitlistError('');
-      
+
       const res = await fetch(`${API_BASE}/save_waitlist_email.php`, {
         method: 'POST',
         headers: {
@@ -705,7 +668,7 @@ export default function App() {
       });
 
       const data = await res.json();
-      
+
       if (data.success) {
         setWaitlistSuccess(true);
         setWaitlistEmail('');
@@ -720,13 +683,84 @@ export default function App() {
     }
   };
 
+  // Polling hook for background check of new blog posts
+  useEffect(() => {
+    if (!notificationsEnabled) return undefined;
+
+    const checkNewPosts = async () => {
+      try {
+        const res = await fetch('https://wmahub.com/blog/wp-json/wp/v2/posts?per_page=1');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const latestPost = data[0];
+            const storedId = localStorage.getItem('wma-last-post-id');
+
+            if (storedId && latestPost.id > parseInt(storedId, 10)) {
+              const title = TRANSLATIONS[lang].new_post_notification_title;
+              const body = TRANSLATIONS[lang].new_post_notification_body.replace('{title}', latestPost.title.rendered);
+
+              const notification = new Notification(title, {
+                body: body.replace(/&#8217;/g, "'").replace(/&#8230;/g, "...").replace(/&#8211;/g, "-"),
+                icon: './logo_ua.png'
+              });
+
+              notification.onclick = () => {
+                window.focus();
+                if (latestPost.link) {
+                  window.open(latestPost.link, '_blank');
+                }
+              };
+
+              localStorage.setItem('wma-last-post-id', latestPost.id.toString());
+              fetchBlogPosts();
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error polling for new blog posts:", err);
+      }
+    };
+
+    checkNewPosts();
+    const intervalId = setInterval(checkNewPosts, 180000);
+    return () => clearInterval(intervalId);
+  }, [notificationsEnabled, lang]);
+
+  // Load all artists and projects on mount
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+    fetchArtists();
+    fetchProjects();
+    fetchBlogPosts();
+    fetchVisitStats();
+    fetchComingSoon();
+  }, []);
+
   // Trigger details fetch when artist is selected
   useEffect(() => {
-    if (selectedArtistId) {
-      fetchArtistDetails(selectedArtistId);
-    } else {
-      setArtistDetails(null);
-    }
+    if (!selectedArtistId) return undefined;
+
+    let cancelled = false;
+
+    const loadArtistDetails = async () => {
+      try {
+        setDetailsLoading(true);
+        setArtistDetails(null);
+        const res = await fetch(`${API_BASE}/ua_get_artist_details.php?id=${selectedArtistId}`);
+        const data = await res.json();
+        if (!cancelled && data && !data.error) {
+          setArtistDetails(data);
+        }
+      } catch (e) {
+        console.error("Error fetching artist details:", e);
+      } finally {
+        if (!cancelled) setDetailsLoading(false);
+      }
+    };
+
+    loadArtistDetails();
+    return () => { cancelled = true; };
   }, [selectedArtistId]);
 
   // Filters
@@ -771,7 +805,7 @@ export default function App() {
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           
-          <a href="#" className="logo-link" onClick={(e) => { e.preventDefault(); setActiveTab('home'); }}>
+          <a href="#" className="logo-link" onClick={(e) => { e.preventDefault(); changeTab('home'); }}>
             {showLogo ? (
               <img src="./logo_ua.png" alt="WMA UA Logo" className="logo-img logo-transition" />
             ) : (
@@ -785,7 +819,7 @@ export default function App() {
                 <a
                   href="#home"
                   className={`nav-item-link ${activeTab === 'home' ? 'active' : ''}`}
-                  onClick={(e) => { e.preventDefault(); setActiveTab('home'); }}
+                  onClick={(e) => { e.preventDefault(); changeTab('home'); }}
                 >
                   {t('nav_home')}
                 </a>
@@ -794,7 +828,7 @@ export default function App() {
                 <a
                   href="#artists"
                   className={`nav-item-link ${activeTab === 'artists' ? 'active' : ''}`}
-                  onClick={(e) => { e.preventDefault(); setActiveTab('artists'); }}
+                  onClick={(e) => { e.preventDefault(); changeTab('artists'); }}
                 >
                   {t('nav_artists')}
                 </a>
@@ -803,9 +837,18 @@ export default function App() {
                 <a
                   href="#distributions"
                   className={`nav-item-link ${activeTab === 'distributions' ? 'active' : ''}`}
-                  onClick={(e) => { e.preventDefault(); setActiveTab('distributions'); }}
+                  onClick={(e) => { e.preventDefault(); changeTab('distributions'); }}
                 >
                   {t('nav_releases')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#newmusic"
+                  className={`nav-item-link ${activeTab === 'newmusic' ? 'active' : ''}`}
+                  onClick={(e) => { e.preventDefault(); changeTab('newmusic'); }}
+                >
+                  {t('nav_newmusic')}
                 </a>
               </li>
             </ul>
@@ -874,10 +917,10 @@ export default function App() {
                   {t('hero_title_1')}<span>{t('hero_title_span')}</span>{t('hero_title_2')}
                 </h1>
                 <div className="hero-actions">
-                  <button onClick={() => setActiveTab('distributions')} className="btn btn-solid">
+                  <button onClick={() => changeTab('distributions')} className="btn btn-solid">
                     {t('hero_btn_catalog')} <ArrowRight size={16} />
                   </button>
-                  <button onClick={() => setActiveTab('artists')} className="btn btn-outline">
+                  <button onClick={() => changeTab('artists')} className="btn btn-outline">
                     {t('hero_btn_artists')} <Users size={16} />
                   </button>
                 </div>
@@ -925,7 +968,7 @@ export default function App() {
               <div className="container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
                   <h2 style={{ fontSize: '2rem' }}>{t('section_artists_title')}<span>UA</span></h2>
-                  <button onClick={() => setActiveTab('artists')} className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
+                  <button onClick={() => changeTab('artists')} className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
                     {t('section_show_all')} <ChevronRight size={14} />
                   </button>
                 </div>
@@ -958,7 +1001,7 @@ export default function App() {
               <div className="container">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
                   <h2 style={{ fontSize: '2rem' }}>{t('section_releases_title')}<span>{t('section_releases_span')}</span></h2>
-                  <button onClick={() => setActiveTab('distributions')} className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
+                  <button onClick={() => changeTab('distributions')} className="btn btn-outline" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
                     {t('section_show_all')} <ChevronRight size={14} />
                   </button>
                 </div>
@@ -992,6 +1035,29 @@ export default function App() {
                     ))}
                   </div>
                 )}
+              </div>
+            </section>
+
+            {/* New Music Friday Banner */}
+            <section className="nmf-banner-section">
+              <div className="container">
+                <a
+                  href="#newmusic"
+                  className="nmf-banner"
+                  onClick={(e) => { e.preventDefault(); changeTab('newmusic'); }}
+                >
+                  <div className="nmf-banner-glow" aria-hidden="true" />
+                  <div className="nmf-banner-content">
+                    <span className="nmf-badge">
+                      <Play size={12} fill="currentColor" /> {t('nmf_badge')}
+                    </span>
+                    <h2 className="nmf-title">{t('nmf_title')}</h2>
+                    <p className="nmf-desc">{t('nmf_desc')}</p>
+                  </div>
+                  <span className="nmf-cta">
+                    {t('nmf_cta')} <ExternalLink size={16} />
+                  </span>
+                </a>
               </div>
             </section>
 
@@ -1037,7 +1103,7 @@ export default function App() {
             <div className="container">
               <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
                 <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>{t('page_artists_title')}<span>{t('page_artists_span')}</span></h1>
-                <p style={{ color: 'var(--text-muted)', maxWWidth: '600px', margin: '0 auto 2.5rem' }}>
+                <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
                   {t('page_artists_desc')}
                 </p>
 
@@ -1088,12 +1154,48 @@ export default function App() {
           </section>
         )}
 
+        {activeTab === 'newmusic' && (
+          <section className="newmusic-page">
+            <div className="container">
+              <header className="newmusic-header">
+                <span className="nmf-badge">
+                  <Play size={12} fill="currentColor" /> {t('nmf_badge')}
+                </span>
+                <h1 className="newmusic-title">{t('nmf_title')}</h1>
+                <p className="newmusic-desc">{t('page_newmusic_desc')}</p>
+                <a
+                  href={SPOTIFY_NMF_PLAYLIST_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nmf-cta newmusic-open-btn"
+                >
+                  {t('page_newmusic_open')} <ExternalLink size={16} />
+                </a>
+              </header>
+
+              <div className="newmusic-player-wrapper">
+                <h2 className="newmusic-tracks-label">{t('page_newmusic_tracks')}</h2>
+                <iframe
+                  title={t('nmf_title')}
+                  src={`https://open.spotify.com/embed/playlist/${SPOTIFY_NMF_PLAYLIST_ID}?utm_source=generator&theme=0`}
+                  width="100%"
+                  height="600"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="newmusic-spotify-embed"
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
         {activeTab === 'distributions' && (
           <section style={{ padding: '4rem 0' }}>
             <div className="container">
               <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
                 <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>{t('page_releases_title')}<span>{t('page_releases_span')}</span></h1>
-                <p style={{ color: 'var(--text-muted)', maxWWidth: '600px', margin: '0 auto 2.5rem' }}>
+                <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
                   {t('page_releases_desc')}
                 </p>
 
@@ -1549,11 +1651,7 @@ export default function App() {
                 <img src="./Next.png" alt="Next Byte Technology" className="partner-logo" />
               </a>
             </div>
-            <div className="partner-card" id="partner-card-azana">
-              <a href="https://www.azanaworldwide.online" target="_blank" rel="noopener noreferrer" className="partner-link">
-                <img src="https://www.azanaworldwide.online/azana-logo.png" alt="Azana" className="partner-logo" />
-              </a>
-            </div>
+        
             <div className="partner-card" id="partner-card-wmaplus">
               <a href="https://wmaplus.com" target="_blank" rel="noopener noreferrer" className="partner-link">
                 <img src="https://wmaplus.com/assets/logo.png" alt="WMA Plus" className="partner-logo" />
@@ -1599,9 +1697,10 @@ export default function App() {
           <div className="footer-col">
             <h4 className="footer-title">{t('footer_nav')}</h4>
             <ul className="footer-links">
-              <li><a href="#home" onClick={(e) => { e.preventDefault(); setActiveTab('home'); }}>{t('nav_home')}</a></li>
-              <li><a href="#artists" onClick={(e) => { e.preventDefault(); setActiveTab('artists'); }}>{t('nav_artists')}</a></li>
-              <li><a href="#distributions" onClick={(e) => { e.preventDefault(); setActiveTab('distributions'); }}>{t('nav_releases')}</a></li>
+              <li><a href="#home" onClick={(e) => { e.preventDefault(); changeTab('home'); }}>{t('nav_home')}</a></li>
+              <li><a href="#artists" onClick={(e) => { e.preventDefault(); changeTab('artists'); }}>{t('nav_artists')}</a></li>
+              <li><a href="#distributions" onClick={(e) => { e.preventDefault(); changeTab('distributions'); }}>{t('nav_releases')}</a></li>
+              <li><a href="#newmusic" onClick={(e) => { e.preventDefault(); changeTab('newmusic'); }}>{t('nav_newmusic')}</a></li>
             </ul>
           </div>
 

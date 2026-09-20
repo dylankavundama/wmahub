@@ -39,8 +39,12 @@ try {
     <meta name="viewport" content="width=1200">
     <meta name="description" content="WMA Hub - Plateforme de distribution musicale pour artistes et labels">
     <title>WMAHUB - La Plateforme de Distribution musicale</title>
-    <link rel="icon" type="image/png" href="/asset/icon.png">
-    <link rel="apple-touch-icon" href="/asset/icon.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/asset/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/asset/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/asset/favicon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/asset/apple-touch-icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="manifest" href="/site.webmanifest">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">

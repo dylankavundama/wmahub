@@ -4,11 +4,13 @@
  * Ne pas confondre avec GOOGLE_CLIENT_ID (OAuth site web).
  */
 
+require_once __DIR__ . '/env.php';
+
 if (!defined('FIREBASE_PROJECT_ID')) {
-    define('FIREBASE_PROJECT_ID', getenv('FIREBASE_PROJECT_ID') ?: 'uawma-70e70');
+    define('FIREBASE_PROJECT_ID', env('FIREBASE_PROJECT_ID', ''));
 }
 if (!defined('FIREBASE_WEB_API_KEY')) {
-    define('FIREBASE_WEB_API_KEY', getenv('FIREBASE_WEB_API_KEY') ?: 'AIzaSyDbSttnS1qfZ-C41OVlIGKABBnlAobfGzk');
+    define('FIREBASE_WEB_API_KEY', env('FIREBASE_WEB_API_KEY', ''));
 }
 
 /**

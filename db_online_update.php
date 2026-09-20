@@ -8,7 +8,8 @@
 require_once __DIR__ . '/includes/config.php';
 
 // Code de sécurité pour empêcher l'exécution non autorisée en ligne
-define('SECURE_KEY', 'wma_db_sync_2026');
+define('SECURE_KEY', env('DB_SYNC_KEY', 'wma_db_sync_2026'));
+define('SECURE_PASSCODE', env('DB_SYNC_PASSCODE', 'wmahub2026'));
 
 // Initialisation des variables
 $action = $_GET['action'] ?? '';
@@ -24,7 +25,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if ($key === SECURE_KEY || (isset($_SESSION['db_auth']) && $_SESSION['db_auth'] === true)) {
     $is_authenticated = true;
     $_SESSION['db_auth'] = true;
-} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_auth']) && $passcode === 'wmahub2026') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_auth']) && $passcode === SECURE_PASSCODE) {
     $is_authenticated = true;
     $_SESSION['db_auth'] = true;
 }
