@@ -48,7 +48,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# 7. Flutter / Mobile App Build & Cache
+# 7. Flutter / Mobile App Build, Cache & Firebase Secrets
 /mobile/.dart_tool/
 /mobile/.flutter-plugins
 /mobile/.flutter-plugins-dependencies
@@ -64,6 +64,14 @@ pnpm-debug.log*
 *.iml
 *.ipr
 *.iws
+
+# Fichiers de configuration Firebase contenant des clés d'API (Client secrets)
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase_options.dart
+!**/google-services.json.example
+!**/GoogleService-Info.plist.example
+!**/firebase_options.dart.example
 
 # 8. Fichiers Systèmes & IDE
 .DS_Store
